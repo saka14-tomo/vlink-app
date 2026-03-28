@@ -446,12 +446,15 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let selectedStatsPlayers = []; 
+    // ★修正ポイント1：統計画面を開いたとき、最初から全員分のデータが表示されるように初期値を設定
+    let selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
+    // ★修正ポイント2：エラーの原因となっていた未宣言の変数をしっかり宣言
+    let hoverServeFilter = null, hoverSpikeFilter = null; 
     let hoverServeZone = null, lockedServeZones = [];
     let hoverSpikeZone = null, lockedSpikeZones = [];
 
@@ -994,7 +997,9 @@
                 if (data.players && data.log) {
                     playerNames = data.players; dataLog = data.log; 
                     saveToLocal(); 
-                    selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = [];
+                    selectedPlayerId = null; 
+                    selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; // 復元後も全選手表示
+                    comparePlayers = [];
                     resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
                     hoverServeZone = null; lockedServeZones = [];
                     hoverSpikeZone = null; lockedSpikeZones = [];
@@ -1011,7 +1016,9 @@
 
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
-            dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = [];
+            dataLog = []; selectedPlayerId = null; 
+            selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; 
+            comparePlayers = [];
             resetInput(); 
             currentSessionId = "session_" + Date.now();
             
