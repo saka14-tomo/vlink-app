@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>V-Link Junior (Pro版 - YouTube埋め込み機能)</title>
+    <title>V-Link Junior (Pro版 - 動画・タイマー完全同期)</title>
     <style>
         /* 基本レイアウト */
         body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; touch-action: manipulation; }
@@ -170,10 +170,12 @@
     <div class="main-container" style="margin-bottom: 10px; flex-direction: column; width: 100%; max-width: 550px; padding: 10px;">
         <div style="display: flex; gap: 6px; width: 100%; align-items: center;">
             <input type="text" id="yt-url-input" placeholder="YouTubeのURLを貼り付け (例: https://youtu.be/...)" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none;">
-            <button class="action-btn" style="background: #ff0000; padding: 8px 12px; font-size: 12px;" onclick="loadYouTubeVideo()">📺 再生</button>
+            <button class="action-btn" style="background: #ff0000; padding: 8px 12px; font-size: 12px;" onclick="loadYouTubeVideo()">📺 動画読込</button>
         </div>
+        <!-- プレイヤーを内包するコンテナ -->
         <div id="yt-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 6px; overflow: hidden; margin-top: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
-            <iframe id="yt-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
+            <!-- YouTube APIがこのdivをiframeに置き換えます -->
+            <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"></div>
         </div>
     </div>
 
@@ -193,8 +195,8 @@
         </div>
 
         <div class="right-panel">
-            <!-- タイムスタンプ機能 -->
-            <div class="category-title" style="margin-top:0;">⏱ 試合タイマー (記録用)</div>
+            <!-- タイムスタンプ機能（YouTube同期対応） -->
+            <div class="category-title" style="margin-top:0;">⏱ 試合タイマー (同期)</div>
             <div style="display: flex; gap: 4px; align-items: stretch; margin-bottom: 8px;">
                 <div id="match-timer-display" style="font-size: 18px; font-weight: bold; background: #222; color: #0f0; padding: 6px; border-radius: 4px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
                 <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; flex: 1; padding: 0;" onclick="toggleTimer()">▶ スタート</button>
@@ -409,7 +411,7 @@
         'temp': '#007bff' 
     };
     
-    // --- 初期状態設定 (IndexedDB読み込み前に備えてのデフォルト値) ---
+    // --- 初期状態設定 ---
     let currentSessionId = "session_" + Date.now();
     let playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
     let dataLog = [];
@@ -425,10 +427,10 @@
     let hoverServeZone = null, lockedServeZones = [];
     let hoverSpikeZone = null, lockedSpikeZones = [];
 
-    let hoverServeFilter = null;
-    let hoverSpikeFilter = null;
+    // --- YouTube API 機能 ---
+    let ytPlayer = null; // YouTubeプレイヤーオブジェクト
 
-    // --- YouTube 埋め込み機能 ---
+    // YouTubeの動画を読み込む（初期化または動画切り替え）
     function loadYouTubeVideo() {
         const url = document.getElementById('yt-url-input').value;
         if (!url) {
@@ -436,10 +438,9 @@
             return;
         }
         
-        let videoId = '';
-        // YouTubeの様々なURLフォーマット（通常、短縮、埋め込み等）からIDを抽出する正規表現
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = url.match(regExp);
+        let videoId = '';
         
         if (match && match[2].length === 11) {
             videoId = match[2];
@@ -448,13 +449,26 @@
             return;
         }
         
-        // プレイヤー領域を表示し、iframeのsrcを設定
         document.getElementById('yt-player-wrapper').style.display = 'block';
-        // playsinline=1 はモバイルブラウザで全画面にならずインライン再生させるためのパラメータ
-        document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?playsinline=1`;
+
+        // 既にプレイヤーが存在する場合は動画IDだけを切り替え
+        if (ytPlayer) {
+            ytPlayer.loadVideoById(videoId);
+        } else {
+            // 初回読み込み時はプレイヤーを生成
+            ytPlayer = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'playsinline': 1,
+                    'rel': 0 // 関連動画を非表示
+                }
+            });
+        }
     }
 
-    // --- タイマー機能用の変数 ---
+    // --- タイマー機能 (YouTube同期) ---
     let timerSeconds = 0;
     let timerInterval = null;
     let isTimerRunning = false;
@@ -469,14 +483,22 @@
         document.getElementById('match-timer-display').innerText = formatTime(timerSeconds);
     }
 
+    // ★ここでタイマーと動画の再生/停止を連動させます
     function toggleTimer() {
         const btn = document.getElementById('btn-timer-toggle');
         if (isTimerRunning) {
+            // タイマー停止
             clearInterval(timerInterval);
             isTimerRunning = false;
             btn.innerHTML = '▶ スタート';
             btn.style.background = '#28a745';
+            
+            // YouTubeの動画も一時停止する
+            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+            }
         } else {
+            // タイマースタート
             timerInterval = setInterval(() => {
                 timerSeconds++;
                 updateTimerDisplay();
@@ -484,6 +506,11 @@
             isTimerRunning = true;
             btn.innerHTML = '⏸ 一時停止';
             btn.style.background = '#ff9800';
+
+            // YouTubeの動画も再生する
+            if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
+                ytPlayer.playVideo();
+            }
         }
     }
 
@@ -496,6 +523,12 @@
             const btn = document.getElementById('btn-timer-toggle');
             btn.innerHTML = '▶ スタート';
             btn.style.background = '#28a745';
+
+            // 動画を一時停止して最初に戻す
+            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+                ytPlayer.seekTo(0);
+            }
         }
     }
 
@@ -506,13 +539,17 @@
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 timerSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
                 updateTimerDisplay();
+                // 動画の再生位置も同期させる
+                if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+                    ytPlayer.seekTo(timerSeconds);
+                }
             } else {
                 alert("正しい形式(mm:ss)で入力してください。");
             }
         }
     }
 
-    // --- IndexedDB のセットアップと制御 ---
+    // --- IndexedDB ---
     const DB_NAME = 'VLinkDB';
     const STORE_NAME = 'vlinkStore';
     let db;
@@ -601,7 +638,15 @@
         return ct;
     }
 
+    // --- 起動時処理 ---
     window.onload = () => { 
+        // 1. YouTube IFrame API のスクリプトを動的に読み込む
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 2. アプリUIの初期化
         initDB(() => {
             renderPlayerGrids(); 
             updateLog(); 
@@ -609,7 +654,7 @@
             clearAnalysisDOM(); 
             drawAnalysis();
             drawSpike();
-            updateTimerDisplay(); // タイマーの初期表示
+            updateTimerDisplay();
 
             document.addEventListener('touchend', (e) => {
                 const now = Date.now();
@@ -801,11 +846,9 @@
 
     function exportCSV() {
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        // ヘッダーに「動画時間」を追加
         csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         dataLog.forEach(l => {
             let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
-            // 動画時間（videoTime）をエクスポートに含める
             let row = `${l.time},${l.sessionId},${l.videoTime || ''},${playerNames[l.playerId]},${typeStr},${l.result}`;
             csvContent += row + "\n";
         });
@@ -846,7 +889,6 @@
             resetInput(); 
             currentSessionId = "session_" + Date.now();
             
-            // タイマーもリセット
             clearInterval(timerInterval);
             isTimerRunning = false;
             timerSeconds = 0;
@@ -854,6 +896,11 @@
             const btn = document.getElementById('btn-timer-toggle');
             btn.innerHTML = '▶ スタート';
             btn.style.background = '#28a745';
+            
+            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+                ytPlayer.seekTo(0);
+            }
 
             saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all';
@@ -1058,7 +1105,7 @@
             endX: serveEnd.x, 
             endY: serveEnd.y, 
             time: new Date().toLocaleString(),
-            videoTime: formatTime(timerSeconds) // タイマーの時間を記録
+            videoTime: formatTime(timerSeconds) 
         });
         resetInput(); 
         saveToLocal(); 
@@ -1085,7 +1132,6 @@
         const container = document.getElementById('log-container');
         container.innerHTML = [...dataLog].reverse().map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
-            // タイムスタンプをログに表示
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             return `<div class="log-row">${timeStr}<span class="log-name">${playerNames[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
