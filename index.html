@@ -464,10 +464,10 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let selectedStatsPlayers = []; // ★初期状態を未選択に修正
+    let selectedStatsPlayers = []; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
-    let multiSelectMode = false; // ★複数選択モードのフラグ
+    let multiSelectMode = false; 
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
@@ -497,12 +497,12 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            videoCard.style.maxWidth = '100%'; // 幅を最大化
+            videoCard.style.maxWidth = '100%'; 
             btn.innerText = '🗗 通常';
             btn.style.background = '#ff9800';
         } else {
             sourceUi.style.display = 'block';
-            videoCard.style.maxWidth = '550px'; // 元の幅
+            videoCard.style.maxWidth = '550px'; 
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
         }
@@ -538,51 +538,88 @@
         resetTimerInternal();
     }
 
+    // ★YouTube読み込みロジックの強力化
     function loadYouTubeVideo() {
         const url = document.getElementById('yt-url-input').value;
         if (!url) { alert("URLを入力してください。"); return; }
         
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        // あらゆる形式のURLに対応する正規表現
+        const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
         const match = url.match(regExp);
         let videoId = '';
         
-        if (match && match[2].length === 11) {
-            videoId = match[2];
+        if (match && match[1].length === 11) {
+            videoId = match[1];
         } else {
-            alert("正しいYouTubeのURLを入力してください。"); return;
+            alert("⚠️ URLから動画IDを読み取れませんでした。正しいYouTubeのURLか確認してください。");
+            return;
         }
 
         activeVideoType = 'youtube';
         showPlayer('youtube');
-        document.getElementById('local-player').pause();
+        const localPlayer = document.getElementById('local-player');
+        if (localPlayer) localPlayer.pause();
 
-        // 堅牢なYouTubeプレイヤーの初期化（エラーハンドリング強化）
+        // YouTube APIの読み込み完了チェック
+        if (typeof YT === 'undefined' || !YT.Player) {
+            alert("⏳ YouTubeのシステムを準備中です。数秒待ってからもう一度ボタンを押してください。");
+            return;
+        }
+
         if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
             try {
                 ytPlayer.loadVideoById(videoId);
             } catch (e) {
-                buildYTPlayer(videoId);
+                rebuildYTPlayer(videoId);
             }
         } else {
-            buildYTPlayer(videoId);
+            rebuildYTPlayer(videoId);
         }
         resetTimerInternal();
     }
 
+    // プレイヤーを安全に破棄して作り直す処理
+    function rebuildYTPlayer(videoId) {
+        const wrapper = document.getElementById('video-player-wrapper');
+        const oldPlayer = document.getElementById('yt-player');
+        if (oldPlayer) {
+            oldPlayer.remove();
+        }
+        
+        const newDiv = document.createElement('div');
+        newDiv.id = 'yt-player';
+        newDiv.style.position = 'absolute';
+        newDiv.style.top = '0';
+        newDiv.style.left = '0';
+        newDiv.style.width = '100%';
+        newDiv.style.height = '100%';
+        newDiv.style.border = '0';
+        wrapper.insertBefore(newDiv, wrapper.firstChild);
+        
+        buildYTPlayer(videoId);
+    }
+
     function buildYTPlayer(videoId) {
+        const originUrl = window.location.origin !== "null" ? window.location.origin : "http://localhost";
+
         ytPlayer = new YT.Player('yt-player', {
             height: '100%', width: '100%', videoId: videoId,
-            playerVars: { 'playsinline': 1, 'rel': 0, 'enablejsapi': 1 },
+            playerVars: { 
+                'playsinline': 1, 
+                'rel': 0, 
+                'enablejsapi': 1,
+                'origin': originUrl // 不正アクセス対策
+            },
             events: { 
                 'onStateChange': onYouTubeStateChange,
                 'onError': function(e) {
                     console.error("YouTube Error Code:", e.data);
                     if (e.data === 150 || e.data === 101 || e.data === 153) {
-                        alert("⚠️ 【再生エラー】\nこの動画は投稿者の設定により、外部アプリでの埋め込み再生が禁止されています。\n別の動画URLをお試しください。");
+                        alert("⚠️ 【再生エラー】\nこの動画は投稿者の設定、またはBGMの著作権等の理由により外部アプリでの再生が制限されています。");
                     } else if (e.data === 100) {
-                        alert("⚠️ 【再生エラー】\n動画が見つかりません。削除されたか、非公開に設定されています。");
+                        alert("⚠️ 【再生エラー】\n動画が見つかりません。非公開設定になっている可能性があります。");
                     } else {
-                        alert("⚠️ YouTube動画の読み込みエラーが発生しました (コード: " + e.data + ")");
+                        alert("⚠️ 読み込みエラーが発生しました (コード: " + e.data + ")\nブラウザの広告ブロック等を一時的にオフにしてみてください。");
                     }
                 }
             }
@@ -772,7 +809,6 @@
 
     function goToCompare() { compareType = (currentTab === 'analysis') ? 'serve' : 'spike'; switchTab('compare'); }
 
-    // ★ 複数選択切り替え機能
     function toggleMultiSelect() {
         multiSelectMode = !multiSelectMode;
         const btnServe = document.getElementById('btn-multi-serve');
@@ -785,7 +821,6 @@
             if(btnServe) { btnServe.innerHTML = '✅ 複数選択：OFF'; btnServe.style.background = '#6c757d'; }
             if(btnSpike) { btnSpike.innerHTML = '✅ 複数選択：OFF'; btnSpike.style.background = '#6c757d'; }
             
-            // OFFにした時、複数人が選択されていたら最後に選択された1人のみに絞る
             if (selectedStatsPlayers.length > 1) {
                 selectedStatsPlayers = [selectedStatsPlayers[selectedStatsPlayers.length - 1]];
                 lockedServeZones = []; lockedSpikeZones = [];
@@ -931,7 +966,7 @@
                 const data = JSON.parse(evt.target.result);
                 if (data.players && data.log) {
                     playerNames = data.players; dataLog = data.log; saveToLocal(); 
-                    selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; // ★初期化変更
+                    selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
                     resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
                     hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
                     updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -945,7 +980,7 @@
 
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
-            dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; // ★初期化変更
+            dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
             resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
             updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -1073,27 +1108,23 @@
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
-    // ★ 選手選択ロジック（単一選択／複数選択の切り替え対応）
     function selectPlayer(id) { 
         if (currentTab === 'input') selectedPlayerId = id; 
         else if (currentTab === 'compare') {
             if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id); else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
         } else {
-            // サーブ統計またはスパイク統計タブの場合
             if (multiSelectMode) {
-                // 複数選択モード：トグルで追加・削除
                 if (selectedStatsPlayers.includes(id)) {
                     selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
                 } else {
                     selectedStatsPlayers.push(id);
                 }
             } else {
-                // 単一選択モード：常に1人のみにする（再タップで解除）
                 if (selectedStatsPlayers.length === 1 && selectedStatsPlayers[0] === id) {
-                    selectedStatsPlayers = []; // 解除
+                    selectedStatsPlayers = []; 
                 } else {
-                    selectedStatsPlayers = [id]; // 新たに選んだ選手のみ
+                    selectedStatsPlayers = [id]; 
                 }
             }
             
