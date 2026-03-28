@@ -8,7 +8,7 @@
         /* 基本レイアウト */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 15px 10px; margin: 0; touch-action: manipulation; }
         
-        /* タブメニュー (モダンなピル型デザイン) */
+        /* タブメニュー */
         .tab-menu { width: 100%; max-width: 760px; display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .tab-btn { flex: 1 1 22%; min-width: 70px; padding: 14px 8px; border: none; border-radius: 8px; cursor: pointer; background: #e9ecef; color: #495057; font-weight: bold; font-size: 13px; transition: all 0.2s ease; text-align: center; }
         .tab-btn:hover { background: #dee2e6; color: #212529; }
@@ -18,7 +18,7 @@
         .view-content { display: none; width: 100%; flex-direction: column; align-items: center; }
         .view-content.active { display: flex; }
         
-        /* メインパネル (幅を760pxに完全統一・余白削減) */
+        /* メインパネル */
         .main-container { 
             display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
             box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
@@ -29,7 +29,6 @@
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
         .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 
-        /* 選手カードラッパー */
         .player-wrapper { 
             display: flex; flex-direction: column; width: 100%; height: 56px; 
             border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: #f8f9fa; 
@@ -58,7 +57,6 @@
         canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); width: 220px; height: 440px; }
         #input-area { width: 220px; height: 440px; position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 10; touch-action: none; }
 
-        /* 統計画面用 9分割ゾーンオーバーレイ */
         .zone-overlay { position: absolute; top: 240px; left: 20px; width: 180px; height: 180px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); z-index: 10; }
         .zone-cell { border: 1px dashed rgba(255, 255, 255, 0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: all 0.2s; user-select: none; -webkit-tap-highlight-color: transparent; }
         .zone-cell:hover { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.9); color: #fff; }
@@ -68,9 +66,9 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウ：柔軟に伸縮するよう調整 */
-        #log-container { flex: 1; min-height: 120px; overflow-y: auto; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; }
-        .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; }
+        /* ログウィンドウ（5件固定枠） */
+        #log-container { min-height: 155px; height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow: hidden; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; }
         .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; }
         .log-name { font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .log-res { font-weight: bold; font-size: 10px; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; }
@@ -78,7 +76,7 @@
         .res-in { background: #e0e0e0; color: #000000; }
         .res-err { background: #ffebee; color: #d32f2f; }
 
-        /* Totalカード・統計 */
+        /* 統計カード */
         .stat-card-total { width: 100%; background: #fff; border: 2px solid #333; border-radius: 10px; padding: 12px 10px; box-sizing: border-box; text-align: center; margin-bottom: 5px; }
         .card-label-total { font-size: 11px; color: #666; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
         .total-val { font-size: 32px; font-weight: bold; color: #000; line-height: 1; }
@@ -91,7 +89,6 @@
         .row-in { background: #fff; color: #000000; border-bottom: 1px solid #eee; }
         .row-miss { background: #fff5f5; color: #d32f2f; }
 
-        /* フィルタリング用のホバー・アクティブ効果 */
         .clickable-stat { cursor: pointer; transition: all 0.2s; position: relative; }
         .clickable-stat:hover { filter: brightness(0.97); box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-1px); z-index: 10; }
         tr.clickable-stat:hover { transform: none; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); z-index: auto; }
@@ -124,7 +121,7 @@
         .btn-ace { background: #007BFF; } .btn-in { background: #212529; } .btn-error { background: #dc3545; }
         .btn-utility { background: #6c757d; font-size: 11px; padding: 8px; }
 
-        /* 比較画面レイアウト */
+        /* 比較画面 */
         .compare-layout { flex-direction: column; align-items: stretch; padding: 20px; }
         .compare-header { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
         .compare-player-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; flex: 1; min-width: 180px; }
@@ -155,10 +152,9 @@
             .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 6px; }
             .player-wrapper { width: 60px; height: 50px; }
-            #log-container { min-height: 100px; height: 100px; }
+            #log-container { min-height: auto; height: auto; max-height: 155px; }
         }
 
-        /* 操作性向上 */
         .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
             -webkit-user-select: none; user-select: none; touch-action: manipulation;
         }
@@ -197,14 +193,18 @@
         <div id="video-source-ui" style="width: 100%;">
             <div class="category-title" style="margin: 0 0 10px 0; border: none; padding: 0; background: transparent; font-size: 13px; color: #555;">🎥 動画ソース選択</div>
             
-            <div style="display: flex; gap: 8px; width: 100%; align-items: center; margin-bottom: 10px;">
-                <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 端末内の動画を選択 (カメラロール等)</button>
+            <!-- 初期ボタン群 -->
+            <div id="source-btn-group" style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 デバイスから動画を選択</button>
                 <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
+                <button class="action-btn" style="background: #dc3545; flex: 1; padding: 12px; font-size: 13px;" onclick="showYouTubeInput()">📺 Youtubeから動画を選択</button>
             </div>
 
-            <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
-                <input type="text" id="yt-url-input" placeholder="または YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;">
-                <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 YouTube再生</button>
+            <!-- Youtube用入力画面 -->
+            <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
+                <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;">
+                <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
+                <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
             </div>
         </div>
 
@@ -270,7 +270,7 @@
                 <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
             </div>
             
-            <div class="category-title" style="margin-top:12px;">入力ログ</div>
+            <div class="category-title" style="margin-top:12px;">入力ログ（直近5件）</div>
             <div id="log-container"></div>
         </div>
     </div>
@@ -452,7 +452,6 @@
         'temp': '#007bff' 
     };
     
-    // --- 初期状態設定 ---
     let currentSessionId = "session_" + Date.now();
     let playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
     let dataLog = [];
@@ -470,7 +469,6 @@
     let hoverServeZone = null, lockedServeZones = [];
     let hoverSpikeZone = null, lockedSpikeZones = [];
 
-    // --- 動画・タイマー・シーク機能 ---
     let activeVideoType = null; 
     let ytPlayer = null;
     let timerSeconds = 0;
@@ -499,6 +497,16 @@
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
         }
+    }
+
+    // 動画ソース表示の切り替え
+    function showYouTubeInput() {
+        document.getElementById('source-btn-group').style.display = 'none';
+        document.getElementById('youtube-input-group').style.display = 'flex';
+    }
+    function hideYouTubeInput() {
+        document.getElementById('source-btn-group').style.display = 'flex';
+        document.getElementById('youtube-input-group').style.display = 'none';
     }
 
     function showPlayer(type) {
@@ -683,7 +691,6 @@
         }
     }
 
-    // --- IndexedDB ---
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -733,7 +740,6 @@
         ct.setTransform(dpr, 0, 0, dpr, 0, 0); return ct;
     }
 
-    // --- 起動時処理 ---
     window.onload = () => { 
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -991,7 +997,6 @@
 
     function resetInput() { inputState = 'idle'; serveStart = null; serveEnd = null; document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); }
 
-    // ★ プレビュー用にログ抽出ロジックを修正
     function getFilteredLogs(type, targetFilter, zones) {
         let logs = dataLog.filter(l => selectedStatsPlayers.includes(l.playerId) && (type === 'serve' ? l.type !== 'spike' : l.type === 'spike'));
         if (zones && zones.length > 0) logs = logs.filter(l => zones.some(z => isLogInZone(l, z)));
@@ -1061,25 +1066,27 @@
             let baseZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
             let mainLogs = getFilteredLogs(type, sFilter, baseZones);
 
-            if (hFilter !== null) {
-                // 表（イン・ミス）にホバーしたときのプレビュー
-                let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
-                ct.globalAlpha = 0.25;
-                filterPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
-                ct.globalAlpha = 1.0;
-            } else {
-                // 通常の描画
-                mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
+            // 1. 選択されているフィルターのログを【常に実線で】描画
+            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
 
-                // ★ 未選択のゾーンにホバーしたときの薄いプレビュー処理
-                if (lZones.length > 0 && hZone) {
-                    const isHZoneLocked = lZones.some(z => z.x === hZone.x && z.y === hZone.y);
-                    if (!isHZoneLocked) {
-                        let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
-                        ct.globalAlpha = 0.25; // 透明度を下げてプレビュー
-                        previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
-                        ct.globalAlpha = 1.0;
-                    }
+            // 2. 表のボタン（イン・ミス）にホバーしたときの薄いプレビュー (選択中のフィルタと異なる場合)
+            if (hFilter !== null && hFilter !== sFilter) {
+                let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
+                // 実線で描画済みのものは除外して薄く描画
+                let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
+                ct.globalAlpha = 0.25;
+                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
+                ct.globalAlpha = 1.0;
+            }
+
+            // 3. ゾーンが固定されている場合の、他ゾーンの薄いプレビュー
+            if (lZones.length > 0 && hZone) {
+                const isHZoneLocked = lZones.some(z => z.x === hZone.x && z.y === hZone.y);
+                if (!isHZoneLocked) {
+                    let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
+                    ct.globalAlpha = 0.25;
+                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
+                    ct.globalAlpha = 1.0;
                 }
             }
         }
@@ -1128,9 +1135,11 @@
         renderPlayerGrids(); 
     }
     
+    // ★ ログを常に最新5件のみ表示するように制限
     function updateLog() { 
         const container = document.getElementById('log-container');
-        container.innerHTML = [...dataLog].reverse().map(l => {
+        const latestLogs = [...dataLog].reverse().slice(0, 5); // 直近5件を抽出
+        container.innerHTML = latestLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             return `<div class="log-row">${timeStr}<span class="log-name">${playerNames[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
