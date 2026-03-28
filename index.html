@@ -171,7 +171,6 @@
 </head>
 <body>
 
-<!-- 設定用モーダルオーバーレイ (常に手前に表示) -->
 <div id="settings-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; padding:20px; border-radius:10px; width:80%; max-width:300px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
         <h3 style="margin:0; border-bottom:2px solid #007bff; padding-bottom:5px; font-size:16px;">⚙️ 設定</h3>
@@ -197,47 +196,38 @@
     <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
 </div>
 
-<!-- データ入力画面 -->
 <div id="view-input" class="view-content active">
 
-    <!-- 動画・YouTube 埋め込みセクション -->
     <div id="video-container-card" class="main-container" style="flex-direction: column; width: 100%; max-width: 550px; padding: 10px; margin-bottom: 10px;">
         
         <div id="video-source-ui" style="width: 100%;">
             <div class="category-title" style="margin: 0 0 6px 0; border: none; padding: 0; font-size: 12px; color: #555;">🎥 動画ソース選択</div>
             
-            <!-- ローカル動画選択ボタン -->
             <div style="display: flex; gap: 6px; width: 100%; align-items: center; margin-bottom: 8px;">
                 <button class="action-btn" style="background: #007bff; flex: 1; padding: 10px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 端末内の動画を選択 (カメラロール等)</button>
                 <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
             </div>
 
-            <!-- YouTube URL入力 -->
             <div style="display: flex; gap: 6px; width: 100%; align-items: center;">
                 <input type="text" id="yt-url-input" placeholder="または YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; min-width: 0;">
                 <button class="action-btn" style="background: #ff0000; padding: 8px 12px; font-size: 12px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 YouTube再生</button>
             </div>
         </div>
 
-        <!-- プレイヤーを内包するコンテナ -->
         <div id="video-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 6px; overflow: hidden; margin-top: 5px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
             <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
             <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
         </div>
 
-        <!-- シーク＆設定コントロール -->
         <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 10px; justify-content: center; display: none; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #e9ecef;">
             <button class="action-btn" style="background: #6c757d; padding: 6px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
             <button class="action-btn" style="background: #6c757d; padding: 6px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
             
-            <div style="flex: 1;"></div> <!-- スペーサー -->
-
-            <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 6px 10px; font-size: 11px;" onclick="toggleLargeScreen()">🔲 大画面</button>
+            <div style="flex: 1;"></div> <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 6px 10px; font-size: 11px;" onclick="toggleLargeScreen()">🔲 大画面</button>
             <button class="action-btn" style="background: #495057; padding: 6px 10px; font-size: 11px;" onclick="openSettings()">⚙️ 設定</button>
         </div>
     </div>
 
-    <!-- メイン入力UI -->
     <div class="main-container">
         <div class="left-panel">
             <div class="category-title" style="width: 100%;">選手選択</div>
@@ -255,7 +245,6 @@
         </div>
 
         <div class="right-panel">
-            <!-- タイムスタンプ機能 -->
             <div class="category-title" style="margin-top:0;">⏱ タイマー (動画と同期)</div>
             <div style="display: flex; gap: 4px; align-items: center; margin-bottom: 8px;">
                 <div id="match-timer-display" style="font-size: 18px; font-weight: bold; background: #222; color: #0f0; padding: 6px; border-radius: 4px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
@@ -292,13 +281,13 @@
     </div>
 </div>
 
-<!-- サーブ統計画面 -->
 <div id="view-analysis" class="view-content">
     <div class="main-container">
         <div class="left-panel">
             <div class="category-title" style="width: 100%;">選手選択</div>
             <div id="player-grid-analysis" class="player-grid"></div>
             <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px; font-size:11px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム全体表示</button>
+            <button id="btn-multi-serve" class="action-btn" style="background:#6c757d; width: 100%; margin-top:5px; font-size:11px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
             <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:5px; font-size:11px;" onclick="goToCompare()">📊 比較機能</button>
         </div>
         <div class="court-wrapper">
@@ -357,13 +346,13 @@
     </div>
 </div>
 
-<!-- スパイク統計画面 -->
 <div id="view-spike" class="view-content">
     <div class="main-container">
         <div class="left-panel">
             <div class="category-title" style="width: 100%;">選手選択</div>
             <div id="player-grid-spike" class="player-grid"></div>
             <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px; font-size:11px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム全体表示</button>
+            <button id="btn-multi-spike" class="action-btn" style="background:#6c757d; width: 100%; margin-top:5px; font-size:11px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
             <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:5px; font-size:11px;" onclick="goToCompare()">📊 比較機能</button>
         </div>
         <div class="court-wrapper">
@@ -420,7 +409,6 @@
     </div>
 </div>
 
-<!-- 比較専用画面 -->
 <div id="view-compare" class="view-content">
     <div class="main-container compare-layout">
         <div class="compare-header">
@@ -435,7 +423,6 @@
     </div>
 </div>
 
-<!-- 名前一括設定画面 -->
 <div id="view-rename" class="view-content">
     <div class="main-container" style="flex-direction: column; width: 95%; max-width: 450px; padding: 20px;">
         <h3 style="margin-top:0; border-bottom: 2px solid #007bff; padding-bottom: 5px; width: 100%;">選手名の一括設定</h3>
@@ -447,7 +434,6 @@
     </div>
 </div>
 
-<!-- データ終了・管理画面 -->
 <div id="view-finish" class="view-content">
     <div class="main-container" style="flex-direction: column; width: 95%; max-width: 500px; padding: 25px 20px; align-items: center; text-align: center;">
         <h3 style="margin-top:0; border-bottom: 2px solid #ff9800; padding-bottom: 10px; width: 100%; color: #333;">データ入力終了・管理</h3>
@@ -478,9 +464,10 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; // 最初から全員表示
+    let selectedStatsPlayers = []; // ★初期状態を未選択に修正
     let comparePlayers = []; 
     let compareType = 'serve'; 
+    let multiSelectMode = false; // ★複数選択モードのフラグ
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
@@ -785,6 +772,31 @@
 
     function goToCompare() { compareType = (currentTab === 'analysis') ? 'serve' : 'spike'; switchTab('compare'); }
 
+    // ★ 複数選択切り替え機能
+    function toggleMultiSelect() {
+        multiSelectMode = !multiSelectMode;
+        const btnServe = document.getElementById('btn-multi-serve');
+        const btnSpike = document.getElementById('btn-multi-spike');
+        
+        if (multiSelectMode) {
+            if(btnServe) { btnServe.innerHTML = '☑️ 複数選択：ON'; btnServe.style.background = '#17a2b8'; }
+            if(btnSpike) { btnSpike.innerHTML = '☑️ 複数選択：ON'; btnSpike.style.background = '#17a2b8'; }
+        } else {
+            if(btnServe) { btnServe.innerHTML = '✅ 複数選択：OFF'; btnServe.style.background = '#6c757d'; }
+            if(btnSpike) { btnSpike.innerHTML = '✅ 複数選択：OFF'; btnSpike.style.background = '#6c757d'; }
+            
+            // OFFにした時、複数人が選択されていたら最後に選択された1人のみに絞る
+            if (selectedStatsPlayers.length > 1) {
+                selectedStatsPlayers = [selectedStatsPlayers[selectedStatsPlayers.length - 1]];
+                lockedServeZones = []; lockedSpikeZones = [];
+                updateZoneClasses('serve'); updateZoneClasses('spike');
+                if(currentTab === 'analysis') drawAnalysis();
+                if(currentTab === 'spike') drawSpike();
+                renderPlayerGrids();
+            }
+        }
+    }
+
     function selectAllTeam() {
         selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
         lockedServeZones = []; lockedSpikeZones = [];
@@ -919,7 +931,7 @@
                 const data = JSON.parse(evt.target.result);
                 if (data.players && data.log) {
                     playerNames = data.players; dataLog = data.log; saveToLocal(); 
-                    selectedPlayerId = null; selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; comparePlayers = [];
+                    selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; // ★初期化変更
                     resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
                     hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
                     updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -933,7 +945,7 @@
 
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
-            dataLog = []; selectedPlayerId = null; selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; comparePlayers = [];
+            dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; // ★初期化変更
             resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
             updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -1061,24 +1073,30 @@
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
+    // ★ 選手選択ロジック（単一選択／複数選択の切り替え対応）
     function selectPlayer(id) { 
         if (currentTab === 'input') selectedPlayerId = id; 
         else if (currentTab === 'compare') {
             if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id); else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
         } else {
-            // ★選択解除のロジック: 全員選択時に特定の選手を押したら「その選手だけ」に。
-            // 既に選択されている選手を押したら選択解除。誰も選ばれていなければ自動的に「全員」に戻る。
-            if (selectedStatsPlayers.length === 10) {
-                selectedStatsPlayers = [id];
-            } else {
+            // サーブ統計またはスパイク統計タブの場合
+            if (multiSelectMode) {
+                // 複数選択モード：トグルで追加・削除
                 if (selectedStatsPlayers.includes(id)) {
                     selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
-                    if (selectedStatsPlayers.length === 0) selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
                 } else {
                     selectedStatsPlayers.push(id);
                 }
+            } else {
+                // 単一選択モード：常に1人のみにする（再タップで解除）
+                if (selectedStatsPlayers.length === 1 && selectedStatsPlayers[0] === id) {
+                    selectedStatsPlayers = []; // 解除
+                } else {
+                    selectedStatsPlayers = [id]; // 新たに選んだ選手のみ
+                }
             }
+            
             lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
             if (currentTab === 'analysis') drawAnalysis();
             if (currentTab === 'spike') drawSpike();
