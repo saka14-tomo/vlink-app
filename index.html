@@ -618,12 +618,10 @@
         }
     }
 
-    // ★追加：シーク幅の更新
     function updateSeekDuration() {
         seekDuration = parseInt(document.getElementById('seek-time-select').value, 10);
     }
 
-    // ★追加：シーク機能の実行
     function seekVideo(direction) {
         if (!activeVideoType) return;
         const offset = direction * seekDuration;
@@ -750,17 +748,25 @@
             updateTimerDisplay();
         });
 
-        // ★追加：キーボードの矢印キーでシーク操作
+        // キーボード操作設定（スペースキー再生・停止追加）
         document.addEventListener('keydown', function(e) {
-            // テキスト入力中は矢印キーを無効化しない
+            // テキスト入力中（名前編集など）は入力を優先し、ショートカットを無効化する
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
             if (activeVideoType) {
-                if (e.key === 'ArrowLeft') {
-                    e.preventDefault(); // 画面スクロール防止
+                // スペースキーで再生・一時停止
+                if (e.key === ' ' || e.code === 'Space') {
+                    e.preventDefault(); // 画面のスクロールを防止
+                    toggleTimer();      // 再生/停止関数を呼び出し
+                }
+                // 左矢印キーで戻る
+                else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
                     seekVideo(-1);
-                } else if (e.key === 'ArrowRight') {
-                    e.preventDefault(); // 画面スクロール防止
+                }
+                // 右矢印キーで進む
+                else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
                     seekVideo(1);
                 }
             }
