@@ -446,14 +446,12 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    // ★修正ポイント1：統計画面を開いたとき、最初から全員分のデータが表示されるように初期値を設定
-    let selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; 
+    let selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; // 最初から全員表示
     let comparePlayers = []; 
     let compareType = 'serve'; 
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
-    // ★修正ポイント2：エラーの原因となっていた未宣言の変数をしっかり宣言
     let hoverServeFilter = null, hoverSpikeFilter = null; 
     let hoverServeZone = null, lockedServeZones = [];
     let hoverSpikeZone = null, lockedSpikeZones = [];
@@ -468,8 +466,8 @@
 
     function showPlayer(type) {
         document.getElementById('video-player-wrapper').style.display = 'block';
-        document.getElementById('video-seek-controls').style.display = 'flex'; // シークボタンも表示
-        const ytNode = document.querySelector('#video-player-wrapper iframe') || document.getElementById('yt-player');
+        document.getElementById('video-seek-controls').style.display = 'flex';
+        const ytNode = document.getElementById('yt-player');
         const localNode = document.getElementById('local-player');
         
         if (type === 'youtube') {
@@ -516,18 +514,45 @@
         showPlayer('youtube');
         document.getElementById('local-player').pause();
 
-        if (ytPlayer) {
-            ytPlayer.loadVideoById(videoId);
+        // 既にプレイヤーが存在する場合はIDを読み込み直す
+        if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            try {
+                ytPlayer.loadVideoById(videoId);
+            } catch (e) {
+                // エラーでプレイヤーが壊れている場合は再構築
+                buildYTPlayer(videoId);
+            }
         } else {
-            ytPlayer = new YT.Player('yt-player', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: { 'playsinline': 1, 'rel': 0 },
-                events: { 'onStateChange': onYouTubeStateChange }
-            });
+            buildYTPlayer(videoId);
         }
         resetTimerInternal();
+    }
+
+    // YouTubeプレイヤーの構築（エラーハンドリング強化版）
+    function buildYTPlayer(videoId) {
+        ytPlayer = new YT.Player('yt-player', {
+            height: '100%',
+            width: '100%',
+            videoId: videoId,
+            playerVars: { 
+                'playsinline': 1, 
+                'rel': 0, 
+                'enablejsapi': 1
+            },
+            events: { 
+                'onStateChange': onYouTubeStateChange,
+                'onError': function(e) {
+                    console.error("YouTube Error Code:", e.data);
+                    if (e.data === 150 || e.data === 101 || e.data === 153) {
+                        alert("⚠️ 【再生エラー】\nこの動画は投稿者の設定により、外部サイト（アプリ）での埋め込み再生が禁止されています。\n別の動画URLをお試しください。");
+                    } else if (e.data === 100) {
+                        alert("⚠️ 【再生エラー】\n動画が見つかりません。削除されたか、非公開に設定されている可能性があります。");
+                    } else {
+                        alert("⚠️ YouTube動画の読み込みエラーが発生しました (コード: " + e.data + ")");
+                    }
+                }
+            }
+        });
     }
 
     function formatTime(sec) {
@@ -752,23 +777,19 @@
             updateTimerDisplay();
         });
 
-        // キーボード操作設定（スペースキー再生・停止追加）
+        // キーボード操作設定
         document.addEventListener('keydown', function(e) {
-            // テキスト入力中（名前編集など）は入力を優先し、ショートカットを無効化する
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
             if (activeVideoType) {
-                // スペースキーで再生・一時停止
                 if (e.key === ' ' || e.code === 'Space') {
-                    e.preventDefault(); // 画面のスクロールを防止
-                    toggleTimer();      // 再生/停止関数を呼び出し
+                    e.preventDefault(); 
+                    toggleTimer();      
                 }
-                // 左矢印キーで戻る
                 else if (e.key === 'ArrowLeft') {
                     e.preventDefault();
                     seekVideo(-1);
                 }
-                // 右矢印キーで進む
                 else if (e.key === 'ArrowRight') {
                     e.preventDefault();
                     seekVideo(1);
@@ -818,11 +839,7 @@
     }
 
     function selectAllTeam() {
-        if (selectedStatsPlayers.length === 10) {
-            selectedStatsPlayers = []; 
-        } else {
-            selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
-        }
+        selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
         lockedServeZones = [];
         lockedSpikeZones = [];
         updateZoneClasses('serve');
@@ -1241,8 +1258,18 @@
             else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
         } else {
-            if (selectedStatsPlayers.includes(id)) selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
-            else selectedStatsPlayers.push(id);
+            // ★変更ポイント：全員選択時に個別の選手を押すと、その選手だけの単独表示にする
+            if (selectedStatsPlayers.length === 10) {
+                selectedStatsPlayers = [id];
+            } else {
+                if (selectedStatsPlayers.includes(id)) {
+                    selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
+                    // 全員の選択が外れたら、自動的に全員表示に戻す
+                    if (selectedStatsPlayers.length === 0) selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
+                } else {
+                    selectedStatsPlayers.push(id);
+                }
+            }
             lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
             if (currentTab === 'analysis') drawAnalysis();
             if (currentTab === 'spike') drawSpike();
