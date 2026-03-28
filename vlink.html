@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>V-Link Junior (Pro版 - 動画完全同期 & シーク機能)</title>
+    <style>
+        /* 基本レイアウト */
+        body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; touch-action: manipulation; }
+        
+        /* タブメニュー */
+        .tab-menu { width: 95%; display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; background: #ccc; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .tab-btn:hover { background: #dcdcdc; box-shadow: 0 -4px 8px rgba(0,0,0,0.08); }
+        .tab-btn.active { background: white; color: #007bff; border-bottom: 3px solid #007bff; box-shadow: none; }
+        
+        /* コンテンツ表示切り替え */
+        .view-content { display: none; width: 100%; flex-direction: column; align-items: center; }
+        .view-content.active { display: flex; }
+        
+        /* メインパネル */
+        .main-container { display: flex; gap: 10px; background: white; padding: 12px; border-radius: 15px; box-shadow: 0 6px 12px rgba(0,0,0,0.1); align-items: flex-start; max-width: 100%; overflow-x: auto; box-sizing: border-box; }
+
+        /* 左パネル：選手選択 */
+        .left-panel { display: flex; flex-direction: column; gap: 8px; width: 150px; flex-shrink: 0; }
+        .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+        /* 選手カードラッパー */
+        .player-wrapper { 
+            display: flex; flex-direction: column; width: 70px; height: 62px; 
+            border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: white; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
+        .player-wrapper:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); transform: translateY(-2px); }
+        .player-wrapper.active { border-color: #007bff; box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .player-wrapper.compare-active { border-color: #6f42c1; box-shadow: 0 4px 8px rgba(111,66,193,0.2); }
+        
+        .player-btn { 
+            flex: 1; border: none; background: transparent; cursor: pointer; padding: 0 2px; 
+            outline: none; transition: background 0.2s; display: flex; align-items: center; justify-content: center; 
+        }
+        .player-btn span { font-size: 12px; font-weight: bold; color: #333; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-wrapper.active .player-btn { background: #007bff; }
+        .player-wrapper.active .player-btn span { color: white; }
+        .player-wrapper.compare-active .player-btn { background: #6f42c1; }
+        .player-wrapper.compare-active .player-btn span { color: white; }
+
+        .edit-single-btn { 
+            height: 20px; background: #f1f3f5; font-size: 10px; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; border-top: 1px solid #ddd; color: #495057; transition: 0.2s; font-weight: bold;
+        }
+        .edit-single-btn:hover { background: #e2e6ea; }
+
+        /* 中央：コート */
+        .court-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; flex-shrink: 0; }
+        canvas { border-radius: 4px; background: #add8e6; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); width: 220px; height: 440px; }
+        #input-area { width: 220px; height: 440px; position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 10; touch-action: none; }
+
+        /* 統計画面用 9分割ゾーンオーバーレイ */
+        .zone-overlay { position: absolute; top: 240px; left: 20px; width: 180px; height: 180px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); z-index: 10; }
+        .zone-cell { border: 1px dashed rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: rgba(255, 255, 255, 0.4); cursor: pointer; transition: all 0.2s; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .zone-cell:hover { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.9); color: #fff; }
+        .zone-cell.locked { background: rgba(0, 123, 255, 0.6) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; }
+
+        /* 右パネル：操作・統計 */
+        .right-panel { display: flex; flex-direction: column; gap: 6px; width: 155px; flex-shrink: 0; height: 440px; } 
+        .category-title { font-size: 13px; font-weight: bold; color: #333; border-left: 4px solid #007bff; padding-left: 6px; margin: 5px 0 6px 0; flex-shrink: 0; }
+        
+        /* ログウィンドウ：約5つ分（約130px）に固定 */
+        #log-container { height: 130px; min-height: 130px; flex-shrink: 0; overflow-y: auto; background: #fafafa; border: 1px solid #ddd; border-radius: 6px; padding: 4px; display: flex; flex-direction: column; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; }
+        .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 1px 3px; border-radius: 3px; }
+        .log-name { font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .log-res { font-weight: bold; font-size: 10px; padding: 2px 4px; border-radius: 3px; flex-shrink: 0; }
+        .res-ace { background: #e0f0ff; color: #007BFF; }
+        .res-in { background: #e0e0e0; color: #000000; }
+        .res-err { background: #ffebee; color: #d32f2f; }
+
+        /* Totalカード・統計 */
+        .stat-card-total { width: 100%; background: #fff; border: 3px solid #333; border-radius: 10px; padding: 10px; box-sizing: border-box; text-align: center; margin-bottom: 10px; }
+        .card-label-total { font-size: 11px; color: #333; font-weight: bold; margin-bottom: 2px; }
+        .total-val { font-size: 28px; font-weight: bold; color: #000; line-height: 1; }
+        .total-unit { font-size: 14px; margin-left: 2px; }
+        
+        .stat-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; background: #fafafa; border-radius: 6px; overflow: hidden; margin-bottom: 10px; border: 1px solid #ddd; }
+        .stat-table th { background: #eee; padding: 6px 2px; border-bottom: 1px solid #ccc; }
+        .stat-table td { padding: 8px 2px; font-size: 14px; font-weight: bold; }
+        .stat-table .cat-name { text-align: left; padding-left: 10px; font-weight: bold; font-size: 11px; }
+        .row-in { background: #f8f9fa; color: #000000; border-bottom: 1px solid #e0e0e0; }
+        .row-miss { background: #fff5f5; color: #d32f2f; }
+
+        /* フィルタリング用のホバー・アクティブ効果 */
+        .clickable-stat { cursor: pointer; transition: all 0.2s; position: relative; }
+        .clickable-stat:hover { filter: brightness(0.95); box-shadow: 0 6px 12px rgba(0,0,0,0.15); transform: translateY(-2px); z-index: 10; }
+        tr.clickable-stat:hover { transform: none; box-shadow: inset 0 0 8px rgba(0,0,0,0.08); z-index: auto; }
+        .active-filter { outline: 3px solid #007bff !important; outline-offset: -2px; border-radius: inherit; background-color: #e7f1ff !important; }
+        tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline-offset: -2px; }
+
+        .chart-box { display: flex; flex-direction: column; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px 0; }
+        .pie-container { position: relative; width: 130px; height: 130px; }
+        .pie-chart { width: 130px; height: 130px; border-radius: 50%; background-image: conic-gradient(#eee 0% 100%); display: flex; align-items: center; justify-content: center; transition: 0.4s ease-out; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .pie-labels { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .pie-label { position: absolute; color: white; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); transform: translate(-50%, -50%); white-space: nowrap; }
+        .pie-inner { width: 75px; height: 75px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #000; z-index: 2; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .pie-total-num { font-size: 18px; font-weight: bold; color: #000; }
+        .legend { display: flex; gap: 8px; margin-top: 10px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
+        .legend-item { font-size: 9px; display: flex; align-items: center; gap: 3px; font-weight: bold; }
+        .dot { width: 10px; height: 10px; border-radius: 2px; }
+        
+        .ace-chart-card { width: 100%; background: #007BFF; border: 3px solid #333; border-radius: 10px; padding: 10px; box-sizing: border-box; text-align: center; margin-top: 8px; color: white; }
+        .ace-stat-label { font-size: 11px; font-weight: bold; margin-bottom: 2px; color: rgba(255,255,255,0.9); }
+        .ace-stat-val-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+        .ace-stat-num { font-size: 22px; font-weight: bold; color: white; line-height: 1; }
+        .ace-stat-unit { font-size: 12px; color: rgba(255,255,255,0.9); margin-left: 1px; }
+        .ace-stat-rate-spn { font-size: 22px; font-weight: bold; color: rgba(255,255,255,0.95); }
+
+        /* ボタン */
+        .action-btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 12px; transition: all 0.2s; flex-shrink: 0; }
+        .action-btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.25); transform: translateY(-2px); filter: brightness(1.1); } 
+        .action-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); opacity: 0.9; }
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(30%); } 
+        .btn-ace { background: #007BFF; } .btn-in { background: #000000; } .btn-error { background: #ff4d4d; }
+        .btn-utility { background: #6c757d; font-size: 10px; padding: 6px; }
+
+        /* 比較画面レイアウト */
+        .compare-layout { flex-direction: column; width: 100%; padding: 10px; gap: 8px; box-sizing: border-box; align-items: stretch; }
+        .compare-header { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; justify-content: center; background: #fafafa; border-radius: 8px; padding: 5px; border: 1px solid #eee; }
+        .compare-player-grid { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; flex: 1; min-width: 180px; }
+        .compare-player-grid .player-wrapper { width: 42px; height: 30px; border-radius: 4px; border-width: 1px; }
+        .compare-player-grid .player-btn span { font-size: 10px; }
+        .compare-cards-wrapper { display: flex; gap: 6px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; }
+        .compare-card { 
+            display: flex; flex-direction: column; align-items: center; 
+            flex: 1 1 22%; min-width: 85px; max-width: 180px;
+            background: #fff; padding: 6px; border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #ddd;
+        }
+        .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #add8e6; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        .compare-table { margin-top: 6px; font-size: 10px; width: 100%; border-collapse: collapse; text-align: center; }
+        .compare-table td { padding: 3px 2px; border-bottom: 1px solid #eee; font-weight: bold; }
+        .compare-table .row-in { background: #f8f9fa; color: #000; }
+        .compare-table .row-miss { background: #fff5f5; color: #d32f2f; }
+        .compare-table .row-ace { background: #007BFF; color: white; }
+
+        .rename-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; padding: 5px; box-sizing: border-box; }
+        .rename-item { display: flex; flex-direction: column; justify-content: center; background: #f8f9fa; padding: 8px 12px; border-radius: 8px; border: 1px solid #e9ecef; }
+        .rename-item input { border: none; background: transparent; border-bottom: 2px solid #ced4da; font-size: 14px; font-weight: bold; color: #333; outline: none; transition: 0.2s; padding-bottom: 2px; width: 100%; }
+        .rename-item input:focus { border-bottom-color: #007BFF; }
+
+        /* 操作性向上 */
+        .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+
+<div class="tab-menu">
+    <button id="tab-input" class="tab-btn active" onclick="switchTab('input')">データ入力</button>
+    <button id="tab-analysis" class="tab-btn" onclick="switchTab('analysis')">サーブ統計</button>
+    <button id="tab-spike" class="tab-btn" onclick="switchTab('spike')">スパイク統計</button>
+    <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
+</div>
+
+<!-- データ入力画面 -->
+<div id="view-input" class="view-content active">
+
+    <!-- 動画・YouTube 埋め込みセクション -->
+    <div class="main-container" style="margin-bottom: 10px; flex-direction: column; width: 100%; max-width: 550px; padding: 10px;">
+        <div class="category-title" style="margin: 0 0 6px 0; border: none; padding: 0; font-size: 12px; color: #555;">🎥 動画ソース選択</div>
+        
+        <!-- ローカル動画選択ボタン -->
+        <div style="display: flex; gap: 6px; width: 100%; align-items: center; margin-bottom: 8px;">
+            <button class="action-btn" style="background: #007bff; flex: 1; padding: 10px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 端末内の動画を選択 (カメラロール等)</button>
+            <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
+        </div>
+
+        <!-- YouTube URL入力 -->
+        <div style="display: flex; gap: 6px; width: 100%; align-items: center;">
+            <input type="text" id="yt-url-input" placeholder="または YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; min-width: 0;">
+            <button class="action-btn" style="background: #ff0000; padding: 8px 12px; font-size: 12px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 YouTube再生</button>
+        </div>
+
+        <!-- プレイヤーを内包するコンテナ -->
+        <div id="video-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+            <!-- YouTube API用 -->
+            <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
+            <!-- ローカル動画用 -->
+            <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
+        </div>
+
+        <!-- シーク（早送り・巻き戻し）コントロール -->
+        <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 10px; justify-content: center; display: none; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #e9ecef;">
+            <button class="action-btn" style="background: #6c757d; padding: 6px 10px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <span style="font-size: 10px; font-weight: bold; color: #555;">シーク幅</span>
+                <select id="seek-time-select" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; outline: none;" onchange="updateSeekDuration()">
+                    <option value="2">2秒</option>
+                    <option value="5" selected>5秒</option>
+                    <option value="10">10秒</option>
+                    <option value="30">30秒</option>
+                </select>
+            </div>
+            <button class="action-btn" style="background: #6c757d; padding: 6px 10px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+        </div>
+    </div>
+
+    <!-- メイン入力UI -->
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="category-title">選手選択</div>
+            <div id="player-grid-input" class="player-grid"></div>
+            <button class="action-btn btn-utility" style="margin-top:10px; background:#4a4a4a; width: 100%;" onclick="openRenameView()">📝 名前一括設定</button>
+            <button class="action-btn" style="background:#dc3545; font-size:10px; margin-top:4px; width: 100%;" onclick="undoLast()">◀ 1つ戻る</button>
+            <button class="action-btn" style="background:#ff9800; font-size: 12px; margin-top: 15px; width: 100%; padding: 12px 4px;" onclick="openFinishView()">⏹ 記録終了・管理</button>
+        </div>
+        
+        <div class="court-wrapper">
+            <canvas id="input-canvas"></canvas>
+            <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
+        </div>
+
+        <div class="right-panel">
+            <!-- タイムスタンプ機能（動画完全同期対応） -->
+            <div class="category-title" style="margin-top:0;">⏱ タイマー (動画と同期)</div>
+            <div style="display: flex; gap: 4px; align-items: center; margin-bottom: 8px;">
+                <div id="match-timer-display" style="font-size: 18px; font-weight: bold; background: #222; color: #0f0; padding: 6px; border-radius: 4px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
+                <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; flex: 1; padding: 8px 4px; font-size: 15px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.2);" onclick="toggleTimer()">▶ スタート</button>
+                <button class="action-btn" style="background: #6c757d; padding: 8px; font-size: 14px;" onclick="resetTimer()" title="リセット">↺</button>
+            </div>
+
+            <div class="category-title">サーブ結果</div>
+            <div style="display:flex; gap:4px;">
+                <button class="action-btn btn-ace serve-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
+                <button class="action-btn btn-in serve-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button class="action-btn btn-error serve-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
+                <button class="action-btn btn-error serve-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
+            </div>
+            
+            <div class="category-title" style="margin-top:10px;">スパイク結果</div>
+            <div style="display:flex; gap:4px;">
+                <button class="action-btn btn-ace spike-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('spike', '決定')" disabled>決定</button>
+                <button class="action-btn btn-in spike-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button class="action-btn btn-error spike-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
+                <button class="action-btn btn-error spike-action-btn" style="flex:1; padding:8px 0;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button class="action-btn btn-error spike-action-btn" style="width:100%; padding:8px 0;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
+            </div>
+            
+            <div class="category-title" style="margin-top:10px;">入力ログ</div>
+            <div id="log-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- サーブ統計画面 -->
+<div id="view-analysis" class="view-content">
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="category-title">選手選択</div>
+            <div id="player-grid-analysis" class="player-grid"></div>
+            <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px; font-size:11px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム</button>
+            <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:5px; font-size:11px;" onclick="goToCompare()">📊 比較機能</button>
+        </div>
+        <div class="court-wrapper">
+            <canvas id="analysis-canvas"></canvas>
+            <div class="zone-overlay" onmouseleave="clearZoneHover('serve')">
+                <div id="zone-serve-0-0" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 0)" onclick="toggleZoneLock('serve', 0, 0)">Z4</div>
+                <div id="zone-serve-1-0" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 0)" onclick="toggleZoneLock('serve', 1, 0)">Z3</div>
+                <div id="zone-serve-2-0" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 0)" onclick="toggleZoneLock('serve', 2, 0)">Z2</div>
+                <div id="zone-serve-0-1" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 1)" onclick="toggleZoneLock('serve', 0, 1)">Z7</div>
+                <div id="zone-serve-1-1" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 1)" onclick="toggleZoneLock('serve', 1, 1)">Z8</div>
+                <div id="zone-serve-2-1" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 1)" onclick="toggleZoneLock('serve', 2, 1)">Z9</div>
+                <div id="zone-serve-0-2" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 2)" onclick="toggleZoneLock('serve', 0, 2)">Z5</div>
+                <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
+                <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
+            </div>
+        </div>
+        <div class="right-panel" style="height: auto;">
+            <div class="category-title">サーブ統計</div>
+            
+            <div class="stat-card-total clickable-stat" id="filter-all" onclick="setServeFilter('all')" onmouseenter="setHoverFilter('serve', 'all')" onmouseleave="clearHoverFilter('serve')">
+                <div class="card-label-total">Total</div>
+                <div class="total-val"><span id="st-total">0</span><span class="total-unit">本</span></div>
+            </div>
+            
+            <table class="stat-table">
+                <thead><tr><th style="text-align:left; padding-left:10px;">結果</th><th>本数</th><th>％</th></tr></thead>
+                <tbody>
+                    <tr class="row-in clickable-stat" id="filter-in" onclick="setServeFilter('in')" onmouseenter="setHoverFilter('serve', 'in')" onmouseleave="clearHoverFilter('serve')">
+                        <td class="cat-name">イン</td><td id="st-in">0</td><td id="st-in-rate">0%</td>
+                    </tr>
+                    <tr class="row-miss clickable-stat" id="filter-miss" onclick="setServeFilter('miss')" onmouseenter="setHoverFilter('serve', 'miss')" onmouseleave="clearHoverFilter('serve')">
+                        <td class="cat-name">ミス</td><td id="st-miss">0</td><td id="st-miss-rate">0%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="chart-box">
+                <div class="pie-container">
+                    <div class="pie-chart" id="pie-chart"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val">0本</span></div></div>
+                    <div class="pie-labels" id="pie-labels"></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><span class="dot" style="background:#000000"></span>イン</div>
+                    <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+                </div>
+                
+                <div class="ace-chart-card clickable-stat" id="filter-ace" onclick="setServeFilter('ace')" onmouseenter="setHoverFilter('serve', 'ace')" onmouseleave="clearHoverFilter('serve')">
+                    <div class="ace-stat-label">エース</div>
+                    <div class="ace-stat-val-row">
+                        <span class="ace-stat-num" id="st-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
+                        <span class="ace-stat-rate-spn">(<span id="st-ace-chart-rate">0%</span>)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- スパイク統計画面 -->
+<div id="view-spike" class="view-content">
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="category-title">選手選択</div>
+            <div id="player-grid-spike" class="player-grid"></div>
+            <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px; font-size:11px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム</button>
+            <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:5px; font-size:11px;" onclick="goToCompare()">📊 比較機能</button>
+        </div>
+        <div class="court-wrapper">
+            <canvas id="spike-canvas"></canvas>
+            <div class="zone-overlay" onmouseleave="clearZoneHover('spike')">
+                <div id="zone-spike-0-0" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 0)" onclick="toggleZoneLock('spike', 0, 0)">Z4</div>
+                <div id="zone-spike-1-0" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 0)" onclick="toggleZoneLock('spike', 1, 0)">Z3</div>
+                <div id="zone-spike-2-0" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 0)" onclick="toggleZoneLock('spike', 2, 0)">Z2</div>
+                <div id="zone-spike-0-1" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 1)" onclick="toggleZoneLock('spike', 0, 1)">Z7</div>
+                <div id="zone-spike-1-1" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 1)" onclick="toggleZoneLock('spike', 1, 1)">Z8</div>
+                <div id="zone-spike-2-1" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 1)" onclick="toggleZoneLock('spike', 2, 1)">Z9</div>
+                <div id="zone-spike-0-2" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 2)" onclick="toggleZoneLock('spike', 0, 2)">Z5</div>
+                <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
+                <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
+            </div>
+        </div>
+        <div class="right-panel" style="height: auto;">
+            <div class="category-title">スパイク統計</div>
+            
+            <div class="stat-card-total clickable-stat" id="filter-all-sp" onclick="setSpikeFilter('all')" onmouseenter="setHoverFilter('spike', 'all')" onmouseleave="clearHoverFilter('spike')">
+                <div class="card-label-total">Total</div>
+                <div class="total-val"><span id="sp-total">0</span><span class="total-unit">本</span></div>
+            </div>
+            
+            <table class="stat-table">
+                <thead><tr><th style="text-align:left; padding-left:10px;">結果</th><th>本数</th><th>％</th></tr></thead>
+                <tbody>
+                    <tr class="row-in clickable-stat" id="filter-in-sp" onclick="setSpikeFilter('in')" onmouseenter="setHoverFilter('spike', 'in')" onmouseleave="clearHoverFilter('spike')">
+                        <td class="cat-name">Good</td><td id="sp-in">0</td><td id="sp-in-rate">0%</td>
+                    </tr>
+                    <tr class="row-miss clickable-stat" id="filter-miss-sp" onclick="setSpikeFilter('miss')" onmouseenter="setHoverFilter('spike', 'miss')" onmouseleave="clearHoverFilter('spike')">
+                        <td class="cat-name">ミス</td><td id="sp-miss">0</td><td id="sp-miss-rate">0%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="chart-box">
+                <div class="pie-container">
+                    <div class="pie-chart" id="pie-chart-sp"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val-sp">0本</span></div></div>
+                    <div class="pie-labels" id="pie-labels-sp"></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><span class="dot" style="background:#000000"></span>Good</div>
+                    <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+                </div>
+                <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
+                    <div class="ace-stat-label">決定（得点）</div>
+                    <div class="ace-stat-val-row">
+                        <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
+                        <span class="ace-stat-rate-spn">(<span id="sp-ace-chart-rate">0%</span>)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 比較専用画面 -->
+<div id="view-compare" class="view-content">
+    <div class="main-container compare-layout">
+        <div class="compare-header">
+            <div class="category-title" style="margin:0; border:none; padding:0 4px 0 0; font-size:12px;">比較(最大8人)</div>
+            <div id="player-grid-compare" class="compare-player-grid"></div>
+            <div class="compare-actions">
+                <button id="cmp-btn-serve" class="action-btn btn-ace cmp-mode-btn" onclick="setCompareType('serve')">サーブ</button>
+                <button id="cmp-btn-spike" class="action-btn btn-utility cmp-mode-btn" onclick="setCompareType('spike')">スパイク</button>
+            </div>
+        </div>
+        <div id="compare-cards-container" class="compare-cards-wrapper"></div>
+    </div>
+</div>
+
+<!-- 名前一括設定画面 -->
+<div id="view-rename" class="view-content">
+    <div class="main-container" style="flex-direction: column; width: 95%; max-width: 450px; padding: 20px;">
+        <h3 style="margin-top:0; border-bottom: 2px solid #007bff; padding-bottom: 5px; width: 100%;">選手名の一括設定</h3>
+        <div id="rename-inputs-container" class="rename-grid"></div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; width: 100%; margin-top: 20px;">
+            <button class="action-btn" style="background:#6c757d; width:100px;" onclick="switchTab('input')">キャンセル</button>
+            <button id="save-rename-btn" class="action-btn" style="background:#007BFF; width:100px;" onclick="saveBatchRename()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- データ終了・管理画面 -->
+<div id="view-finish" class="view-content">
+    <div class="main-container" style="flex-direction: column; width: 95%; max-width: 500px; padding: 25px 20px; align-items: center; text-align: center;">
+        <h3 style="margin-top:0; border-bottom: 2px solid #ff9800; padding-bottom: 10px; width: 100%; color: #333;">データ入力終了・管理</h3>
+        <p style="font-size: 13px; color: #555; margin-bottom: 20px;">記録したデータを保存するか、新しく記録を始めるか選択してください。</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px;">
+            <button class="action-btn" style="background:#28a745; font-size: 14px; padding: 12px;" onclick="exportData()">💾 V-Link復元用データを保存 (JSON)</button>
+            <button class="action-btn" style="background:#17a2b8; font-size: 14px; padding: 12px;" onclick="exportCSV()">📊 表計算ソフト用データを保存 (CSV)</button>
+            <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 10px 0;">
+            <button class="action-btn" style="background:#6c757d; font-size: 12px; padding: 10px;" onclick="document.getElementById('import-file-finish').click()">📁 過去のV-Linkデータを読み込む (復元)</button>
+            <input type="file" id="import-file-finish" style="display:none;" accept=".json" onchange="importData(event)">
+            <button class="action-btn" style="background:#dc3545; font-size: 14px; padding: 12px; margin-top: 10px;" onclick="resetAllData()">🗑 データを消去して新しく始める</button>
+            <button class="action-btn" style="background:#e0e0e0; color: #333; font-size: 14px; padding: 12px; margin-top: 5px;" onclick="switchTab('input')">キャンセル (入力に戻る)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const colors = { 
+        'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
+        '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
+        'temp': '#007bff' 
+    };
+    
+    // --- 初期状態設定 ---
+    let currentSessionId = "session_" + Date.now();
+    let playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
+    let dataLog = [];
+    
+    let currentTab = 'input';
+    let selectedPlayerId = null; 
+    // ★修正ポイント1：統計画面を開いたとき、最初から全員分のデータが表示されるように初期値を設定
+    let selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; 
+    let comparePlayers = []; 
+    let compareType = 'serve'; 
+    
+    let inputState = 'idle', serveStart = null, serveEnd = null;
+    let serveFilter = 'all', spikeFilter = 'all'; 
+    // ★修正ポイント2：エラーの原因となっていた未宣言の変数をしっかり宣言
+    let hoverServeFilter = null, hoverSpikeFilter = null; 
+    let hoverServeZone = null, lockedServeZones = [];
+    let hoverSpikeZone = null, lockedSpikeZones = [];
+
+    // --- 動画・タイマー・シーク機能 ---
+    let activeVideoType = null; // 'youtube' or 'local'
+    let ytPlayer = null;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let seekDuration = 5; // 初期シーク時間
+
+    function showPlayer(type) {
+        document.getElementById('video-player-wrapper').style.display = 'block';
+        document.getElementById('video-seek-controls').style.display = 'flex'; // シークボタンも表示
+        const ytNode = document.querySelector('#video-player-wrapper iframe') || document.getElementById('yt-player');
+        const localNode = document.getElementById('local-player');
+        
+        if (type === 'youtube') {
+            if (ytNode) ytNode.style.display = 'block';
+            if (localNode) localNode.style.display = 'none';
+        } else if (type === 'local') {
+            if (ytNode) ytNode.style.display = 'none';
+            if (localNode) localNode.style.display = 'block';
+        }
+    }
+
+    function loadLocalVideo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        activeVideoType = 'local';
+        showPlayer('local');
+        
+        if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+            ytPlayer.pauseVideo();
+        }
+
+        const lp = document.getElementById('local-player');
+        lp.src = URL.createObjectURL(file);
+        
+        resetTimerInternal();
+    }
+
+    function loadYouTubeVideo() {
+        const url = document.getElementById('yt-url-input').value;
+        if (!url) { alert("URLを入力してください。"); return; }
+        
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        let videoId = '';
+        
+        if (match && match[2].length === 11) {
+            videoId = match[2];
+        } else {
+            alert("正しいYouTubeのURLを入力してください。"); return;
+        }
+
+        activeVideoType = 'youtube';
+        showPlayer('youtube');
+        document.getElementById('local-player').pause();
+
+        if (ytPlayer) {
+            ytPlayer.loadVideoById(videoId);
+        } else {
+            ytPlayer = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: { 'playsinline': 1, 'rel': 0 },
+                events: { 'onStateChange': onYouTubeStateChange }
+            });
+        }
+        resetTimerInternal();
+    }
+
+    function formatTime(sec) {
+        const m = Math.floor(sec / 60).toString().padStart(2, '0');
+        const s = (sec % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function updateTimerDisplay() {
+        document.getElementById('match-timer-display').innerText = formatTime(timerSeconds);
+    }
+
+    function setTimerState(running) {
+        if (isTimerRunning === running) return;
+        const btn = document.getElementById('btn-timer-toggle');
+        if (running) {
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+            isTimerRunning = true;
+            btn.innerHTML = '⏸ 一時停止';
+            btn.style.background = '#ff9800';
+        } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerHTML = '▶ スタート';
+            btn.style.background = '#28a745';
+        }
+    }
+
+    function toggleTimer() {
+        if (isTimerRunning) {
+            setTimerState(false);
+            if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+            else if (activeVideoType === 'local') document.getElementById('local-player').pause();
+        } else {
+            setTimerState(true);
+            if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
+            else if (activeVideoType === 'local') document.getElementById('local-player').play();
+        }
+    }
+
+    function resetTimerInternal() {
+        setTimerState(false);
+        timerSeconds = 0;
+        updateTimerDisplay();
+
+        if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+            ytPlayer.pauseVideo();
+            ytPlayer.seekTo(0);
+        } else if (activeVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            lp.pause();
+            lp.currentTime = 0;
+        }
+    }
+
+    function resetTimer() {
+        if(confirm("タイマーと動画を最初からリセットしますか？")) {
+            resetTimerInternal();
+        }
+    }
+
+    function editTimer() {
+        const input = prompt("タイマーの時間を設定してください (例: 12:34)", formatTime(timerSeconds));
+        if (input) {
+            const parts = input.split(':');
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                timerSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                updateTimerDisplay();
+                if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.seekTo === 'function') {
+                    ytPlayer.seekTo(timerSeconds);
+                } else if (activeVideoType === 'local') {
+                    document.getElementById('local-player').currentTime = timerSeconds;
+                }
+            } else {
+                alert("正しい形式(mm:ss)で入力してください。");
+            }
+        }
+    }
+
+    function onYouTubeStateChange(event) {
+        if (event.data === 1) { 
+            setTimerState(true);
+            timerSeconds = Math.floor(ytPlayer.getCurrentTime());
+            updateTimerDisplay();
+        } else if (event.data === 2) { 
+            setTimerState(false);
+            timerSeconds = Math.floor(ytPlayer.getCurrentTime());
+            updateTimerDisplay();
+        }
+    }
+
+    function updateSeekDuration() {
+        seekDuration = parseInt(document.getElementById('seek-time-select').value, 10);
+    }
+
+    function seekVideo(direction) {
+        if (!activeVideoType) return;
+        const offset = direction * seekDuration;
+
+        if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+            let newTime = ytPlayer.getCurrentTime() + offset;
+            if (newTime < 0) newTime = 0;
+            ytPlayer.seekTo(newTime, true);
+            timerSeconds = Math.floor(newTime);
+            updateTimerDisplay();
+        } else if (activeVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            let newTime = lp.currentTime + offset;
+            if (newTime < 0) newTime = 0;
+            lp.currentTime = newTime;
+            timerSeconds = Math.floor(newTime);
+            updateTimerDisplay();
+        }
+    }
+
+    // --- IndexedDB ---
+    const DB_NAME = 'VLinkDB';
+    const STORE_NAME = 'vlinkStore';
+    let db;
+
+    function initDB(callback) {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+        req.onsuccess = (e) => {
+            db = e.target.result;
+            loadFromDB(callback);
+        };
+        req.onerror = (e) => {
+            console.error("IndexedDBエラー。localStorageへのフォールバックを試みます", e);
+            fallbackLoad();
+            callback();
+        };
+    }
+
+    function loadFromDB(callback) {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const reqP = store.get('players');
+        const reqL = store.get('log');
+        const reqS = store.get('session');
+
+        tx.oncomplete = () => {
+            let needsMigration = false;
+            if (reqP.result) { playerNames = reqP.result; } else { needsMigration = true; }
+            if (reqL.result) { dataLog = reqL.result; } else { needsMigration = true; }
+            if (reqS.result) { currentSessionId = reqS.result; } else { needsMigration = true; }
+            
+            if (needsMigration) fallbackLoad();
+            callback();
+        };
+    }
+
+    function fallbackLoad() {
+        if (localStorage.getItem('vlink_players')) {
+            playerNames = JSON.parse(localStorage.getItem('vlink_players'));
+        }
+        if (localStorage.getItem('vlink_data')) {
+            dataLog = JSON.parse(localStorage.getItem('vlink_data'));
+        }
+        if (localStorage.getItem('vlink_current_session')) {
+            currentSessionId = localStorage.getItem('vlink_current_session');
+        }
+        if (db) saveToDB(); 
+    }
+
+    function saveToDB() {
+        if (!db) return;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put(playerNames, 'players');
+        store.put(dataLog, 'log');
+        store.put(currentSessionId, 'session');
+    }
+
+    function saveToLocal() {
+        localStorage.setItem('vlink_players', JSON.stringify(playerNames));
+        localStorage.setItem('vlink_data', JSON.stringify(dataLog));
+        localStorage.setItem('vlink_current_session', currentSessionId);
+        saveToDB(); 
+    }
+
+    function setupCanvasContext(id) {
+        const cv = document.getElementById(id);
+        const ct = cv.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        
+        const logicalWidth = 220;
+        const logicalHeight = 440;
+        
+        cv.width = logicalWidth * dpr;
+        cv.height = logicalHeight * dpr;
+        
+        cv.style.width = logicalWidth + 'px';
+        cv.style.height = logicalHeight + 'px';
+        
+        ct.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ct;
+    }
+
+    // --- 起動時処理 ---
+    window.onload = () => { 
+        // YouTube APIの読み込み
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // ローカル動画側のイベント監視
+        const lp = document.getElementById('local-player');
+        lp.addEventListener('play', () => setTimerState(true));
+        lp.addEventListener('pause', () => setTimerState(false));
+        lp.addEventListener('seeked', () => {
+            timerSeconds = Math.floor(lp.currentTime);
+            updateTimerDisplay();
+        });
+
+        // キーボード操作設定（スペースキー再生・停止追加）
+        document.addEventListener('keydown', function(e) {
+            // テキスト入力中（名前編集など）は入力を優先し、ショートカットを無効化する
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+            if (activeVideoType) {
+                // スペースキーで再生・一時停止
+                if (e.key === ' ' || e.code === 'Space') {
+                    e.preventDefault(); // 画面のスクロールを防止
+                    toggleTimer();      // 再生/停止関数を呼び出し
+                }
+                // 左矢印キーで戻る
+                else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    seekVideo(-1);
+                }
+                // 右矢印キーで進む
+                else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    seekVideo(1);
+                }
+            }
+        });
+
+        initDB(() => {
+            renderPlayerGrids(); 
+            updateLog(); 
+            draw('input-canvas');
+            clearAnalysisDOM(); 
+            drawAnalysis();
+            drawSpike();
+            updateTimerDisplay();
+
+            document.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - (window.lastTouchEnd || 0) <= 300) e.preventDefault();
+                window.lastTouchEnd = now;
+            }, false);
+        });
+    };
+
+    function switchTab(target) {
+        currentTab = target;
+        document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`view-${target}`).classList.add('active');
+        if(target !== 'rename' && target !== 'finish') document.getElementById(`tab-${target}`).classList.add('active');
+        
+        if(target === 'analysis') drawAnalysis();
+        if(target === 'spike') drawSpike();
+        if(target === 'compare') {
+            document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
+            document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
+            renderCompareVisual();
+        }
+        renderPlayerGrids();
+    }
+
+    function openFinishView() { switchTab('finish'); }
+
+    function goToCompare() {
+        compareType = (currentTab === 'analysis') ? 'serve' : 'spike';
+        switchTab('compare');
+    }
+
+    function selectAllTeam() {
+        if (selectedStatsPlayers.length === 10) {
+            selectedStatsPlayers = []; 
+        } else {
+            selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
+        }
+        lockedServeZones = [];
+        lockedSpikeZones = [];
+        updateZoneClasses('serve');
+        updateZoneClasses('spike');
+        renderPlayerGrids();
+        if(currentTab === 'analysis') drawAnalysis();
+        if(currentTab === 'spike') drawSpike();
+    }
+
+    function setCompareType(type) {
+        compareType = type;
+        document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${type === 'serve' ? 'btn-ace' : 'btn-utility'}`;
+        document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${type === 'spike' ? 'btn-ace' : 'btn-utility'}`;
+        renderCompareVisual();
+    }
+
+    function setZoneHover(type, x, y) {
+        if(type === 'serve') hoverServeZone = {x, y};
+        else hoverSpikeZone = {x, y};
+        if(type === 'serve' && currentTab === 'analysis') drawAnalysis();
+        if(type === 'spike' && currentTab === 'spike') drawSpike();
+    }
+
+    function clearZoneHover(type) {
+        if(type === 'serve') hoverServeZone = null;
+        else hoverSpikeZone = null;
+        if(type === 'serve' && currentTab === 'analysis') drawAnalysis();
+        if(type === 'spike' && currentTab === 'spike') drawSpike();
+    }
+
+    function toggleZoneLock(type, x, y) {
+        let lockedZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
+        let index = lockedZones.findIndex(z => z.x === x && z.y === y);
+        if (index > -1) lockedZones.splice(index, 1);
+        else lockedZones.push({x, y});
+        
+        updateZoneClasses(type);
+        if(type === 'serve') drawAnalysis();
+        if(type === 'spike') drawSpike();
+    }
+
+    function updateZoneClasses(type) {
+        let lockedZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
+        for(let x=0; x<3; x++) {
+            for(let y=0; y<3; y++) {
+                let el = document.getElementById(`zone-${type}-${x}-${y}`);
+                if(!el) continue;
+                let isLocked = lockedZones.some(z => z.x === x && z.y === y);
+                if(isLocked) el.classList.add('locked');
+                else el.classList.remove('locked');
+            }
+        }
+    }
+
+    function setHoverFilter(type, filter) {
+        if (type === 'serve') { hoverServeFilter = filter; draw('analysis-canvas'); }
+        if (type === 'spike') { hoverSpikeFilter = filter; draw('spike-canvas'); }
+    }
+
+    function clearHoverFilter(type) {
+        if (type === 'serve') { hoverServeFilter = null; draw('analysis-canvas'); }
+        if (type === 'spike') { hoverSpikeFilter = null; draw('spike-canvas'); }
+    }
+
+    function setServeFilter(filter) { 
+        if (serveFilter === filter) {
+            serveFilter = 'all'; 
+        } else {
+            serveFilter = filter; 
+        }
+        
+        if(serveFilter === 'all') {
+            lockedServeZones = [];
+            updateZoneClasses('serve');
+        }
+        drawAnalysis(); 
+    }
+    
+    function setSpikeFilter(filter) { 
+        if (spikeFilter === filter) {
+            spikeFilter = 'all'; 
+        } else {
+            spikeFilter = filter; 
+        }
+
+        if(spikeFilter === 'all') {
+            lockedSpikeZones = [];
+            updateZoneClasses('spike');
+        }
+        drawSpike(); 
+    }
+
+    function renderPlayerGrids() {
+        ['input', 'analysis', 'spike', 'compare'].forEach(type => {
+            const container = document.getElementById(`player-grid-${type}`);
+            if(!container) return;
+            container.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const wrapper = document.createElement('div');
+                let isActive = false;
+                let isCompareActive = false;
+
+                if (type === 'input') {
+                    isActive = (selectedPlayerId == i);
+                } else if (type === 'compare') {
+                    isCompareActive = comparePlayers.includes(i);
+                } else {
+                    isActive = selectedStatsPlayers.includes(i);
+                }
+
+                wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
+                const btn = document.createElement('button');
+                btn.className = `player-btn`;
+                btn.onclick = () => selectPlayer(i);
+                btn.innerHTML = `<span>${playerNames[i]}</span>`;
+                wrapper.appendChild(btn);
+                
+                if (type === 'input') {
+                    const editBtn = document.createElement('div');
+                    editBtn.className = 'edit-single-btn';
+                    editBtn.innerHTML = '✏️ 編集';
+                    editBtn.onclick = (e) => editSingleName(e, i);
+                    wrapper.appendChild(editBtn);
+                }
+                container.appendChild(wrapper);
+            }
+        });
+    }
+
+    function editSingleName(e, id) {
+        e.stopPropagation();
+        const currentName = playerNames[id];
+        const newName = prompt(`No.${id} の選手名を入力してください:`, currentName);
+        if (newName !== null && newName.trim() !== "") {
+            playerNames[id] = newName.trim();
+            saveToLocal();
+            renderPlayerGrids(); updateLog();
+            if (currentTab === 'compare') renderCompareVisual();
+        }
+    }
+
+    function exportData() {
+        const data = { players: playerNames, log: dataLog };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `VLink_Data_${new Date().toISOString().slice(0,10)}.json`;
+        a.click(); URL.revokeObjectURL(url);
+    }
+
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
+        dataLog.forEach(l => {
+            let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
+            let row = `${l.time},${l.sessionId},${l.videoTime || ''},${playerNames[l.playerId]},${typeStr},${l.result}`;
+            csvContent += row + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const a = document.createElement('a');
+        a.href = encodedUri; a.download = `VLink_Report_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+    }
+
+    function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                if (data.players && data.log) {
+                    playerNames = data.players; dataLog = data.log; 
+                    saveToLocal(); 
+                    selectedPlayerId = null; 
+                    selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; // 復元後も全選手表示
+                    comparePlayers = [];
+                    resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
+                    hoverServeZone = null; lockedServeZones = [];
+                    hoverSpikeZone = null; lockedSpikeZones = [];
+                    updateZoneClasses('serve'); updateZoneClasses('spike');
+                    renderPlayerGrids(); updateLog(); draw('input-canvas');
+                    clearAnalysisDOM(); 
+                    switchTab('input'); 
+                    alert("データの復元が完了しました。");
+                } else alert("データ形式が正しくありません。");
+            } catch (err) { alert("ファイルの読み込みに失敗しました。"); }
+        };
+        reader.readAsText(file); e.target.value = ''; 
+    }
+
+    function resetAllData() {
+        if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
+            dataLog = []; selectedPlayerId = null; 
+            selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10]; 
+            comparePlayers = [];
+            resetInput(); 
+            currentSessionId = "session_" + Date.now();
+            
+            resetTimerInternal();
+
+            saveToLocal(); 
+            serveFilter = 'all'; spikeFilter = 'all';
+            hoverServeZone = null; lockedServeZones = [];
+            hoverSpikeZone = null; lockedSpikeZones = [];
+            updateZoneClasses('serve'); updateZoneClasses('spike');
+            renderPlayerGrids(); updateLog(); draw('input-canvas');
+            clearAnalysisDOM();
+            switchTab('input');
+        }
+    }
+
+    function clearAnalysisDOM() {
+        draw('analysis-canvas');
+        draw('spike-canvas');
+        document.getElementById('st-total').innerText = '0';
+        document.getElementById('st-in').innerText = '0'; document.getElementById('st-in-rate').innerText = '0%';
+        document.getElementById('st-miss').innerText = '0'; document.getElementById('st-miss-rate').innerText = '0%';
+        document.getElementById('st-ace-chart-val').innerText = '0'; document.getElementById('st-ace-chart-rate').innerText = '0%';
+        document.getElementById('pie-total-val').innerText = '0本';
+        document.getElementById('pie-labels').innerHTML = '';
+        document.getElementById('pie-chart').style.backgroundImage = "conic-gradient(#eee 0% 100%)";
+        document.getElementById('sp-total').innerText = '0';
+        document.getElementById('sp-in').innerText = '0'; document.getElementById('sp-in-rate').innerText = '0%';
+        document.getElementById('sp-miss').innerText = '0'; document.getElementById('sp-miss-rate').innerText = '0%';
+        document.getElementById('sp-ace-chart-val').innerText = '0'; document.getElementById('sp-ace-chart-rate').innerText = '0%';
+        document.getElementById('pie-total-val-sp').innerText = '0本';
+        document.getElementById('pie-labels-sp').innerHTML = '';
+        document.getElementById('pie-chart-sp').style.backgroundImage = "conic-gradient(#eee 0% 100%)";
+        document.getElementById('compare-cards-container').innerHTML = '';
+    }
+
+    function handleCourtClick(e) {
+        if (!selectedPlayerId) return;
+        const cv = document.getElementById('input-canvas');
+        const r = cv.getBoundingClientRect();
+        const x = Math.round(e.clientX - r.left), y = Math.round(e.clientY - r.top);
+        if (inputState === 'idle') { serveStart = {x, y}; inputState = 'waiting'; }
+        else if (inputState === 'waiting') { 
+            serveEnd = {x, y}; inputState = 'ready'; 
+            if (serveStart.y >= 400) {
+                document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = false);
+                document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = true);
+            } else {
+                document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = true);
+                document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = false);
+            }
+        }
+        draw('input-canvas');
+    }
+
+    function isLogInZone(log, zone) {
+        let clampedX = Math.max(20, Math.min(log.startX, 199.9));
+        let clampedY = Math.max(240, Math.min(log.startY, 419.9));
+        let xIndex = Math.floor((clampedX - 20) / 60);
+        let yIndex = Math.floor((clampedY - 240) / 60);
+        return xIndex === zone.x && yIndex === zone.y;
+    }
+
+    function resetInput() { inputState = 'idle'; serveStart = null; serveEnd = null; document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); }
+
+    function getFilteredLogs(type, targetFilter, zones, hZone) {
+        let logs = dataLog.filter(l => {
+            if (!selectedStatsPlayers.includes(l.playerId)) return false;
+            return type === 'serve' ? l.type !== 'spike' : l.type === 'spike';
+        });
+
+        if (zones && zones.length > 0) {
+            logs = logs.filter(l => zones.some(z => isLogInZone(l, z)));
+        } else if (hZone) {
+            logs = logs.filter(l => isLogInZone(l, hZone));
+        }
+
+        if (targetFilter && targetFilter !== 'all') {
+            logs = logs.filter(l => {
+                if (type === 'serve') {
+                    if (targetFilter === 'in') return l.result === 'イン' || l.result === 'エース';
+                    if (targetFilter === 'miss') return l.result === 'アウト' || l.result === 'ネット';
+                    if (targetFilter === 'ace') return l.result === 'エース';
+                } else if (type === 'spike') {
+                    if (targetFilter === 'in') return l.result === 'Good' || l.result === '決定';
+                    if (targetFilter === 'miss') return ['アウト', 'ネット', 'ブロックシャット'].includes(l.result);
+                    if (targetFilter === 'ace') return l.result === '決定';
+                }
+                return true;
+            });
+        }
+        return logs;
+    }
+
+    function updateStatsUI(type, logs) {
+        const tot = logs.length;
+        let ace, goodOrIn, miss;
+
+        if (type === 'serve') {
+            ace = logs.filter(l => l.result === 'エース').length;
+            goodOrIn = logs.filter(l => l.result === 'イン').length;
+            miss = logs.filter(l => l.result === 'アウト' || l.result === 'ネット').length;
+        } else {
+            ace = logs.filter(l => l.result === '決定').length;
+            goodOrIn = logs.filter(l => l.result === 'Good').length;
+            miss = logs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
+        }
+        
+        const totalIn = ace + goodOrIn;
+        const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
+
+        const p = type === 'serve' ? 'st' : 'sp';
+        const pie = type === 'serve' ? '' : '-sp';
+
+        document.getElementById(`${p}-total`).innerText = tot;
+        document.getElementById(`${p}-in`).innerText = totalIn;
+        document.getElementById(`${p}-in-rate`).innerText = rate(totalIn);
+        document.getElementById(`${p}-miss`).innerText = miss;
+        document.getElementById(`${p}-miss-rate`).innerText = rate(miss);
+        document.getElementById(`${p}-ace-chart-val`).innerText = ace;
+        document.getElementById(`${p}-ace-chart-rate`).innerText = rate(ace);
+
+        const chart = document.getElementById(`pie-chart${pie}`);
+        const labelsContainer = document.getElementById(`pie-labels${pie}`);
+        labelsContainer.innerHTML = ''; 
+        document.getElementById(`pie-total-val${pie}`).innerText = tot + "本";
+
+        if (tot === 0) {
+            chart.style.backgroundImage = "conic-gradient(#eee 0% 100%)";
+        } else {
+            const pIn = (totalIn / tot) * 100;
+            chart.style.backgroundImage = `conic-gradient(#000000 0% ${pIn}%, #ff4d4d ${pIn}% 100%)`;
+            
+            const addLabel = (count, startPct, endPct) => { 
+                if (count === 0) return; 
+                const midAngle = (startPct + endPct) / 2 * 3.6;
+                const centerX = 65, centerY = 65, r = 48;
+                const x = centerX + r * Math.sin(midAngle * Math.PI / 180);
+                const y = centerY - r * Math.cos(midAngle * Math.PI / 180); 
+                const span = document.createElement('span'); 
+                span.className = 'pie-label'; 
+                span.style.left = x + 'px'; 
+                span.style.top = y + 'px'; 
+                span.innerText = count; 
+                labelsContainer.appendChild(span); 
+            };
+            addLabel(totalIn, 0, pIn); addLabel(miss, pIn, 100); 
+        }
+    }
+
+    function draw(id) {
+        const ct = setupCanvasContext(id);
+        ct.clearRect(0,0,220,440);
+        ct.fillStyle = '#ee9e4b'; ct.fillRect(20,60,180,360);
+        ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
+        ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
+        ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+        
+        if (id === 'input-canvas') {
+            if (serveStart) dot(ct, serveStart.x, serveStart.y, 2.5, colors['temp']); 
+            if (serveStart && serveEnd) line(ct, serveStart, serveEnd, colors['temp']);
+        } else if (id === 'analysis-canvas' || id === 'spike-canvas') {
+            const type = id === 'analysis-canvas' ? 'serve' : 'spike';
+            const sFilter = type === 'serve' ? serveFilter : spikeFilter;
+            const hFilter = type === 'serve' ? hoverServeFilter : hoverSpikeFilter;
+            const lZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
+            const hZone = type === 'serve' ? hoverServeZone : hoverSpikeZone;
+
+            let lockedLogs = getFilteredLogs(type, sFilter, lZones, hZone);
+
+            if (lZones.length > 0 && hFilter !== null) {
+                let filterPreviewLogs = getFilteredLogs(type, hFilter, hFilter === 'all' ? [] : lZones, null);
+                ct.globalAlpha = 0.25; 
+                filterPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result])); 
+                ct.globalAlpha = 1.0; 
+                lockedLogs = []; 
+            }
+
+            lockedLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
+        }
+    }
+
+    function line(ct, p1, p2, c) { ct.beginPath(); ct.moveTo(p1.x, p1.y); ct.lineTo(p2.x, p2.y); ct.strokeStyle = c; ct.lineWidth = 2; ct.stroke(); dot(ct, p1.x, p1.y, 2.5, c); dot(ct, p2.x, p2.y, 2.5, c); }
+    function dot(ct, x, y, r, c) { ct.beginPath(); ct.arc(x,y,r,0,Math.PI*2); ct.fillStyle=c; ct.fill(); ct.strokeStyle='white'; ct.stroke(); }
+
+    function saveAction(type, result) {
+        let finalX = serveStart.x, finalY = serveStart.y;
+        if (type === 'serve') {
+            let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); 
+            finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
+        } else if (type === 'spike') {
+            let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); 
+            let yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
+            finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
+            if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; 
+            if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
+        }
+        dataLog.push({ 
+            id: Date.now(), 
+            sessionId: currentSessionId,
+            playerId: selectedPlayerId, 
+            type: type, 
+            result: result, 
+            startX: finalX, 
+            startY: finalY, 
+            endX: serveEnd.x, 
+            endY: serveEnd.y, 
+            time: new Date().toLocaleString(),
+            videoTime: formatTime(timerSeconds) 
+        });
+        resetInput(); 
+        saveToLocal(); 
+        updateLog(); draw('input-canvas');
+    }
+
+    function selectPlayer(id) { 
+        if (currentTab === 'input') selectedPlayerId = id; 
+        else if (currentTab === 'compare') {
+            if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id);
+            else if (comparePlayers.length < 8) comparePlayers.push(id);
+            renderCompareVisual();
+        } else {
+            if (selectedStatsPlayers.includes(id)) selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
+            else selectedStatsPlayers.push(id);
+            lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
+            if (currentTab === 'analysis') drawAnalysis();
+            if (currentTab === 'spike') drawSpike();
+        }
+        renderPlayerGrids(); 
+    }
+    
+    function updateLog() { 
+        const container = document.getElementById('log-container');
+        container.innerHTML = [...dataLog].reverse().map(l => {
+            let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
+            let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
+            return `<div class="log-row">${timeStr}<span class="log-name">${playerNames[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+        }).join('');
+    }
+    
+    function undoLast() { 
+        if(dataLog.length > 0) { 
+            dataLog.pop(); 
+            saveToLocal(); 
+            updateLog(); 
+            draw('input-canvas'); 
+        } 
+    }
+
+    function drawAnalysis() {
+        document.querySelectorAll('#view-analysis .clickable-stat').forEach(el => el.classList.remove('active-filter'));
+        const activeIdMap = { 'all': 'filter-all', 'in': 'filter-in', 'miss': 'filter-miss', 'ace': 'filter-ace' };
+        const activeEl = document.getElementById(activeIdMap[serveFilter]);
+        if(activeEl) activeEl.classList.add('active-filter');
+
+        draw('analysis-canvas');
+
+        const activeLogs = getFilteredLogs('serve', 'all', lockedServeZones, hoverServeZone);
+        updateStatsUI('serve', activeLogs);
+    }
+
+    function drawSpike() {
+        document.querySelectorAll('#view-spike .clickable-stat').forEach(el => el.classList.remove('active-filter'));
+        const activeIdMapSp = { 'all': 'filter-all-sp', 'in': 'filter-in-sp', 'miss': 'filter-miss-sp', 'ace': 'filter-ace-sp' };
+        const activeEl = document.getElementById(activeIdMapSp[spikeFilter]);
+        if(activeEl) activeEl.classList.add('active-filter');
+
+        draw('spike-canvas');
+
+        const activeLogs = getFilteredLogs('spike', 'all', lockedSpikeZones, hoverSpikeZone);
+        updateStatsUI('spike', activeLogs);
+    }
+
+    function renderCompareVisual() {
+        const container = document.getElementById('compare-cards-container');
+        container.innerHTML = (comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択してください（最大8人）</p>' : '';
+        comparePlayers.forEach(pid => {
+            let logs = dataLog.filter(l => l.playerId === pid && (compareType === 'serve' ? l.type !== 'spike' : l.type === 'spike'));
+            const tot = logs.length;
+            let aceOrDecide = logs.filter(l => l.result === (compareType === 'serve' ? 'エース' : '決定')).length;
+            let goodOrIn = logs.filter(l => l.result === (compareType === 'serve' ? 'イン' : 'Good')).length;
+            let miss = logs.filter(l => compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
+            const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
+            const card = document.createElement('div');
+            card.className = 'compare-card';
+            card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:12px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${playerNames[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
+            container.appendChild(card);
+            
+            const ct = setupCanvasContext(`cmp-canvas-${pid}`);
+            ct.fillStyle = '#ee9e4b'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+            logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]); });
+        });
+    }
+
+    function openRenameView() {
+        const container = document.getElementById('rename-inputs-container');
+        container.innerHTML = ''; 
+        for(let i = 1; i <= 10; i++) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'rename-item';
+            wrapper.innerHTML = `<input type="text" id="rename-input-${i}" value="${playerNames[i]}">`;
+            container.appendChild(wrapper);
+        }
+
+        for(let i = 1; i <= 10; i++) {
+            const input = document.getElementById(`rename-input-${i}`);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    input.blur(); 
+                    document.getElementById('save-rename-btn').focus(); 
+                }
+            });
+        }
+        
+        switchTab('rename');
+    }
+
+    function saveBatchRename() {
+        for(let i = 1; i <= 10; i++) playerNames[i] = document.getElementById(`rename-input-${i}`).value || String(i);
+        saveToLocal(); 
+        renderPlayerGrids(); switchTab('input');
+    }
+</script>
+</body>
+</html>
