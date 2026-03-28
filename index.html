@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>V-Link Junior (Pro版 - 動画完全同期 & ローカル対応)</title>
+    <title>V-Link Junior (Pro版 - 動画完全同期 & シーク機能)</title>
     <style>
         /* 基本レイアウト */
         body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; touch-action: manipulation; }
@@ -188,6 +188,21 @@
             <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
             <!-- ローカル動画用 -->
             <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
+        </div>
+
+        <!-- シーク（早送り・巻き戻し）コントロール -->
+        <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 10px; justify-content: center; display: none; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #e9ecef;">
+            <button class="action-btn" style="background: #6c757d; padding: 8px 16px; font-size: 16px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <span style="font-size: 10px; font-weight: bold; color: #555;">シーク幅</span>
+                <select id="seek-time-select" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; outline: none;" onchange="updateSeekDuration()">
+                    <option value="2">2秒</option>
+                    <option value="5" selected>5秒</option>
+                    <option value="10">10秒</option>
+                    <option value="30">30秒</option>
+                </select>
+            </div>
+            <button class="action-btn" style="background: #6c757d; padding: 8px 16px; font-size: 16px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
         </div>
     </div>
 
@@ -439,16 +454,17 @@
     let hoverServeZone = null, lockedServeZones = [];
     let hoverSpikeZone = null, lockedSpikeZones = [];
 
-    // --- 動画・タイマー完全同期ロジック ---
+    // --- 動画・タイマー・シーク機能 ---
     let activeVideoType = null; // 'youtube' or 'local'
     let ytPlayer = null;
     let timerSeconds = 0;
     let timerInterval = null;
     let isTimerRunning = false;
+    let seekDuration = 5; // 初期シーク時間
 
-    // 表示を切り替える関数
     function showPlayer(type) {
         document.getElementById('video-player-wrapper').style.display = 'block';
+        document.getElementById('video-seek-controls').style.display = 'flex'; // シークボタンも表示
         const ytNode = document.querySelector('#video-player-wrapper iframe') || document.getElementById('yt-player');
         const localNode = document.getElementById('local-player');
         
@@ -461,7 +477,6 @@
         }
     }
 
-    // ローカル動画の読み込み
     function loadLocalVideo(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -479,7 +494,6 @@
         resetTimerInternal();
     }
 
-    // YouTube動画の読み込み
     function loadYouTubeVideo() {
         const url = document.getElementById('yt-url-input').value;
         if (!url) { alert("URLを入力してください。"); return; }
@@ -506,13 +520,12 @@
                 width: '100%',
                 videoId: videoId,
                 playerVars: { 'playsinline': 1, 'rel': 0 },
-                events: { 'onStateChange': onYouTubeStateChange } // 状態監視
+                events: { 'onStateChange': onYouTubeStateChange }
             });
         }
         resetTimerInternal();
     }
 
-    // タイマーフォーマット
     function formatTime(sec) {
         const m = Math.floor(sec / 60).toString().padStart(2, '0');
         const s = (sec % 60).toString().padStart(2, '0');
@@ -523,7 +536,6 @@
         document.getElementById('match-timer-display').innerText = formatTime(timerSeconds);
     }
 
-    // タイマーのUI（ボタン等の状態）のみを切り替える
     function setTimerState(running) {
         if (isTimerRunning === running) return;
         const btn = document.getElementById('btn-timer-toggle');
@@ -543,7 +555,6 @@
         }
     }
 
-    // ★アプリのボタンを押した時の処理（ボタン→動画を操作）
     function toggleTimer() {
         if (isTimerRunning) {
             setTimerState(false);
@@ -584,7 +595,6 @@
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 timerSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
                 updateTimerDisplay();
-                // 指定した時間へ動画もワープさせる
                 if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.seekTo === 'function') {
                     ytPlayer.seekTo(timerSeconds);
                 } else if (activeVideoType === 'local') {
@@ -596,15 +606,40 @@
         }
     }
 
-    // ★YouTube動画側のボタンを押した時の処理（動画→ボタンを操作）
     function onYouTubeStateChange(event) {
-        if (event.data === 1) { // 1 = 再生中
+        if (event.data === 1) { 
             setTimerState(true);
             timerSeconds = Math.floor(ytPlayer.getCurrentTime());
             updateTimerDisplay();
-        } else if (event.data === 2) { // 2 = 一時停止
+        } else if (event.data === 2) { 
             setTimerState(false);
             timerSeconds = Math.floor(ytPlayer.getCurrentTime());
+            updateTimerDisplay();
+        }
+    }
+
+    // ★追加：シーク幅の更新
+    function updateSeekDuration() {
+        seekDuration = parseInt(document.getElementById('seek-time-select').value, 10);
+    }
+
+    // ★追加：シーク機能の実行
+    function seekVideo(direction) {
+        if (!activeVideoType) return;
+        const offset = direction * seekDuration;
+
+        if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+            let newTime = ytPlayer.getCurrentTime() + offset;
+            if (newTime < 0) newTime = 0;
+            ytPlayer.seekTo(newTime, true);
+            timerSeconds = Math.floor(newTime);
+            updateTimerDisplay();
+        } else if (activeVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            let newTime = lp.currentTime + offset;
+            if (newTime < 0) newTime = 0;
+            lp.currentTime = newTime;
+            timerSeconds = Math.floor(newTime);
             updateTimerDisplay();
         }
     }
@@ -706,13 +741,29 @@
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // ★ローカル動画側のボタンやプログレスバーを操作した時の処理（動画→ボタンを操作）
+        // ローカル動画側のイベント監視
         const lp = document.getElementById('local-player');
         lp.addEventListener('play', () => setTimerState(true));
         lp.addEventListener('pause', () => setTimerState(false));
         lp.addEventListener('seeked', () => {
             timerSeconds = Math.floor(lp.currentTime);
             updateTimerDisplay();
+        });
+
+        // ★追加：キーボードの矢印キーでシーク操作
+        document.addEventListener('keydown', function(e) {
+            // テキスト入力中は矢印キーを無効化しない
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+            if (activeVideoType) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault(); // 画面スクロール防止
+                    seekVideo(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault(); // 画面スクロール防止
+                    seekVideo(1);
+                }
+            }
         });
 
         initDB(() => {
