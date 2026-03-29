@@ -172,6 +172,7 @@
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 6px; }
             .player-wrapper { width: 60px; height: 50px; }
             #log-container { min-height: 120px; height: 120px; }
+            #video-seek-controls { justify-content: center; }
         }
 
         .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
@@ -183,7 +184,7 @@
 
 <!-- 連続再生用モーダル -->
 <div id="video-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column; padding: 15px; box-sizing: border-box;">
-    <div id="modal-video-placeholder" style="width: 100%; max-width: 760px; display: flex; flex-direction: column;"></div>
+    <div id="modal-video-placeholder" style="width: 100%; max-width: 960px; display: flex; flex-direction: column;"></div>
     
     <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; justify-content: center; background: #222; padding: 12px 15px; border-radius: 8px; width: 100%; max-width: 760px; box-sizing: border-box;">
         <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipPrevPlayback()">⏮ 前へ</button>
@@ -231,7 +232,8 @@
             </div>
 
             <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;">
+                <!-- URL入力後、Enterキーで読み込み可能に修正 -->
+                <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') loadYouTubeVideo()">
                 <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
                 <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
             </div>
@@ -242,7 +244,7 @@
             <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
         </div>
 
-        <!-- コントロールとタイマーを統合 -->
+        <!-- コントロールとタイマーを統合配置 -->
         <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 12px; justify-content: space-between; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;">
             <div style="display: flex; gap: 6px;">
                 <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
@@ -280,6 +282,8 @@
         </div>
 
         <div class="right-panel">
+            <!-- タイマーを動画エリアに移動したため、ここは削除 -->
+
             <div class="category-title" style="margin-top:0;">サーブ結果</div>
             <div style="display:flex; gap:6px;">
                 <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
@@ -430,7 +434,8 @@
                     <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
                 </div>
                 <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
-                    <div class="ace-stat-label">決定（得点）</div>
+                    <!-- 表記変更 -->
+                    <div class="ace-stat-label">決定</div>
                     <div class="ace-stat-val-row">
                         <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
                         <span class="ace-stat-rate-spn">(<span id="sp-ace-chart-rate">0%</span>)</span>
@@ -514,6 +519,9 @@
     let timerInterval = null;
     let isTimerRunning = false;
     let seekDuration = 5; 
+    
+    // ★ 動画名の保存用変数
+    let currentVideoName = "";
 
     // 動画再生キュー用の変数
     let playQueue = [];
@@ -532,7 +540,8 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            videoCard.style.maxWidth = '100%'; 
+            // ★ 大画面時、100%ではなくほど良い最大幅(960px)に制限
+            videoCard.style.maxWidth = '960px'; 
             btn.innerText = '🗗 通常';
             btn.style.background = '#ff9800';
         } else {
@@ -570,6 +579,9 @@
     function loadLocalVideo(event) {
         const file = event.target.files[0];
         if (!file) return;
+
+        // ★ ファイル名から拡張子を除いたものをセット
+        currentVideoName = file.name.replace(/\.[^/.]+$/, "");
 
         activeVideoType = 'local';
         showPlayer('local');
@@ -733,11 +745,16 @@
     }
 
     function onYouTubeStateChange(event) {
+        // ★ YouTube動画タイトルの取得
+        if (ytPlayer && typeof ytPlayer.getVideoData === 'function') {
+            let vData = ytPlayer.getVideoData();
+            if (vData && vData.title) currentVideoName = vData.title;
+        }
+
         if (event.data === 1) { 
             setTimerState(true); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         } else if (event.data === 2) { 
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
-        // ★YouTube再生終了時にタイマー停止
         } else if (event.data === 0) {
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         }
@@ -919,7 +936,6 @@
         const lp = document.getElementById('local-player');
         lp.addEventListener('play', () => setTimerState(true));
         lp.addEventListener('pause', () => setTimerState(false));
-        // ★ローカル動画の再生終了時にもタイマー停止
         lp.addEventListener('ended', () => setTimerState(false));
         lp.addEventListener('seeked', () => { timerSeconds = Math.floor(lp.currentTime); updateTimerDisplay(); });
 
@@ -972,7 +988,6 @@
             btns.forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
         }
         
-        // ★フィルターリセット
         serveFilter = 'all'; spikeFilter = 'all'; 
         lockedServeZones = []; lockedSpikeZones = []; 
         updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -1151,15 +1166,34 @@
         }
     }
 
+    // ★ ファイル保存用ヘルパー関数
+    function getSuggestFileName(prefix) {
+        let base = currentVideoName ? currentVideoName : "VLink";
+        let dateStr = new Date().toISOString().slice(0,10);
+        return `${base}_${prefix}_${dateStr}`;
+    }
+
     function exportData() {
+        let defaultName = getSuggestFileName("Data");
+        let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
+        if (inputName === null) return; 
+        if (inputName.trim() === "") inputName = defaultName;
+        if (!inputName.endsWith('.json')) inputName += '.json';
+
         const data = { players: playerNames, log: dataLog, playerCount: activePlayerCount };
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         const url = URL.createObjectURL(blob); const a = document.createElement('a');
-        a.href = url; a.download = `VLink_Data_${new Date().toISOString().slice(0,10)}.json`;
+        a.href = url; a.download = inputName;
         a.click(); URL.revokeObjectURL(url);
     }
 
     function exportCSV() {
+        let defaultName = getSuggestFileName("Report");
+        let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
+        if (inputName === null) return; 
+        if (inputName.trim() === "") inputName = defaultName;
+        if (!inputName.endsWith('.csv')) inputName += '.csv';
+
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
         csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         dataLog.forEach(l => {
@@ -1167,7 +1201,7 @@
             csvContent += `${l.time},${l.sessionId},${l.videoTime || ''},${playerNames[l.playerId]},${typeStr},${l.result}\n`;
         });
         const encodedUri = encodeURI(csvContent); const a = document.createElement('a');
-        a.href = encodedUri; a.download = `VLink_Report_${new Date().toISOString().slice(0,10)}.csv`;
+        a.href = encodedUri; a.download = inputName;
         a.click();
     }
 
@@ -1393,7 +1427,6 @@
                 }
             }
             
-            // ★ 別の選手を選択したときにフィルターを自動リセット
             serveFilter = 'all'; spikeFilter = 'all'; 
             lockedServeZones = []; lockedSpikeZones = []; 
             updateZoneClasses('serve'); updateZoneClasses('spike');
