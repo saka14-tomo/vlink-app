@@ -52,6 +52,24 @@
         .edit-single-btn:hover { background: rgba(0,0,0,0.08); }
         .player-wrapper.active .edit-single-btn { border-top-color: rgba(255,255,255,0.2); color: white; }
 
+        /* 追加ボタン(+)用のスタイル */
+        .player-add-btn { 
+            border: 2px dashed #adb5bd !important; 
+            background: transparent !important; 
+            justify-content: center !important; 
+            align-items: center !important; 
+            box-shadow: none !important; 
+            cursor: pointer;
+        }
+        .player-add-btn:hover { 
+            background: #e9ecef !important; 
+            border-color: #6c757d !important; 
+            transform: translateY(-2px) !important; 
+        }
+        .player-add-btn span { 
+            font-size: 24px; color: #adb5bd; font-weight: bold; pointer-events: none; margin-top: -2px;
+        }
+
         /* 中央：コート */
         .court-wrapper { width: 220px; display: flex; flex-direction: column; align-items: center; position: relative; flex-shrink: 0; }
         canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); width: 220px; height: 440px; }
@@ -457,6 +475,7 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
+    let activePlayerCount = 6; // ★初期表示人数を6人に設定
     let selectedStatsPlayers = []; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
@@ -664,14 +683,11 @@
         }
     }
 
-    // ★ ログのシーンにジャンプする機能 (記録時の4秒前へ)
     function seekToLogTime(timeStr) {
         if (!timeStr || !activeVideoType) return;
         const parts = timeStr.split(':');
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            // "MM:SS"を秒に変換
             let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-            // プレーの振り返り用に、記録された瞬間の4秒前から再生する
             let playSeconds = Math.max(0, targetSeconds - 4);
             
             timerSeconds = playSeconds;
@@ -740,6 +756,11 @@
         if (localStorage.getItem('vlink_players')) playerNames = JSON.parse(localStorage.getItem('vlink_players'));
         if (localStorage.getItem('vlink_data')) dataLog = JSON.parse(localStorage.getItem('vlink_data'));
         if (localStorage.getItem('vlink_current_session')) currentSessionId = localStorage.getItem('vlink_current_session');
+        if (localStorage.getItem('vlink_player_count')) {
+            activePlayerCount = parseInt(localStorage.getItem('vlink_player_count'), 10);
+        } else if (localStorage.getItem('vlink_players')) {
+            activePlayerCount = 10; // 旧バージョン互換性
+        }
         if (db) saveToDB(); 
     }
 
@@ -753,6 +774,7 @@
         localStorage.setItem('vlink_players', JSON.stringify(playerNames));
         localStorage.setItem('vlink_data', JSON.stringify(dataLog));
         localStorage.setItem('vlink_current_session', currentSessionId);
+        localStorage.setItem('vlink_player_count', activePlayerCount);
         saveToDB(); 
     }
 
@@ -835,7 +857,7 @@
     }
 
     function selectAllTeam() {
-        selectedStatsPlayers = [1,2,3,4,5,6,7,8,9,10];
+        selectedStatsPlayers = Array.from({length: activePlayerCount}, (_, i) => i + 1);
         lockedServeZones = []; lockedSpikeZones = [];
         updateZoneClasses('serve'); updateZoneClasses('spike');
         renderPlayerGrids();
@@ -903,11 +925,12 @@
         drawSpike(); 
     }
 
+    // ★ グリッドの動的レンダリング（＋ボタンを含む）
     function renderPlayerGrids() {
         ['input', 'analysis', 'spike', 'compare'].forEach(type => {
             const container = document.getElementById(`player-grid-${type}`); if(!container) return;
             container.innerHTML = '';
-            for(let i=1; i<=10; i++) {
+            for(let i=1; i<=activePlayerCount; i++) {
                 const wrapper = document.createElement('div');
                 let isActive = false, isCompareActive = false;
 
@@ -928,6 +951,20 @@
                 }
                 container.appendChild(wrapper);
             }
+            
+            // ＋追加ボタンの表示（10人未満の場合）
+            if (activePlayerCount < 10) {
+                const addWrapper = document.createElement('div');
+                addWrapper.className = 'player-wrapper player-add-btn';
+                addWrapper.onclick = () => {
+                    activePlayerCount++;
+                    if (!playerNames[activePlayerCount]) playerNames[activePlayerCount] = String(activePlayerCount);
+                    saveToLocal();
+                    renderPlayerGrids();
+                };
+                addWrapper.innerHTML = '<span>＋</span>';
+                container.appendChild(addWrapper);
+            }
         });
     }
 
@@ -941,7 +978,7 @@
     }
 
     function exportData() {
-        const data = { players: playerNames, log: dataLog };
+        const data = { players: playerNames, log: dataLog, playerCount: activePlayerCount };
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         const url = URL.createObjectURL(blob); const a = document.createElement('a');
         a.href = url; a.download = `VLink_Data_${new Date().toISOString().slice(0,10)}.json`;
@@ -967,7 +1004,9 @@
             try {
                 const data = JSON.parse(evt.target.result);
                 if (data.players && data.log) {
-                    playerNames = data.players; dataLog = data.log; saveToLocal(); 
+                    playerNames = data.players; dataLog = data.log; 
+                    activePlayerCount = data.playerCount || 10;
+                    saveToLocal(); 
                     selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
                     resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
                     hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
@@ -983,6 +1022,8 @@
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
             dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
+            activePlayerCount = 6; 
+            playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
             resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
             updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -1154,13 +1195,11 @@
         renderPlayerGrids(); 
     }
     
-    // ★ ログの表示（件数制限なしで全て表示し、CSS側でスクロールさせる）
     function updateLog() { 
         const container = document.getElementById('log-container');
         container.innerHTML = [...dataLog].reverse().map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
-            // クリック用のイベントを追加
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
             return `<div class="log-row" ${clickAction} title="クリックでこのシーンの4秒前から再生">${timeStr}<span class="log-name">${playerNames[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
@@ -1204,11 +1243,11 @@
 
     function openRenameView() {
         const container = document.getElementById('rename-inputs-container'); container.innerHTML = ''; 
-        for(let i = 1; i <= 10; i++) {
+        for(let i = 1; i <= activePlayerCount; i++) {
             const wrapper = document.createElement('div'); wrapper.className = 'rename-item';
-            wrapper.innerHTML = `<input type="text" id="rename-input-${i}" value="${playerNames[i]}">`; container.appendChild(wrapper);
+            wrapper.innerHTML = `<label style="font-size:10px; color:#666; margin-bottom:2px;">No.${i}</label><input type="text" id="rename-input-${i}" value="${playerNames[i]}">`; container.appendChild(wrapper);
         }
-        for(let i = 1; i <= 10; i++) {
+        for(let i = 1; i <= activePlayerCount; i++) {
             const input = document.getElementById(`rename-input-${i}`);
             input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); input.blur(); document.getElementById('save-rename-btn').focus(); } });
         }
@@ -1216,7 +1255,9 @@
     }
 
     function saveBatchRename() {
-        for(let i = 1; i <= 10; i++) playerNames[i] = document.getElementById(`rename-input-${i}`).value || String(i);
+        for(let i = 1; i <= activePlayerCount; i++) {
+            playerNames[i] = document.getElementById(`rename-input-${i}`).value || String(i);
+        }
         saveToLocal(); renderPlayerGrids(); switchTab('input');
     }
 </script>
