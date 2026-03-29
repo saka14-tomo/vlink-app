@@ -178,6 +178,18 @@
 </head>
 <body>
 
+<!-- 連続再生用モーダル -->
+<div id="video-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column; padding: 15px; box-sizing: border-box;">
+    <div id="modal-video-placeholder" style="width: 100%; max-width: 760px; display: flex; flex-direction: column;"></div>
+    
+    <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; justify-content: center; background: #222; padding: 12px 15px; border-radius: 8px; width: 100%; max-width: 760px; box-sizing: border-box;">
+        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipPrevPlayback()">⏮ 前へ</button>
+        <div id="playback-status-text" style="font-weight: bold; font-size: 15px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipNextPlayback()">次へ ⏭</button>
+    </div>
+    <button class="action-btn" style="margin-top: 15px; background: #dc3545; padding: 12px 30px; font-size: 15px; width: 100%; max-width: 760px;" onclick="closePlaybackModal()">✖ 閉じる (統計に戻る)</button>
+</div>
+
 <div id="settings-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; padding:25px; border-radius:12px; width:80%; max-width:320px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
         <h3 style="margin:0; border-bottom:2px solid #007bff; padding-bottom:8px; font-size:16px;">⚙️ 設定</h3>
@@ -296,7 +308,7 @@
         <div class="left-panel">
             <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
             <div id="player-grid-analysis" class="player-grid"></div>
-            <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム全体表示</button>
+            <button class="action-btn btn-team-all" style="background:#28a745; width: 100%; margin-top:10px;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
             <button id="btn-multi-serve" class="action-btn" style="background:#6c757d; width: 100%; margin-top:6px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
             <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:6px;" onclick="goToCompare()">📊 比較機能</button>
         </div>
@@ -313,6 +325,8 @@
                 <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
                 <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
             </div>
+            <!-- 動画連続再生ボタンを追加 -->
+            <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('serve')">▶ 表示中の動画を連続再生</button>
         </div>
         <div class="right-panel">
             <div class="category-title" style="margin-top:0;">サーブ統計</div>
@@ -361,7 +375,7 @@
         <div class="left-panel">
             <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
             <div id="player-grid-spike" class="player-grid"></div>
-            <button class="action-btn" style="background:#28a745; width: 100%; margin-top:10px;" onclick="selectAllTeam()">👨‍👩‍👦 チーム全体表示</button>
+            <button class="action-btn btn-team-all" style="background:#28a745; width: 100%; margin-top:10px;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
             <button id="btn-multi-spike" class="action-btn" style="background:#6c757d; width: 100%; margin-top:6px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
             <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:6px;" onclick="goToCompare()">📊 比較機能</button>
         </div>
@@ -378,6 +392,8 @@
                 <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
                 <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
             </div>
+            <!-- 動画連続再生ボタンを追加 -->
+            <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('spike')">▶ 表示中の動画を連続再生</button>
         </div>
         <div class="right-panel">
             <div class="category-title" style="margin-top:0;">スパイク統計</div>
@@ -478,6 +494,7 @@
     let comparePlayers = []; 
     let compareType = 'serve'; 
     let multiSelectMode = false; 
+    let isTeamAll = false; // チーム全体表示のON/OFFフラグ
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
@@ -491,6 +508,11 @@
     let timerInterval = null;
     let isTimerRunning = false;
     let seekDuration = 5; 
+
+    // 動画再生キュー用の変数
+    let playQueue = [];
+    let playIndex = 0;
+    let playTimeout = null;
 
     function openSettings() { document.getElementById('settings-modal-overlay').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal-overlay').style.display = 'none'; }
@@ -508,7 +530,7 @@
             btn.innerText = '🗗 通常';
             btn.style.background = '#ff9800';
         } else {
-            sourceUi.style.display = 'flex';
+            sourceUi.style.display = 'block';
             videoCard.style.maxWidth = '760px'; 
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
@@ -729,6 +751,109 @@
         }
     }
 
+    /* ====== プレイリスト（連続再生）の処理 ====== */
+    function startPlaylist(type) {
+        if (!activeVideoType) {
+            alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
+            return;
+        }
+
+        const sFilter = type === 'serve' ? serveFilter : spikeFilter;
+        const lZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
+        let logs = getFilteredLogs(type, sFilter, lZones);
+        
+        // 動画時間が記録されているログのみ抽出
+        logs = logs.filter(l => l.videoTime);
+        
+        if (logs.length === 0) {
+            alert("再生できる動画データがありません。\n（動画の時間が記録されているログのみ再生可能です）");
+            return;
+        }
+        
+        // ログを動画時間順（時系列）に並び替え
+        logs.sort((a, b) => {
+            let ta = a.videoTime.split(':'); let sa = parseInt(ta[0])*60 + parseInt(ta[1]);
+            let tb = b.videoTime.split(':'); let sb = parseInt(tb[0])*60 + parseInt(tb[1]);
+            return sa - sb;
+        });
+        
+        playQueue = logs;
+        playIndex = 0;
+        
+        // 再生用UIへ表示を切り替え（入力タブにある動画エリアをモーダル内に移動）
+        document.getElementById('video-source-ui').style.display = 'none';
+        document.getElementById('video-seek-controls').style.display = 'none';
+        
+        const vc = document.getElementById('video-container-card');
+        vc.style.marginBottom = '0';
+        document.getElementById('modal-video-placeholder').appendChild(vc);
+        document.getElementById('video-modal-overlay').style.display = 'flex';
+        
+        playCurrentQueueItem();
+    }
+
+    function playCurrentQueueItem() {
+        if (playIndex >= playQueue.length || playIndex < 0) {
+            document.getElementById('playback-status-text').innerText = "⏹ 再生終了";
+            clearTimeout(playTimeout);
+            return;
+        }
+        
+        let log = playQueue[playIndex];
+        let pName = playerNames[log.playerId];
+        document.getElementById('playback-status-text').innerText = `[${playIndex + 1}/${playQueue.length}] ${pName} : ${log.result}`;
+        
+        seekToLogTime(log.videoTime); // 指定時間の4秒前から再生開始
+        
+        // 約8秒間再生したら次のシーンへ自動スキップ
+        clearTimeout(playTimeout);
+        playTimeout = setTimeout(() => {
+            if (playIndex < playQueue.length - 1) {
+                playIndex++;
+                playCurrentQueueItem();
+            } else {
+                document.getElementById('playback-status-text').innerText = "⏹ すべての再生が終了しました";
+            }
+        }, 8000);
+    }
+
+    function skipNextPlayback() {
+        if (playIndex < playQueue.length - 1) {
+            playIndex++;
+            playCurrentQueueItem();
+        }
+    }
+
+    function skipPrevPlayback() {
+        if (playIndex > 0) {
+            playIndex--;
+            playCurrentQueueItem();
+        }
+    }
+
+    function closePlaybackModal() {
+        clearTimeout(playTimeout);
+        
+        // 動画エリアを元の位置（データ入力タブ内）に戻す
+        const vc = document.getElementById('video-container-card');
+        vc.style.marginBottom = '15px';
+        const originalParent = document.getElementById('view-input');
+        originalParent.insertBefore(vc, originalParent.firstChild);
+        
+        document.getElementById('video-modal-overlay').style.display = 'none';
+        
+        document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
+        document.getElementById('video-seek-controls').style.display = 'flex';
+        
+        // 動画を一時停止
+        if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+            ytPlayer.pauseVideo();
+        } else if (activeVideoType === 'local') {
+            document.getElementById('local-player').pause();
+        }
+    }
+
+    /* ====== IndexedDB ＆ データ保存処理 ====== */
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -831,6 +956,23 @@
     function openFinishView() { switchTab('finish'); }
     function goToCompare() { compareType = (currentTab === 'analysis') ? 'serve' : 'spike'; switchTab('compare'); }
 
+    // ★ チーム全体表示のON/OFF
+    function toggleAllTeam() {
+        isTeamAll = !isTeamAll;
+        const btns = document.querySelectorAll('.btn-team-all');
+        if (isTeamAll) {
+            selectedStatsPlayers = Array.from({length: activePlayerCount}, (_, i) => i + 1);
+            btns.forEach(b => { b.innerHTML = '☑️ チーム全体表示：ON'; b.style.background = '#17a2b8'; });
+        } else {
+            selectedStatsPlayers = [];
+            btns.forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
+        }
+        lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
+        if (currentTab === 'analysis') drawAnalysis();
+        if (currentTab === 'spike') drawSpike();
+        renderPlayerGrids();
+    }
+
     function toggleMultiSelect() {
         multiSelectMode = !multiSelectMode;
         const btnServe = document.getElementById('btn-multi-serve');
@@ -923,7 +1065,6 @@
         drawSpike(); 
     }
 
-    // ★ グリッドの動的レンダリング（＋/－ボタンを含む）
     function renderPlayerGrids() {
         ['input', 'analysis', 'spike', 'compare'].forEach(type => {
             const container = document.getElementById(`player-grid-${type}`); if(!container) return;
@@ -976,7 +1117,6 @@
                         const removingId = activePlayerCount;
                         activePlayerCount--;
                         
-                        // 選択状態のリセット・クリーンアップ
                         if(selectedPlayerId === removingId) {
                             selectedPlayerId = null;
                             resetInput();
@@ -1092,7 +1232,6 @@
         document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
     }
 
-    // ★ 現在入力中のポイントを１つ戻すキャンセル機能
     function cancelCurrentInput() {
         if (inputState === 'ready') {
             serveEnd = null;
@@ -1197,7 +1336,6 @@
     }
 
     function line(ct, p1, p2, c) { ct.beginPath(); ct.moveTo(p1.x, p1.y); ct.lineTo(p2.x, p2.y); ct.strokeStyle = c; ct.lineWidth = 2; ct.stroke(); dot(ct, p1.x, p1.y, 3.5, c); dot(ct, p2.x, p2.y, 3.5, c); }
-    // ★黄色のポイントは黒フチをつけて視認性をあげる
     function dot(ct, x, y, r, c) { 
         ct.beginPath(); ct.arc(x,y,r,0,Math.PI*2); ct.fillStyle=c; ct.fill(); 
         ct.strokeStyle = (c === '#FFFF00') ? '#333' : 'white'; 
@@ -1219,7 +1357,6 @@
 
     function selectPlayer(id) { 
         if (currentTab === 'input') {
-            // ★別の選手を選んだ際に入力中のポイントをリセット
             if (selectedPlayerId !== id) {
                 selectedPlayerId = id; 
                 resetInput();
@@ -1230,6 +1367,12 @@
             if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id); else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
         } else {
+            // チーム全体表示がONの状態で個別選手を押した場合はOFFにする
+            if (isTeamAll) {
+                isTeamAll = false;
+                document.querySelectorAll('.btn-team-all').forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
+            }
+
             if (multiSelectMode) {
                 if (selectedStatsPlayers.includes(id)) {
                     selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== id);
