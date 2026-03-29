@@ -52,7 +52,7 @@
         .edit-single-btn:hover { background: rgba(0,0,0,0.08); }
         .player-wrapper.active .edit-single-btn { border-top-color: rgba(255,255,255,0.2); color: white; }
 
-        /* 追加ボタン(+)用のスタイル */
+        /* 追加/削除ボタン用のスタイル */
         .player-add-btn { 
             border: 2px dashed #adb5bd !important; 
             background: transparent !important; 
@@ -65,9 +65,6 @@
             background: #e9ecef !important; 
             border-color: #6c757d !important; 
             transform: translateY(-2px) !important; 
-        }
-        .player-add-btn span { 
-            font-size: 24px; color: #adb5bd; font-weight: bold; pointer-events: none; margin-top: -2px;
         }
 
         /* 中央：コート */
@@ -244,9 +241,10 @@
         <div class="left-panel">
             <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
             <div id="player-grid-input" class="player-grid"></div>
-            <div style="display: flex; gap: 6px; width: 100%; margin-top: 10px;">
-                <button class="action-btn btn-utility" style="flex: 1; background:#4a4a4a;" onclick="openRenameView()">📝 一括設定</button>
-                <button class="action-btn" style="flex: 1; background:#dc3545; font-size:11px;" onclick="undoLast()">◀ 1つ戻る</button>
+            <div style="display: flex; gap: 4px; width: 100%; margin-top: 10px;">
+                <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
+                <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
+                <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
             </div>
             <button class="action-btn" style="background:#ff9800; font-size: 13px; margin-top: 6px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
         </div>
@@ -466,7 +464,7 @@
     const colors = { 
         'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
         '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
-        'temp': '#007bff' 
+        'temp': '#FFFF00' // 入力中のポイント色（黄色へ変更）
     };
     
     let currentSessionId = "session_" + Date.now();
@@ -475,7 +473,7 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let activePlayerCount = 6; // ★初期表示人数を6人に設定
+    let activePlayerCount = 6; 
     let selectedStatsPlayers = []; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
@@ -759,7 +757,7 @@
         if (localStorage.getItem('vlink_player_count')) {
             activePlayerCount = parseInt(localStorage.getItem('vlink_player_count'), 10);
         } else if (localStorage.getItem('vlink_players')) {
-            activePlayerCount = 10; // 旧バージョン互換性
+            activePlayerCount = 10;
         }
         if (db) saveToDB(); 
     }
@@ -925,7 +923,7 @@
         drawSpike(); 
     }
 
-    // ★ グリッドの動的レンダリング（＋ボタンを含む）
+    // ★ グリッドの動的レンダリング（＋/－ボタンを含む）
     function renderPlayerGrids() {
         ['input', 'analysis', 'spike', 'compare'].forEach(type => {
             const container = document.getElementById(`player-grid-${type}`); if(!container) return;
@@ -952,7 +950,7 @@
                 container.appendChild(wrapper);
             }
             
-            // ＋追加ボタンの表示（10人未満の場合）
+            // ＋追加ボタンの表示
             if (activePlayerCount < 10) {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'player-wrapper player-add-btn';
@@ -964,6 +962,35 @@
                 };
                 addWrapper.innerHTML = '<span>＋</span>';
                 container.appendChild(addWrapper);
+            }
+            
+            // －削除ボタンの表示 (最小1人)
+            if (activePlayerCount > 1) {
+                const removeWrapper = document.createElement('div');
+                removeWrapper.className = 'player-wrapper player-add-btn';
+                removeWrapper.style.borderColor = '#dc3545';
+                removeWrapper.onmouseover = () => removeWrapper.style.backgroundColor = '#fff5f5';
+                removeWrapper.onmouseout = () => removeWrapper.style.backgroundColor = 'transparent';
+                removeWrapper.onclick = () => {
+                    if(confirm(`No.${activePlayerCount} (${playerNames[activePlayerCount]}) の選手枠を削除しますか？\n※記録済みのデータ自体は残りますが、選択できなくなります。`)) {
+                        const removingId = activePlayerCount;
+                        activePlayerCount--;
+                        
+                        // 選択状態のリセット・クリーンアップ
+                        if(selectedPlayerId === removingId) {
+                            selectedPlayerId = null;
+                            resetInput();
+                            draw('input-canvas');
+                        }
+                        comparePlayers = comparePlayers.filter(p => p !== removingId);
+                        selectedStatsPlayers = selectedStatsPlayers.filter(p => p !== removingId);
+                        
+                        saveToLocal();
+                        renderPlayerGrids();
+                    }
+                };
+                removeWrapper.innerHTML = '<span style="color:#dc3545; font-size:24px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>';
+                container.appendChild(removeWrapper);
             }
         });
     }
@@ -1060,7 +1087,24 @@
         return Math.floor((clampedX - 20) / 60) === zone.x && Math.floor((clampedY - 240) / 60) === zone.y;
     }
 
-    function resetInput() { inputState = 'idle'; serveStart = null; serveEnd = null; document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); }
+    function resetInput() { 
+        inputState = 'idle'; serveStart = null; serveEnd = null; 
+        document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
+    }
+
+    // ★ 現在入力中のポイントを１つ戻すキャンセル機能
+    function cancelCurrentInput() {
+        if (inputState === 'ready') {
+            serveEnd = null;
+            inputState = 'waiting';
+            document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true);
+            draw('input-canvas');
+        } else if (inputState === 'waiting') {
+            serveStart = null;
+            inputState = 'idle';
+            draw('input-canvas');
+        }
+    }
 
     function getFilteredLogs(type, targetFilter, zones) {
         let logs = dataLog.filter(l => selectedStatsPlayers.includes(l.playerId) && (type === 'serve' ? l.type !== 'spike' : l.type === 'spike'));
@@ -1118,7 +1162,7 @@
         ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
         
         if (id === 'input-canvas') {
-            if (serveStart) dot(ct, serveStart.x, serveStart.y, 2.5, colors['temp']); 
+            if (serveStart) dot(ct, serveStart.x, serveStart.y, 3.5, colors['temp']); 
             if (serveStart && serveEnd) line(ct, serveStart, serveEnd, colors['temp']);
         } else if (id === 'analysis-canvas' || id === 'spike-canvas') {
             const type = id === 'analysis-canvas' ? 'serve' : 'spike';
@@ -1152,8 +1196,13 @@
         }
     }
 
-    function line(ct, p1, p2, c) { ct.beginPath(); ct.moveTo(p1.x, p1.y); ct.lineTo(p2.x, p2.y); ct.strokeStyle = c; ct.lineWidth = 2; ct.stroke(); dot(ct, p1.x, p1.y, 2.5, c); dot(ct, p2.x, p2.y, 2.5, c); }
-    function dot(ct, x, y, r, c) { ct.beginPath(); ct.arc(x,y,r,0,Math.PI*2); ct.fillStyle=c; ct.fill(); ct.strokeStyle='white'; ct.stroke(); }
+    function line(ct, p1, p2, c) { ct.beginPath(); ct.moveTo(p1.x, p1.y); ct.lineTo(p2.x, p2.y); ct.strokeStyle = c; ct.lineWidth = 2; ct.stroke(); dot(ct, p1.x, p1.y, 3.5, c); dot(ct, p2.x, p2.y, 3.5, c); }
+    // ★黄色のポイントは黒フチをつけて視認性をあげる
+    function dot(ct, x, y, r, c) { 
+        ct.beginPath(); ct.arc(x,y,r,0,Math.PI*2); ct.fillStyle=c; ct.fill(); 
+        ct.strokeStyle = (c === '#FFFF00') ? '#333' : 'white'; 
+        ct.stroke(); 
+    }
 
     function saveAction(type, result) {
         let finalX = serveStart.x, finalY = serveStart.y;
@@ -1169,7 +1218,14 @@
     }
 
     function selectPlayer(id) { 
-        if (currentTab === 'input') selectedPlayerId = id; 
+        if (currentTab === 'input') {
+            // ★別の選手を選んだ際に入力中のポイントをリセット
+            if (selectedPlayerId !== id) {
+                selectedPlayerId = id; 
+                resetInput();
+                draw('input-canvas');
+            }
+        } 
         else if (currentTab === 'compare') {
             if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id); else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
