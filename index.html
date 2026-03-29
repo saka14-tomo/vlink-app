@@ -10,10 +10,10 @@
         
         /* タブメニュー（上部固定） */
         .tab-menu { 
-            position: sticky; top: 0; z-index: 1000; background: #f4f7f6;
-            width: 100%; max-width: 760px; display: flex; gap: 8px; padding: 15px 0 10px 0; margin-bottom: 5px; flex-wrap: wrap; 
+            position: sticky; top: 0; z-index: 1000; background: rgba(244, 247, 246, 0.95); backdrop-filter: blur(5px);
+            width: 100%; max-width: 1400px; display: flex; gap: 8px; padding: 15px 0 10px 0; margin-bottom: 5px; flex-wrap: wrap; justify-content: center;
         }
-        .tab-btn { flex: 1 1 22%; min-width: 70px; padding: 14px 8px; border: none; border-radius: 8px; cursor: pointer; background: #e9ecef; color: #495057; font-weight: bold; font-size: 13px; transition: all 0.2s ease; text-align: center; }
+        .tab-btn { flex: 1 1 20%; min-width: 70px; padding: 14px 8px; border: none; border-radius: 8px; cursor: pointer; background: #e9ecef; color: #495057; font-weight: bold; font-size: 13px; transition: all 0.2s ease; text-align: center; }
         .tab-btn:hover { background: #dee2e6; color: #212529; }
         .tab-btn.active { background: #007bff; color: white; box-shadow: 0 4px 12px rgba(0,123,255,0.3); transform: translateY(-1px); }
         
@@ -27,6 +27,17 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
             width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
         }
+
+        /* ★ 新設：データ入力用の左右分割レスポンシブレイアウト */
+        .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: flex-start; }
+        .split-left { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
+        .split-right { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
+        /* スプリット内のコンテナは親の幅いっぱいに広がるように上書き */
+        .split-layout .main-container { max-width: 100%; margin-bottom: 0; }
+        
+        /* 大画面モード（左右分割を解除して縦積みにする） */
+        .large-video-mode { flex-direction: column !important; align-items: center; }
+        .large-video-mode .split-left, .large-video-mode .split-right { width: 100%; max-width: 960px; flex: none; }
 
         /* 左パネル：選手選択 */
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
@@ -166,7 +177,9 @@
         .rename-item input:focus { border-bottom-color: #007BFF; }
 
         /* スマホ用レスポンシブ */
-        @media (max-width: 720px) {
+        @media (max-width: 900px) {
+            .split-layout { flex-direction: column; align-items: center; }
+            .split-left, .split-right { width: 100%; max-width: 760px; }
             .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; }
             .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 6px; }
@@ -219,96 +232,104 @@
     <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
 </div>
 
-<div id="view-input" class="view-content active">
+<div id="view-input" class="view-content active" style="max-width: 100%;">
+    <!-- ★ データ入力用 左右分割レイアウト -->
+    <div id="input-split-layout" class="split-layout">
+        
+        <!-- 左側：動画エリア -->
+        <div class="split-left">
+            <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px;">
+                <div id="video-source-ui" style="width: 100%;">
+                    <div class="category-title" style="margin: 0 0 10px 0; border: none; padding: 0; background: transparent; font-size: 13px; color: #555;">🎥 動画ソース選択</div>
+                    
+                    <div id="source-btn-group" style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                        <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 デバイスから動画を選択</button>
+                        <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
+                        <button class="action-btn" style="background: #dc3545; flex: 1; padding: 12px; font-size: 13px;" onclick="showYouTubeInput()">📺 Youtubeから動画を選択</button>
+                    </div>
 
-    <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px;">
-        <div id="video-source-ui" style="width: 100%;">
-            <div class="category-title" style="margin: 0 0 10px 0; border: none; padding: 0; background: transparent; font-size: 13px; color: #555;">🎥 動画ソース選択</div>
-            
-            <div id="source-btn-group" style="display: flex; gap: 8px; width: 100%; align-items: center;">
-                <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 デバイスから動画を選択</button>
-                <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
-                <button class="action-btn" style="background: #dc3545; flex: 1; padding: 12px; font-size: 13px;" onclick="showYouTubeInput()">📺 Youtubeから動画を選択</button>
-            </div>
+                    <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
+                        <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') loadYouTubeVideo()">
+                        <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
+                        <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
+                    </div>
+                </div>
 
-            <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                <!-- URL入力後、Enterキーで読み込み -->
-                <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') loadYouTubeVideo()">
-                <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
-                <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
+                <div id="video-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 8px; overflow: hidden; margin-top: 10px; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
+                    <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
+                    <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
+                </div>
+
+                <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 12px; justify-content: space-between; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 6px;">
+                        <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
+                        <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
+                        <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
+                        <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
+                        <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 6px;">
+                        <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 8px 12px; font-size: 12px;" onclick="toggleLargeScreen()">🔲 大画面</button>
+                        <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px;" onclick="openSettings()">⚙️ 設定</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="video-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 8px; overflow: hidden; margin-top: 10px; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
-            <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
-            <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
-        </div>
+        <!-- 右側：データ入力エリア -->
+        <div class="split-right">
+            <div class="main-container">
+                <div class="left-panel">
+                    <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
+                    <div id="player-grid-input" class="player-grid"></div>
+                    <div style="display: flex; gap: 4px; width: 100%; margin-top: 10px;">
+                        <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
+                        <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
+                        <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
+                    </div>
+                    <button class="action-btn" style="background:#ff9800; font-size: 13px; margin-top: 6px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
+                </div>
+                
+                <div class="court-wrapper">
+                    <canvas id="input-canvas"></canvas>
+                    <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
+                </div>
 
-        <!-- コントロールとタイマーを統合配置 -->
-        <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 12px; justify-content: space-between; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;">
-            <div style="display: flex; gap: 6px;">
-                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
-                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+                <div class="right-panel">
+                    <div class="category-title" style="margin-top:0;">サーブ結果</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
+                        <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
+                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
+                    </div>
+                    
+                    <div class="category-title" style="margin-top:12px;">スパイク結果</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn btn-ace spike-action-btn" style="flex:1;" onclick="saveAction('spike', '決定')" disabled>決定</button>
+                        <button class="action-btn btn-in spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
+                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
+                    </div>
+                    
+                    <div class="category-title" style="margin-top:12px;">入力ログ（クリックで再生）</div>
+                    <div id="log-container"></div>
+                </div>
             </div>
-            
-            <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
-                <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
-                <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
-                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
-            </div>
-            
-            <div style="display: flex; gap: 6px;">
-                <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 8px 12px; font-size: 12px;" onclick="toggleLargeScreen()">🔲 大画面</button>
-                <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px;" onclick="openSettings()">⚙️ 設定</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
-            <div id="player-grid-input" class="player-grid"></div>
-            <div style="display: flex; gap: 4px; width: 100%; margin-top: 10px;">
-                <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
-                <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
-                <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
-            </div>
-            <button class="action-btn" style="background:#ff9800; font-size: 13px; margin-top: 6px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
         </div>
         
-        <div class="court-wrapper">
-            <canvas id="input-canvas"></canvas>
-            <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
-        </div>
-
-        <div class="right-panel">
-            <div class="category-title" style="margin-top:0;">サーブ結果</div>
-            <div style="display:flex; gap:6px;">
-                <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
-                <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-                <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
-                <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
-            </div>
-            
-            <div class="category-title" style="margin-top:12px;">スパイク結果</div>
-            <div style="display:flex; gap:6px;">
-                <button class="action-btn btn-ace spike-action-btn" style="flex:1;" onclick="saveAction('spike', '決定')" disabled>決定</button>
-                <button class="action-btn btn-in spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-                <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
-                <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-                <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
-            </div>
-            
-            <div class="category-title" style="margin-top:12px;">入力ログ（クリックで再生）</div>
-            <div id="log-container"></div>
-        </div>
-    </div>
+    </div> <!-- /split-layout -->
 </div>
 
 <div id="view-analysis" class="view-content">
@@ -432,7 +453,6 @@
                     <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
                 </div>
                 <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
-                    <!-- 表記変更 -->
                     <div class="ace-stat-label">決定</div>
                     <div class="ace-stat-val-row">
                         <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
@@ -518,10 +538,7 @@
     let isTimerRunning = false;
     let seekDuration = 5; 
     
-    // ★ 動画名の保存用変数
     let currentVideoName = "";
-
-    // 動画再生キュー用の変数
     let playQueue = [];
     let playIndex = 0;
     let playTimeout = null;
@@ -533,18 +550,17 @@
     function toggleLargeScreen() {
         isLargeScreen = !isLargeScreen;
         const sourceUi = document.getElementById('video-source-ui');
-        const videoCard = document.getElementById('video-container-card');
+        const splitLayout = document.getElementById('input-split-layout');
         const btn = document.getElementById('btn-large-screen');
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            // ★ 大画面時、100%ではなくほど良い最大幅(960px)に制限
-            videoCard.style.maxWidth = '960px'; 
-            btn.innerText = '🗗 通常';
+            splitLayout.classList.add('large-video-mode');
+            btn.innerText = '🗗 分割に戻す';
             btn.style.background = '#ff9800';
         } else {
             sourceUi.style.display = 'block';
-            videoCard.style.maxWidth = '760px'; 
+            splitLayout.classList.remove('large-video-mode');
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
         }
@@ -578,7 +594,6 @@
         const file = event.target.files[0];
         if (!file) return;
 
-        // ★ ファイル名から拡張子を除いたものをセット
         currentVideoName = file.name.replace(/\.[^/.]+$/, "");
 
         activeVideoType = 'local';
@@ -743,7 +758,6 @@
     }
 
     function onYouTubeStateChange(event) {
-        // ★ YouTube動画タイトルの取得
         if (ytPlayer && typeof ytPlayer.getVideoData === 'function') {
             let vData = ytPlayer.getVideoData();
             if (vData && vData.title) currentVideoName = vData.title;
@@ -775,7 +789,6 @@
         }
     }
 
-    /* ====== プレイリスト（連続再生）の処理 ====== */
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -856,8 +869,10 @@
         
         const vc = document.getElementById('video-container-card');
         vc.style.marginBottom = '15px';
-        const originalParent = document.getElementById('view-input');
-        originalParent.insertBefore(vc, originalParent.firstChild);
+        
+        // 元のsplit-leftの中に戻す
+        const splitLeft = document.querySelector('.split-left');
+        splitLeft.insertBefore(vc, splitLeft.firstChild);
         
         document.getElementById('video-modal-overlay').style.display = 'none';
         
@@ -871,7 +886,6 @@
         }
     }
 
-    /* ====== IndexedDB ＆ データ保存処理 ====== */
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -1164,14 +1178,12 @@
         }
     }
 
-    // ★ ファイル保存用ヘルパー関数
     function getSuggestFileName(prefix) {
         let base = currentVideoName ? currentVideoName : "VLink";
         let dateStr = new Date().toISOString().slice(0,10);
         return `${base}_${prefix}_${dateStr}`;
     }
 
-    // ★ JSON保存処理（File System Access API 対応）
     async function exportData() {
         let defaultName = getSuggestFileName("Data");
         let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
@@ -1206,7 +1218,6 @@
         }
     }
 
-    // ★ CSV保存処理（File System Access API 対応）
     async function exportCSV() {
         let defaultName = getSuggestFileName("Report");
         let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
@@ -1214,7 +1225,7 @@
         if (inputName.trim() === "") inputName = defaultName;
         if (!inputName.endsWith('.csv')) inputName += '.csv';
 
-        let csvContent = "\uFEFF"; // Excel用BOM
+        let csvContent = "\uFEFF";
         csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         dataLog.forEach(l => {
             let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
