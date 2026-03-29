@@ -6,10 +6,13 @@
     <title>V-Link Junior (Pro版 - 動画完全同期 & シーク機能)</title>
     <style>
         /* 基本レイアウト */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 15px 10px; margin: 0; touch-action: manipulation; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 0 10px 15px 10px; margin: 0; touch-action: manipulation; }
         
-        /* タブメニュー */
-        .tab-menu { width: 100%; max-width: 760px; display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        /* タブメニュー（上部固定） */
+        .tab-menu { 
+            position: sticky; top: 0; z-index: 1000; background: #f4f7f6;
+            width: 100%; max-width: 760px; display: flex; gap: 8px; padding: 15px 0 10px 0; margin-bottom: 5px; flex-wrap: wrap; 
+        }
         .tab-btn { flex: 1 1 22%; min-width: 70px; padding: 14px 8px; border: none; border-radius: 8px; cursor: pointer; background: #e9ecef; color: #495057; font-weight: bold; font-size: 13px; transition: all 0.2s ease; text-align: center; }
         .tab-btn:hover { background: #dee2e6; color: #212529; }
         .tab-btn.active { background: #007bff; color: white; box-shadow: 0 4px 12px rgba(0,123,255,0.3); transform: translateY(-1px); }
@@ -239,13 +242,23 @@
             <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
         </div>
 
-        <div id="video-seek-controls" style="display: flex; gap: 10px; width: 100%; align-items: center; margin-top: 12px; justify-content: center; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef;">
-            <button class="action-btn" style="background: #6c757d; padding: 8px 16px; font-size: 13px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
-            <button class="action-btn" style="background: #6c757d; padding: 8px 16px; font-size: 13px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+        <!-- コントロールとタイマーを統合 -->
+        <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 12px; justify-content: space-between; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;">
+            <div style="display: flex; gap: 6px;">
+                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
+                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+            </div>
             
-            <div style="flex: 1;"></div> 
-            <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 8px 12px; font-size: 12px;" onclick="toggleLargeScreen()">🔲 大画面</button>
-            <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px;" onclick="openSettings()">⚙️ 設定</button>
+            <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
+                <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
+                <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
+                <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
+            </div>
+            
+            <div style="display: flex; gap: 6px;">
+                <button id="btn-large-screen" class="action-btn" style="background: #17a2b8; padding: 8px 12px; font-size: 12px;" onclick="toggleLargeScreen()">🔲 大画面</button>
+                <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px;" onclick="openSettings()">⚙️ 設定</button>
+            </div>
         </div>
     </div>
 
@@ -267,14 +280,7 @@
         </div>
 
         <div class="right-panel">
-            <div class="category-title" style="margin-top:0;">⏱ タイマー (動画と同期)</div>
-            <div style="display: flex; gap: 6px; align-items: stretch; margin-bottom: 10px;">
-                <div id="match-timer-display" style="font-size: 20px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 70px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
-                <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; flex: 1; padding: 10px; font-size: 15px; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ スタート</button>
-                <button class="action-btn" style="background: #6c757d; padding: 10px 12px; font-size: 15px;" onclick="resetTimer()" title="リセット">↺</button>
-            </div>
-
-            <div class="category-title">サーブ結果</div>
+            <div class="category-title" style="margin-top:0;">サーブ結果</div>
             <div style="display:flex; gap:6px;">
                 <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
                 <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
@@ -325,7 +331,7 @@
                 <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
                 <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
             </div>
-            <!-- 動画連続再生ボタンを追加 -->
+            <!-- 動画連続再生ボタン -->
             <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('serve')">▶ 表示中の動画を連続再生</button>
         </div>
         <div class="right-panel">
@@ -392,7 +398,7 @@
                 <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
                 <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
             </div>
-            <!-- 動画連続再生ボタンを追加 -->
+            <!-- 動画連続再生ボタン -->
             <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('spike')">▶ 表示中の動画を連続再生</button>
         </div>
         <div class="right-panel">
@@ -480,7 +486,7 @@
     const colors = { 
         'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
         '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
-        'temp': '#FFFF00' // 入力中のポイント色（黄色へ変更）
+        'temp': '#FFFF00' 
     };
     
     let currentSessionId = "session_" + Date.now();
@@ -494,7 +500,7 @@
     let comparePlayers = []; 
     let compareType = 'serve'; 
     let multiSelectMode = false; 
-    let isTeamAll = false; // チーム全体表示のON/OFFフラグ
+    let isTeamAll = false; 
     
     let inputState = 'idle', serveStart = null, serveEnd = null;
     let serveFilter = 'all', spikeFilter = 'all'; 
@@ -664,7 +670,7 @@
         } else {
             clearInterval(timerInterval);
             isTimerRunning = false;
-            btn.innerHTML = '▶ スタート'; btn.style.background = '#28a745';
+            btn.innerHTML = '▶ 再生'; btn.style.background = '#28a745';
         }
     }
 
@@ -731,6 +737,9 @@
             setTimerState(true); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         } else if (event.data === 2) { 
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
+        // ★YouTube再生終了時にタイマー停止
+        } else if (event.data === 0) {
+            setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         }
     }
 
@@ -762,7 +771,6 @@
         const lZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
         let logs = getFilteredLogs(type, sFilter, lZones);
         
-        // 動画時間が記録されているログのみ抽出
         logs = logs.filter(l => l.videoTime);
         
         if (logs.length === 0) {
@@ -770,7 +778,6 @@
             return;
         }
         
-        // ログを動画時間順（時系列）に並び替え
         logs.sort((a, b) => {
             let ta = a.videoTime.split(':'); let sa = parseInt(ta[0])*60 + parseInt(ta[1]);
             let tb = b.videoTime.split(':'); let sb = parseInt(tb[0])*60 + parseInt(tb[1]);
@@ -780,7 +787,6 @@
         playQueue = logs;
         playIndex = 0;
         
-        // 再生用UIへ表示を切り替え（入力タブにある動画エリアをモーダル内に移動）
         document.getElementById('video-source-ui').style.display = 'none';
         document.getElementById('video-seek-controls').style.display = 'none';
         
@@ -803,9 +809,8 @@
         let pName = playerNames[log.playerId];
         document.getElementById('playback-status-text').innerText = `[${playIndex + 1}/${playQueue.length}] ${pName} : ${log.result}`;
         
-        seekToLogTime(log.videoTime); // 指定時間の4秒前から再生開始
+        seekToLogTime(log.videoTime); 
         
-        // 約8秒間再生したら次のシーンへ自動スキップ
         clearTimeout(playTimeout);
         playTimeout = setTimeout(() => {
             if (playIndex < playQueue.length - 1) {
@@ -834,7 +839,6 @@
     function closePlaybackModal() {
         clearTimeout(playTimeout);
         
-        // 動画エリアを元の位置（データ入力タブ内）に戻す
         const vc = document.getElementById('video-container-card');
         vc.style.marginBottom = '15px';
         const originalParent = document.getElementById('view-input');
@@ -845,7 +849,6 @@
         document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
         document.getElementById('video-seek-controls').style.display = 'flex';
         
-        // 動画を一時停止
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
         } else if (activeVideoType === 'local') {
@@ -916,6 +919,8 @@
         const lp = document.getElementById('local-player');
         lp.addEventListener('play', () => setTimerState(true));
         lp.addEventListener('pause', () => setTimerState(false));
+        // ★ローカル動画の再生終了時にもタイマー停止
+        lp.addEventListener('ended', () => setTimerState(false));
         lp.addEventListener('seeked', () => { timerSeconds = Math.floor(lp.currentTime); updateTimerDisplay(); });
 
         document.addEventListener('keydown', function(e) {
@@ -956,7 +961,6 @@
     function openFinishView() { switchTab('finish'); }
     function goToCompare() { compareType = (currentTab === 'analysis') ? 'serve' : 'spike'; switchTab('compare'); }
 
-    // ★ チーム全体表示のON/OFF
     function toggleAllTeam() {
         isTeamAll = !isTeamAll;
         const btns = document.querySelectorAll('.btn-team-all');
@@ -967,7 +971,12 @@
             selectedStatsPlayers = [];
             btns.forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
         }
-        lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
+        
+        // ★フィルターリセット
+        serveFilter = 'all'; spikeFilter = 'all'; 
+        lockedServeZones = []; lockedSpikeZones = []; 
+        updateZoneClasses('serve'); updateZoneClasses('spike');
+        
         if (currentTab === 'analysis') drawAnalysis();
         if (currentTab === 'spike') drawSpike();
         renderPlayerGrids();
@@ -1091,7 +1100,6 @@
                 container.appendChild(wrapper);
             }
             
-            // ＋追加ボタンの表示
             if (activePlayerCount < 10) {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'player-wrapper player-add-btn';
@@ -1105,7 +1113,6 @@
                 container.appendChild(addWrapper);
             }
             
-            // －削除ボタンの表示 (最小1人)
             if (activePlayerCount > 1) {
                 const removeWrapper = document.createElement('div');
                 removeWrapper.className = 'player-wrapper player-add-btn';
@@ -1367,7 +1374,6 @@
             if (comparePlayers.includes(id)) comparePlayers = comparePlayers.filter(p => p !== id); else if (comparePlayers.length < 8) comparePlayers.push(id);
             renderCompareVisual();
         } else {
-            // チーム全体表示がONの状態で個別選手を押した場合はOFFにする
             if (isTeamAll) {
                 isTeamAll = false;
                 document.querySelectorAll('.btn-team-all').forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
@@ -1387,7 +1393,11 @@
                 }
             }
             
-            lockedServeZones = []; lockedSpikeZones = []; updateZoneClasses('serve'); updateZoneClasses('spike');
+            // ★ 別の選手を選択したときにフィルターを自動リセット
+            serveFilter = 'all'; spikeFilter = 'all'; 
+            lockedServeZones = []; lockedSpikeZones = []; 
+            updateZoneClasses('serve'); updateZoneClasses('spike');
+            
             if (currentTab === 'analysis') drawAnalysis();
             if (currentTab === 'spike') drawSpike();
         }
