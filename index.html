@@ -232,7 +232,7 @@
             </div>
 
             <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                <!-- URL入力後、Enterキーで読み込み可能に修正 -->
+                <!-- URL入力後、Enterキーで読み込み -->
                 <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') loadYouTubeVideo()">
                 <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
                 <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
@@ -282,8 +282,6 @@
         </div>
 
         <div class="right-panel">
-            <!-- タイマーを動画エリアに移動したため、ここは削除 -->
-
             <div class="category-title" style="margin-top:0;">サーブ結果</div>
             <div style="display:flex; gap:6px;">
                 <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
@@ -1173,7 +1171,8 @@
         return `${base}_${prefix}_${dateStr}`;
     }
 
-    function exportData() {
+    // ★ JSON保存処理（File System Access API 対応）
+    async function exportData() {
         let defaultName = getSuggestFileName("Data");
         let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
         if (inputName === null) return; 
@@ -1181,28 +1180,69 @@
         if (!inputName.endsWith('.json')) inputName += '.json';
 
         const data = { players: playerNames, log: dataLog, playerCount: activePlayerCount };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob); const a = document.createElement('a');
-        a.href = url; a.download = inputName;
-        a.click(); URL.revokeObjectURL(url);
+        const jsonString = JSON.stringify(data);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        try {
+            if (window.showSaveFilePicker) {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: inputName,
+                    types: [{ description: 'JSON File', accept: {'application/json': ['.json']} }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const url = URL.createObjectURL(blob); 
+                const a = document.createElement('a');
+                a.href = url; a.download = inputName;
+                a.click(); 
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                alert("保存に失敗しました。");
+            }
+        }
     }
 
-    function exportCSV() {
+    // ★ CSV保存処理（File System Access API 対応）
+    async function exportCSV() {
         let defaultName = getSuggestFileName("Report");
         let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", defaultName);
         if (inputName === null) return; 
         if (inputName.trim() === "") inputName = defaultName;
         if (!inputName.endsWith('.csv')) inputName += '.csv';
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        let csvContent = "\uFEFF"; // Excel用BOM
         csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         dataLog.forEach(l => {
             let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
             csvContent += `${l.time},${l.sessionId},${l.videoTime || ''},${playerNames[l.playerId]},${typeStr},${l.result}\n`;
         });
-        const encodedUri = encodeURI(csvContent); const a = document.createElement('a');
-        a.href = encodedUri; a.download = inputName;
-        a.click();
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+
+        try {
+            if (window.showSaveFilePicker) {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: inputName,
+                    types: [{ description: 'CSVファイル', accept: {'text/csv': ['.csv']} }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = inputName;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                alert("保存に失敗しました。");
+            }
+        }
     }
 
     function importData(e) {
