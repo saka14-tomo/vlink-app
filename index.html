@@ -40,7 +40,7 @@
         .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 
         .player-wrapper { 
-            display: flex; flex-direction: column; width: 100%; height: 56px; 
+            display: flex; flex-direction: column; width: 100%; height: 50px; /* JSで動的変更 */
             border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: #f8f9fa; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;
         }
@@ -52,11 +52,11 @@
             flex: 1; border: none; background: transparent; cursor: pointer; padding: 0 2px; 
             outline: none; transition: background 0.2s; display: flex; align-items: center; justify-content: center; 
         }
-        .player-btn span { font-size: 12px; font-weight: bold; color: #333; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-btn span { font-weight: bold; color: #333; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .player-wrapper.active .player-btn span, .player-wrapper.compare-active .player-btn span { color: white; }
 
         .edit-single-btn { 
-            height: 18px; background: rgba(0,0,0,0.04); font-size: 9px; display: flex; align-items: center; justify-content: center; 
+            background: rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: center; 
             cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); color: #495057; transition: 0.2s; font-weight: bold;
         }
         .edit-single-btn:hover { background: rgba(0,0,0,0.08); }
@@ -91,8 +91,8 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウ */
-        #log-container { flex: 1; min-height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
+        /* ログウィンドウ（スクロール不可・5枠固定） */
+        #log-container { flex: 1; min-height: 155px; max-height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow: hidden; }
         .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
         .log-row:hover { background: #e2e6ea; }
         .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; pointer-events: none; }
@@ -221,7 +221,7 @@
 <div id="view-input" class="view-content active" style="max-width: 100%;">
     <div id="input-split-layout" class="split-layout">
         
-        <!-- 左側：動画エリア（共通のvideo-container-cardを保有） -->
+        <!-- 左側：動画エリア -->
         <div class="split-left" id="input-video-area">
             <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px;">
                 <div id="video-source-ui" style="width: 100%;">
@@ -336,10 +336,7 @@
 
 <!-- ================= 2. サーブ統計画面 ================= -->
 <div id="view-analysis" class="view-content" style="max-width: 100%;">
-    <!-- ★ データ入力画面と統一した左右分割構造 -->
     <div id="analysis-split-layout" class="split-layout">
-        
-        <!-- 再生時用の動画エリア（通常時は非表示） -->
         <div class="split-left" id="analysis-video-area" style="display: none;"></div>
 
         <div class="split-right">
@@ -349,7 +346,6 @@
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                         <div id="player-grid-analysis" class="player-grid"></div>
                     </div>
-                    <!-- アライメント：下部固定 -->
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
                         <button class="action-btn btn-team-all" style="background:#28a745; width: 100%;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
                         <button id="btn-multi-serve" class="action-btn" style="background:#6c757d; width: 100%;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
@@ -370,7 +366,6 @@
                         <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
                         <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
                     </div>
-                    <!-- 動画連続再生ボタン：下部固定 -->
                     <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: auto; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('serve')">▶ 表示中の動画を連続再生</button>
                 </div>
                 
@@ -420,10 +415,7 @@
 
 <!-- ================= 3. スパイク統計画面 ================= -->
 <div id="view-spike" class="view-content" style="max-width: 100%;">
-    <!-- ★ データ入力画面と統一した左右分割構造 -->
     <div id="spike-split-layout" class="split-layout">
-        
-        <!-- 再生時用の動画エリア（通常時は非表示） -->
         <div class="split-left" id="spike-video-area" style="display: none;"></div>
 
         <div class="split-right">
@@ -433,7 +425,6 @@
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                         <div id="player-grid-spike" class="player-grid"></div>
                     </div>
-                    <!-- アライメント：下部固定 -->
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
                         <button class="action-btn btn-team-all" style="background:#28a745; width: 100%;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
                         <button id="btn-multi-spike" class="action-btn" style="background:#6c757d; width: 100%;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
@@ -454,7 +445,6 @@
                         <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
                         <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
                     </div>
-                    <!-- 動画連続再生ボタン：下部固定 -->
                     <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: auto; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('spike')">▶ 表示中の動画を連続再生</button>
                 </div>
                 
@@ -550,12 +540,12 @@
     };
     
     let currentSessionId = "session_" + Date.now();
-    let playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
+    let playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"};
     let dataLog = [];
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let activePlayerCount = 6; 
+    let activePlayerCount = 7; // ★基本を7名に変更
     let selectedStatsPlayers = []; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
@@ -592,7 +582,6 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            // 大画面モード：左右分割を維持しつつ幅を全画面に拡張
             splitLayout.style.maxWidth = '100%'; 
             btn.innerText = '🗗 縮小';
             btn.style.background = '#ff9800';
@@ -682,6 +671,9 @@
             rebuildYTPlayer(videoId);
         }
         
+        // ★スペースキーによる再生トラブル防止策：フォーカスを外す
+        document.getElementById('yt-url-input').blur();
+
         timerSeconds = 0;
         updateTimerDisplay();
     }
@@ -836,7 +828,6 @@
         }
     }
 
-    /* ====== プレイリスト（連続再生）の処理 ====== */
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -863,7 +854,6 @@
         playQueue = logs;
         playIndex = 0;
         
-        // --- 画面を左右分割（大画面）モードに変更 ---
         const vc = document.getElementById('video-container-card');
         const targetArea = document.getElementById(type === 'serve' ? 'analysis-video-area' : 'spike-video-area');
         
@@ -874,7 +864,6 @@
         document.getElementById('video-seek-controls').style.display = 'none';
         document.getElementById('playlist-controls').style.display = 'flex';
         
-        // 統計画面のSplitLayoutの幅を100%（大画面表示）にする
         document.getElementById(type === 'serve' ? 'analysis-split-layout' : 'spike-split-layout').style.maxWidth = '100%';
         
         playCurrentQueueItem();
@@ -921,20 +910,16 @@
     function closePlaybackModal() {
         clearTimeout(playTimeout);
         
-        // --- データ入力画面の元の位置に動画プレイヤーを戻す ---
         const vc = document.getElementById('video-container-card');
         const inputLeftArea = document.getElementById('input-video-area');
         inputLeftArea.insertBefore(vc, inputLeftArea.firstChild);
         
-        // 統計画面の動画エリアを非表示に戻す
         document.getElementById('analysis-video-area').style.display = 'none';
         document.getElementById('spike-video-area').style.display = 'none';
         
-        // SplitLayoutの幅を元に戻す
         document.getElementById('analysis-split-layout').style.maxWidth = '1400px';
         document.getElementById('spike-split-layout').style.maxWidth = '1400px';
         
-        // コントロール表示の復元（大画面状態に応じてソースUI表示を判断）
         document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
         document.getElementById('video-seek-controls').style.display = 'flex';
         document.getElementById('playlist-controls').style.display = 'none';
@@ -975,7 +960,7 @@
         if (localStorage.getItem('vlink_player_count')) {
             activePlayerCount = parseInt(localStorage.getItem('vlink_player_count'), 10);
         } else if (localStorage.getItem('vlink_players')) {
-            activePlayerCount = 10;
+            activePlayerCount = 7; // フォールバックも7人に設定
         }
         if (db) saveToDB(); 
     }
@@ -1169,12 +1154,36 @@
         drawSpike(); 
     }
 
+    // ★ 12人対応と自動リサイズ処理を組み込んだ renderPlayerGrids()
     function renderPlayerGrids() {
+        let wrapperHeight = '50px';
+        let fontSize = '12px';
+        let editHeight = '18px';
+        let editFontSize = '9px';
+
+        // 描画される全ボタン数（選手数＋「追加」＋「削除」の最大値）から高さを決定
+        let totalButtons = activePlayerCount;
+        if (activePlayerCount < 12) totalButtons++; // 追加ボタン
+        if (activePlayerCount > 1) totalButtons++;  // 削除ボタン
+
+        if (totalButtons > 10) { 
+            wrapperHeight = '34px';
+            fontSize = '10px';
+            editHeight = '14px';
+            editFontSize = '8px';
+        } else if (totalButtons > 8) { 
+            wrapperHeight = '42px';
+            fontSize = '11px';
+            editHeight = '16px';
+            editFontSize = '8px';
+        }
+
         ['input', 'analysis', 'spike', 'compare'].forEach(type => {
             const container = document.getElementById(`player-grid-${type}`); if(!container) return;
             container.innerHTML = '';
             for(let i=1; i<=activePlayerCount; i++) {
                 const wrapper = document.createElement('div');
+                wrapper.style.height = wrapperHeight;
                 let isActive = false, isCompareActive = false;
 
                 if (type === 'input') isActive = (selectedPlayerId == i);
@@ -1184,33 +1193,38 @@
                 wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
                 const btn = document.createElement('button'); btn.className = `player-btn`;
                 btn.onclick = () => selectPlayer(i);
-                btn.innerHTML = `<span>${playerNames[i]}</span>`;
+                btn.innerHTML = `<span style="font-size:${fontSize};">${playerNames[i]}</span>`;
                 wrapper.appendChild(btn);
                 
                 if (type === 'input') {
                     const editBtn = document.createElement('div'); editBtn.className = 'edit-single-btn';
+                    editBtn.style.height = editHeight;
+                    editBtn.style.fontSize = editFontSize;
                     editBtn.innerHTML = '✏️ 編集'; editBtn.onclick = (e) => editSingleName(e, i);
                     wrapper.appendChild(editBtn);
                 }
                 container.appendChild(wrapper);
             }
             
-            if (activePlayerCount < 10) {
+            // ★ 最大12人まで追加可能
+            if (activePlayerCount < 12) {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'player-wrapper player-add-btn';
+                addWrapper.style.height = wrapperHeight;
                 addWrapper.onclick = () => {
                     activePlayerCount++;
                     if (!playerNames[activePlayerCount]) playerNames[activePlayerCount] = String(activePlayerCount);
                     saveToLocal();
                     renderPlayerGrids();
                 };
-                addWrapper.innerHTML = '<span>＋</span>';
+                addWrapper.innerHTML = `<span style="font-size:${fontSize};">＋</span>`;
                 container.appendChild(addWrapper);
             }
             
             if (activePlayerCount > 1) {
                 const removeWrapper = document.createElement('div');
                 removeWrapper.className = 'player-wrapper player-add-btn';
+                removeWrapper.style.height = wrapperHeight;
                 removeWrapper.style.borderColor = '#dc3545';
                 removeWrapper.onmouseover = () => removeWrapper.style.backgroundColor = '#fff5f5';
                 removeWrapper.onmouseout = () => removeWrapper.style.backgroundColor = 'transparent';
@@ -1231,7 +1245,7 @@
                         renderPlayerGrids();
                     }
                 };
-                removeWrapper.innerHTML = '<span style="color:#dc3545; font-size:24px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>';
+                removeWrapper.innerHTML = `<span style="color:#dc3545; font-size:18px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>`;
                 container.appendChild(removeWrapper);
             }
         });
@@ -1349,8 +1363,8 @@
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
             dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
-            activePlayerCount = 6; 
-            playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10"};
+            activePlayerCount = 7; // リセット時も7人に戻す
+            playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"};
             resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
             updateZoneClasses('serve'); updateZoneClasses('spike');
@@ -1556,9 +1570,11 @@
         renderPlayerGrids(); 
     }
     
+    // ★ ログ表示を確実に最新5枠に限定（.slice(0, 5)）
     function updateLog() { 
         const container = document.getElementById('log-container');
-        container.innerHTML = [...dataLog].reverse().map(l => {
+        const displayLogs = [...dataLog].reverse().slice(0, 5); // 5枠固定
+        container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
