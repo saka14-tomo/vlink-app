@@ -31,7 +31,7 @@
         /* ★ データ入力・統計用の左右分割レスポンシブレイアウト */
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
-        .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
+        .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
         /* 左右の高さを完全に均一化 */
         .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
 
@@ -337,6 +337,7 @@
 <!-- ================= 2. サーブ統計画面 ================= -->
 <div id="view-analysis" class="view-content" style="max-width: 100%;">
     <div id="analysis-split-layout" class="split-layout">
+        <!-- 元の動画移動先divは残しておきますが、今回は使用しません -->
         <div class="split-left" id="analysis-video-area" style="display: none;"></div>
 
         <div class="split-right">
@@ -416,6 +417,7 @@
 <!-- ================= 3. スパイク統計画面 ================= -->
 <div id="view-spike" class="view-content" style="max-width: 100%;">
     <div id="spike-split-layout" class="split-layout">
+        <!-- 元の動画移動先divは残しておきますが、今回は使用しません -->
         <div class="split-left" id="spike-video-area" style="display: none;"></div>
 
         <div class="split-right">
@@ -545,7 +547,7 @@
     
     let currentTab = 'input';
     let selectedPlayerId = null; 
-    let activePlayerCount = 7; // ★基本を7名に変更
+    let activePlayerCount = 7; 
     let selectedStatsPlayers = []; 
     let comparePlayers = []; 
     let compareType = 'serve'; 
@@ -569,6 +571,9 @@
     let playQueue = [];
     let playIndex = 0;
     let playTimeout = null;
+    
+    // ★ 連続再生用に追加：元いたタブを記憶する変数
+    let returnTabAfterPlaylist = null; 
 
     function openSettings() { document.getElementById('settings-modal-overlay').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal-overlay').style.display = 'none'; }
@@ -671,7 +676,6 @@
             rebuildYTPlayer(videoId);
         }
         
-        // ★スペースキーによる再生トラブル防止策：フォーカスを外す
         document.getElementById('yt-url-input').blur();
 
         timerSeconds = 0;
@@ -828,6 +832,7 @@
         }
     }
 
+    // ★ 動画を移動させず、データ入力タブをシアターモードにするよう処理を変更
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -854,17 +859,17 @@
         playQueue = logs;
         playIndex = 0;
         
-        const vc = document.getElementById('video-container-card');
-        const targetArea = document.getElementById(type === 'serve' ? 'analysis-video-area' : 'spike-video-area');
-        
-        targetArea.appendChild(vc);
-        targetArea.style.display = 'flex';
+        // 元のタブを記憶して、動画タブへ切り替え
+        returnTabAfterPlaylist = currentTab;
+        switchTab('input');
+
+        // 右側の入力パネルを隠す（シアターモード）
+        const inputRightPanel = document.querySelector('#view-input .split-right');
+        if(inputRightPanel) inputRightPanel.style.display = 'none';
         
         document.getElementById('video-source-ui').style.display = 'none';
         document.getElementById('video-seek-controls').style.display = 'none';
         document.getElementById('playlist-controls').style.display = 'flex';
-        
-        document.getElementById(type === 'serve' ? 'analysis-split-layout' : 'spike-split-layout').style.maxWidth = '100%';
         
         playCurrentQueueItem();
     }
@@ -907,27 +912,29 @@
         }
     }
 
+    // ★ シアターモードを終了して元に戻す処理
     function closePlaybackModal() {
         clearTimeout(playTimeout);
-        
-        const vc = document.getElementById('video-container-card');
-        const inputLeftArea = document.getElementById('input-video-area');
-        inputLeftArea.insertBefore(vc, inputLeftArea.firstChild);
-        
-        document.getElementById('analysis-video-area').style.display = 'none';
-        document.getElementById('spike-video-area').style.display = 'none';
-        
-        document.getElementById('analysis-split-layout').style.maxWidth = '1400px';
-        document.getElementById('spike-split-layout').style.maxWidth = '1400px';
-        
-        document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
-        document.getElementById('video-seek-controls').style.display = 'flex';
-        document.getElementById('playlist-controls').style.display = 'none';
         
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
         } else if (activeVideoType === 'local') {
             document.getElementById('local-player').pause();
+        }
+
+        // 隠していた右側パネルを再表示
+        const inputRightPanel = document.querySelector('#view-input .split-right');
+        if(inputRightPanel) inputRightPanel.style.display = 'flex';
+        
+        document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
+        document.getElementById('video-seek-controls').style.display = 'flex';
+        document.getElementById('playlist-controls').style.display = 'none';
+        
+        // 記憶していたタブへ戻る
+        if (returnTabAfterPlaylist) {
+            let target = returnTabAfterPlaylist;
+            returnTabAfterPlaylist = null;
+            switchTab(target);
         }
     }
 
@@ -1023,11 +1030,21 @@
     };
 
     function switchTab(target) {
+        // ★ 連続再生中に他のタブが押された場合の安全な終了処理
+        if (document.getElementById('playlist-controls').style.display === 'flex') {
+            returnTabAfterPlaylist = null; // ループ防止
+            closePlaybackModal();
+        }
+
         currentTab = target;
         document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`view-${target}`).classList.add('active');
-        if(target !== 'rename' && target !== 'finish') document.getElementById(`tab-${target}`).classList.add('active');
+        
+        if(target !== 'rename' && target !== 'finish') {
+            const tabBtn = document.getElementById(`tab-${target}`);
+            if (tabBtn) tabBtn.classList.add('active');
+        }
         
         if(target === 'analysis') drawAnalysis();
         if(target === 'spike') drawSpike();
@@ -1154,17 +1171,15 @@
         drawSpike(); 
     }
 
-    // ★ 12人対応と自動リサイズ処理を組み込んだ renderPlayerGrids()
     function renderPlayerGrids() {
         let wrapperHeight = '50px';
         let fontSize = '12px';
         let editHeight = '18px';
         let editFontSize = '9px';
 
-        // 描画される全ボタン数（選手数＋「追加」＋「削除」の最大値）から高さを決定
         let totalButtons = activePlayerCount;
-        if (activePlayerCount < 12) totalButtons++; // 追加ボタン
-        if (activePlayerCount > 1) totalButtons++;  // 削除ボタン
+        if (activePlayerCount < 12) totalButtons++; 
+        if (activePlayerCount > 1) totalButtons++;  
 
         if (totalButtons > 10) { 
             wrapperHeight = '34px';
@@ -1206,7 +1221,6 @@
                 container.appendChild(wrapper);
             }
             
-            // ★ 最大12人まで追加可能
             if (activePlayerCount < 12) {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'player-wrapper player-add-btn';
@@ -1363,7 +1377,7 @@
     function resetAllData() {
         if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
             dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
-            activePlayerCount = 7; // リセット時も7人に戻す
+            activePlayerCount = 7; 
             playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"};
             resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
             serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
@@ -1570,10 +1584,9 @@
         renderPlayerGrids(); 
     }
     
-    // ★ ログ表示を確実に最新5枠に限定（.slice(0, 5)）
     function updateLog() { 
         const container = document.getElementById('log-container');
-        const displayLogs = [...dataLog].reverse().slice(0, 5); // 5枠固定
+        const displayLogs = [...dataLog].reverse().slice(0, 5);
         container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
