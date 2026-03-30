@@ -28,7 +28,7 @@
             width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
         }
 
-        /* ★ データ入力用の左右分割レスポンシブレイアウト */
+        /* データ入力用の左右分割レスポンシブレイアウト */
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
         .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
@@ -91,8 +91,8 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウ（スクロール可能、下部までストレッチ） */
-        #log-container { flex: 1; min-height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
+        /* ログウィンドウ（最大5件固定表示） */
+        #log-container { flex: none; height: 148px; min-height: 148px; max-height: 148px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
         .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
         .log-row:hover { background: #e2e6ea; }
         .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; pointer-events: none; }
@@ -180,7 +180,7 @@
             .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 6px; }
             .player-wrapper { width: 60px; height: 50px; }
-            #log-container { min-height: 120px; height: 120px; }
+            #log-container { height: 148px; min-height: 148px; }
             #video-seek-controls { justify-content: center; }
         }
 
@@ -230,7 +230,7 @@
 </div>
 
 <div id="view-input" class="view-content active" style="max-width: 100%;">
-    <!-- ★ データ入力用 左右分割レスポンシブレイアウト -->
+    <!-- データ入力用 左右分割レスポンシブレイアウト -->
     <div id="input-split-layout" class="split-layout">
         
         <!-- 左側：動画エリア -->
@@ -246,7 +246,7 @@
                     </div>
 
                     <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                        <!-- ★ Enterキーで読み込み＆自動再生開始 -->
+                        <!-- Enterキーで読み込み＆自動再生開始 -->
                         <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); loadYouTubeVideo(); }">
                         <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
                         <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
@@ -458,7 +458,6 @@
                     <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
                 </div>
                 <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
-                    <!-- 表記変更 -->
                     <div class="ace-stat-label">決定</div>
                     <div class="ace-stat-val-row">
                         <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
@@ -561,7 +560,6 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            // 大画面モード：左右分割を維持しつつ幅を全画面に拡張
             splitLayout.style.maxWidth = '100%'; 
             btn.innerText = '🗗 縮小';
             btn.style.background = '#ff9800';
@@ -587,7 +585,6 @@
         
         const controls = document.getElementById('video-seek-controls');
         controls.style.display = 'flex';
-        // flexが適用された後、マージン等を維持する
         controls.style.marginTop = 'auto';
 
         const ytNode = document.getElementById('yt-player');
@@ -615,14 +612,16 @@
         const lp = document.getElementById('local-player');
         lp.src = URL.createObjectURL(file);
         
-        // ★ 自動でタイマー0リセット＆再生開始
+        if(document.activeElement) document.activeElement.blur(); // ★フォーカスを外す
+
         timerSeconds = 0;
         updateTimerDisplay();
         lp.play();
     }
 
     function loadYouTubeVideo() {
-        const url = document.getElementById('yt-url-input').value;
+        const urlInput = document.getElementById('yt-url-input');
+        const url = urlInput.value;
         if (!url) { alert("URLを入力してください。"); return; }
         
         const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -653,7 +652,9 @@
             rebuildYTPlayer(videoId);
         }
         
-        // ★ 自動でタイマー0リセット（loadVideoByIdが自動再生を引き起こすため、連動してタイマーが走る）
+        urlInput.blur(); // ★入力欄からフォーカスを外してスペースキー誤動作を防ぐ
+        if(document.activeElement) document.activeElement.blur();
+
         timerSeconds = 0;
         updateTimerDisplay();
     }
@@ -787,7 +788,6 @@
         } else if (event.data === 2) { 
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         } else if (event.data === 0) {
-            // ★YouTubeの動画終了時
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         }
     }
@@ -809,7 +809,6 @@
         }
     }
 
-    /* ====== プレイリスト（連続再生）の処理 ====== */
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -900,7 +899,7 @@
         
         const controls = document.getElementById('video-seek-controls');
         controls.style.display = 'flex';
-        controls.style.marginTop = 'auto'; // 再適用
+        controls.style.marginTop = 'auto'; 
         
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
@@ -909,7 +908,6 @@
         }
     }
 
-    /* ====== IndexedDB ＆ データ保存処理 ====== */
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -972,12 +970,10 @@
         const lp = document.getElementById('local-player');
         lp.addEventListener('play', () => setTimerState(true));
         lp.addEventListener('pause', () => setTimerState(false));
-        // ★ ローカルの動画終了時
         lp.addEventListener('ended', () => setTimerState(false));
         lp.addEventListener('seeked', () => { timerSeconds = Math.floor(lp.currentTime); updateTimerDisplay(); });
 
         document.addEventListener('keydown', function(e) {
-            // ★ Escキーで大画面モード解除
             if (e.key === 'Escape' && isLargeScreen) {
                 e.preventDefault();
                 toggleLargeScreen();
@@ -987,7 +983,10 @@
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
             
             if (activeVideoType) {
-                if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); toggleTimer(); }
+                if (e.key === ' ' || e.code === 'Space') { 
+                    e.preventDefault(); 
+                    toggleTimer(); 
+                }
                 else if (e.key === 'ArrowLeft') { e.preventDefault(); seekVideo(-1); }
                 else if (e.key === 'ArrowRight') { e.preventDefault(); seekVideo(1); }
             }
