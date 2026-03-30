@@ -29,7 +29,7 @@
         }
 
         /* ★ アプリ全体の左右分割レスポンシブレイアウト */
-        .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s; }
+        .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s ease; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
         
@@ -254,14 +254,12 @@
                 </div>
             </div>
 
-            <!-- 連続再生用のコントロール（普段は非表示） -->
-            <div id="playlist-controls" style="display: none; flex-direction: column; width: 100%; margin-top: auto; gap: 10px;">
-                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; background: #222; padding: 12px 15px; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                    <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipPrevPlayback()">⏮ 前へ</button>
-                    <div id="playback-status-text" style="font-weight: bold; font-size: 15px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-                    <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipNextPlayback()">次へ ⏭</button>
-                </div>
-                <button class="action-btn" style="background: #dc3545; padding: 12px 30px; font-size: 15px; width: 100%;" onclick="closePlaybackModal()">✖ 閉じる (統計に戻る)</button>
+            <!-- ★ 連続再生用のコントロール（コンパクトな1列表示に修正） -->
+            <div id="playlist-controls" style="display: none; flex-direction: row; width: 100%; margin-top: auto; gap: 8px; background: #222; padding: 8px 12px; border-radius: 8px; align-items: center; box-sizing: border-box;">
+                <button class="action-btn" style="background:#555; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="skipPrevPlayback()">⏮ 前へ</button>
+                <div id="playback-status-text" style="font-weight: bold; font-size: 14px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                <button class="action-btn" style="background:#555; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="skipNextPlayback()">次へ ⏭</button>
+                <button class="action-btn" style="background: #dc3545; padding: 8px 16px; font-size: 12px; flex-shrink: 0; margin-left: 4px; box-shadow: none;" onclick="closePlaybackModal()">✖ 閉じる</button>
             </div>
 
         </div>
@@ -548,7 +546,7 @@
     
     let currentVideoName = "";
     
-    // ★ 連続再生用ステート
+    // 連続再生用ステート
     let isPlaylistActive = false;
     let currentPlaylistType = null;
     let playQueue = [];
@@ -812,7 +810,6 @@
         }
     }
 
-    // ★ 動画を停止する共通関数
     function pauseManualVideo() {
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
@@ -822,7 +819,6 @@
         }
     }
 
-    // ★ 再生中のプレイリストUIをリセットする関数
     function resetPlaylistUI() {
         isPlaylistActive = false;
         currentPlaylistType = null;
@@ -833,9 +829,13 @@
         document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
         document.getElementById('video-seek-controls').style.display = 'flex';
         document.getElementById('playlist-controls').style.display = 'none';
+
+        // ★ プレイリスト終了時に大画面モードでなければ元の幅に戻す
+        if (!isLargeScreen) {
+            document.getElementById('shared-split-layout').style.maxWidth = '1400px';
+        }
     }
 
-    // ★ フィルタに合致したログ配列を取得する関数
     function getPlaylistLogs(type) {
         const sFilter = type === 'serve' ? serveFilter : spikeFilter;
         const lZones = type === 'serve' ? lockedServeZones : lockedSpikeZones;
@@ -850,7 +850,6 @@
         return logs;
     }
 
-    // ★ 分析タブでの「動画を連続再生」ボタン押下時の処理
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -869,9 +868,12 @@
         playQueue = logs;
         playIndex = 0;
 
-        // タブ切り替えはせず、左側の動画エリアを表示して分割レイアウトにする
+        // 左側の動画エリアを表示して分割レイアウトにする
         document.getElementById('shared-video-area').style.display = 'flex';
         
+        // ★ プレイリスト再生時は強制的に大画面モードと同じ幅にする
+        document.getElementById('shared-split-layout').style.maxWidth = '100%';
+
         // 動画プレイヤー側のUIをプレイリストモードに切り替え
         document.getElementById('video-source-ui').style.display = 'none';
         document.getElementById('video-seek-controls').style.display = 'none';
@@ -918,11 +920,10 @@
         }
     }
 
-    // ★ 動的にプレイリストを更新する（別の項目をクリックした時用）
     function updateDynamicPlaylist() {
         if (!isPlaylistActive) return;
         const type = currentPlaylistType;
-        if (currentTab !== type) return; // 念のため
+        if (currentTab !== type) return; 
 
         let newLogs = getPlaylistLogs(type);
         playQueue = newLogs;
@@ -932,7 +933,6 @@
             clearTimeout(playTimeout);
             pauseManualVideo();
         } else {
-            // 条件が変わった時は0番目から再生し直す
             playIndex = 0;
             playCurrentQueueItem();
         }
@@ -940,7 +940,6 @@
 
     function closePlaybackModal() {
         resetPlaylistUI();
-        // 入力タブ以外であれば動画エリアを隠して元の全画面レイアウトに戻す
         if (currentTab !== 'input') {
             document.getElementById('shared-video-area').style.display = 'none';
         }
@@ -1040,7 +1039,6 @@
     function switchTab(target) {
         currentTab = target;
         
-        // アクティブ表示の切り替え
         document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`view-${target}`).classList.add('active');
@@ -1050,7 +1048,6 @@
             if (tabBtn) tabBtn.classList.add('active');
         }
 
-        // 共有動画エリアの表示/非表示コントロール
         const videoArea = document.getElementById('shared-video-area');
         
         if (target === 'input') {
@@ -1058,7 +1055,7 @@
             if (isPlaylistActive) resetPlaylistUI(); 
         } else if (target === 'analysis' || target === 'spike') {
             if (isPlaylistActive && currentPlaylistType === target) {
-                videoArea.style.display = 'flex'; // 連続再生中ならそのまま表示
+                videoArea.style.display = 'flex'; 
             } else {
                 videoArea.style.display = 'none';
                 if (isPlaylistActive) resetPlaylistUI();
@@ -1070,7 +1067,6 @@
             else pauseManualVideo();
         }
         
-        // キャンバスの再描画
         if(target === 'analysis') drawAnalysis();
         if(target === 'spike') drawSpike();
         if(target === 'compare') {
@@ -1164,7 +1160,7 @@
         
         if(type === 'serve') drawAnalysis();
         if(type === 'spike') drawSpike();
-        updateDynamicPlaylist(); // 動的更新
+        updateDynamicPlaylist(); 
     }
 
     function updateZoneClasses(type) {
@@ -1191,14 +1187,14 @@
         serveFilter = (serveFilter === filter) ? 'all' : filter;
         if(serveFilter === 'all') { lockedServeZones = []; updateZoneClasses('serve'); }
         drawAnalysis(); 
-        updateDynamicPlaylist(); // 動的更新
+        updateDynamicPlaylist(); 
     }
     
     function setSpikeFilter(filter) { 
         spikeFilter = (spikeFilter === filter) ? 'all' : filter;
         if(spikeFilter === 'all') { lockedSpikeZones = []; updateZoneClasses('spike'); }
         drawSpike(); 
-        updateDynamicPlaylist(); // 動的更新
+        updateDynamicPlaylist(); 
     }
 
     function renderPlayerGrids() {
