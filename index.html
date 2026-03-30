@@ -28,7 +28,7 @@
             width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
         }
 
-        /* データ入力用の左右分割レスポンシブレイアウト */
+        /* ★ データ入力・統計用の左右分割レスポンシブレイアウト */
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
         .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
@@ -91,8 +91,8 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウ（最大5件固定表示） */
-        #log-container { flex: none; height: 148px; min-height: 148px; max-height: 148px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
+        /* ログウィンドウ */
+        #log-container { flex: 1; min-height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
         .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
         .log-row:hover { background: #e2e6ea; }
         .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; pointer-events: none; }
@@ -180,7 +180,7 @@
             .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 6px; }
             .player-wrapper { width: 60px; height: 50px; }
-            #log-container { height: 148px; min-height: 148px; }
+            #log-container { min-height: 120px; height: 120px; }
             #video-seek-controls { justify-content: center; }
         }
 
@@ -190,18 +190,6 @@
     </style>
 </head>
 <body>
-
-<!-- 連続再生用モーダル -->
-<div id="video-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column; padding: 15px; box-sizing: border-box;">
-    <div id="modal-video-placeholder" style="width: 100%; max-width: 960px; display: flex; flex-direction: column;"></div>
-    
-    <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; justify-content: center; background: #222; padding: 12px 15px; border-radius: 8px; width: 100%; max-width: 760px; box-sizing: border-box;">
-        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipPrevPlayback()">⏮ 前へ</button>
-        <div id="playback-status-text" style="font-weight: bold; font-size: 15px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipNextPlayback()">次へ ⏭</button>
-    </div>
-    <button class="action-btn" style="margin-top: 15px; background: #dc3545; padding: 12px 30px; font-size: 15px; width: 100%; max-width: 760px;" onclick="closePlaybackModal()">✖ 閉じる (統計に戻る)</button>
-</div>
 
 <div id="settings-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; padding:25px; border-radius:12px; width:80%; max-width:320px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
@@ -229,12 +217,12 @@
     <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
 </div>
 
+<!-- ================= 1. データ入力画面 ================= -->
 <div id="view-input" class="view-content active" style="max-width: 100%;">
-    <!-- データ入力用 左右分割レスポンシブレイアウト -->
     <div id="input-split-layout" class="split-layout">
         
-        <!-- 左側：動画エリア -->
-        <div class="split-left">
+        <!-- 左側：動画エリア（共通のvideo-container-cardを保有） -->
+        <div class="split-left" id="input-video-area">
             <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px;">
                 <div id="video-source-ui" style="width: 100%;">
                     <div class="category-title" style="margin: 0 0 10px 0; border: none; padding: 0; background: transparent; font-size: 13px; color: #555;">🎥 動画ソース選択</div>
@@ -246,7 +234,6 @@
                     </div>
 
                     <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                        <!-- Enterキーで読み込み＆自動再生開始 -->
                         <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); loadYouTubeVideo(); }">
                         <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
                         <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
@@ -258,7 +245,7 @@
                     <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
                 </div>
 
-                <!-- コントロールとタイマーを最下部にピッタリ揃える -->
+                <!-- 通常時のコントロール -->
                 <div id="video-seek-controls" style="display: none; gap: 8px; width: 100%; align-items: center; margin-top: auto; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap; box-sizing: border-box;">
                     <div style="display: flex; gap: 6px;">
                         <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
@@ -276,6 +263,17 @@
                         <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px;" onclick="openSettings()">⚙️ 設定</button>
                     </div>
                 </div>
+
+                <!-- 連続再生用のコントロール（普段は非表示） -->
+                <div id="playlist-controls" style="display: none; flex-direction: column; width: 100%; margin-top: auto; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center; justify-content: center; background: #222; padding: 12px 15px; border-radius: 8px; width: 100%; box-sizing: border-box;">
+                        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipPrevPlayback()">⏮ 前へ</button>
+                        <div id="playback-status-text" style="font-weight: bold; font-size: 15px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                        <button class="action-btn" style="background:#555; padding: 10px; flex-shrink: 0;" onclick="skipNextPlayback()">次へ ⏭</button>
+                    </div>
+                    <button class="action-btn" style="background: #dc3545; padding: 12px 30px; font-size: 15px; width: 100%;" onclick="closePlaybackModal()">✖ 閉じる (統計に戻る)</button>
+                </div>
+
             </div>
         </div>
 
@@ -287,8 +285,7 @@
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                         <div id="player-grid-input" class="player-grid"></div>
                     </div>
-                    
-                    <!-- コントロール群を最下部にピッタリ揃える -->
+                    <!-- アライメント：下部固定 -->
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
                         <div style="display: flex; gap: 4px; width: 100%;">
                             <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
@@ -334,69 +331,86 @@
             </div>
         </div>
         
-    </div> <!-- /split-layout -->
+    </div>
 </div>
 
-<div id="view-analysis" class="view-content">
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
-            <div id="player-grid-analysis" class="player-grid"></div>
-            <button class="action-btn btn-team-all" style="background:#28a745; width: 100%; margin-top:10px;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
-            <button id="btn-multi-serve" class="action-btn" style="background:#6c757d; width: 100%; margin-top:6px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
-            <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:6px;" onclick="goToCompare()">📊 比較機能</button>
-        </div>
-        <div class="court-wrapper">
-            <canvas id="analysis-canvas"></canvas>
-            <div class="zone-overlay" onmouseleave="clearZoneHover('serve')">
-                <div id="zone-serve-0-0" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 0)" onclick="toggleZoneLock('serve', 0, 0)">Z4</div>
-                <div id="zone-serve-1-0" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 0)" onclick="toggleZoneLock('serve', 1, 0)">Z3</div>
-                <div id="zone-serve-2-0" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 0)" onclick="toggleZoneLock('serve', 2, 0)">Z2</div>
-                <div id="zone-serve-0-1" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 1)" onclick="toggleZoneLock('serve', 0, 1)">Z7</div>
-                <div id="zone-serve-1-1" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 1)" onclick="toggleZoneLock('serve', 1, 1)">Z8</div>
-                <div id="zone-serve-2-1" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 1)" onclick="toggleZoneLock('serve', 2, 1)">Z9</div>
-                <div id="zone-serve-0-2" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 2)" onclick="toggleZoneLock('serve', 0, 2)">Z5</div>
-                <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
-                <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
-            </div>
-            <!-- 動画連続再生ボタン -->
-            <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('serve')">▶ 表示中の動画を連続再生</button>
-        </div>
-        <div class="right-panel">
-            <div class="category-title" style="margin-top:0;">サーブ統計</div>
-            
-            <div class="stat-card-total clickable-stat" id="filter-all" onclick="setServeFilter('all')" onmouseenter="setHoverFilter('serve', 'all')" onmouseleave="clearHoverFilter('serve')">
-                <div class="card-label-total">Total</div>
-                <div class="total-val"><span id="st-total">0</span><span class="total-unit">本</span></div>
-            </div>
-            
-            <table class="stat-table">
-                <thead><tr><th style="text-align:left; padding-left:12px;">結果</th><th>本数</th><th>％</th></tr></thead>
-                <tbody>
-                    <tr class="row-in clickable-stat" id="filter-in" onclick="setServeFilter('in')" onmouseenter="setHoverFilter('serve', 'in')" onmouseleave="clearHoverFilter('serve')">
-                        <td class="cat-name">イン</td><td id="st-in">0</td><td id="st-in-rate">0%</td>
-                    </tr>
-                    <tr class="row-miss clickable-stat" id="filter-miss" onclick="setServeFilter('miss')" onmouseenter="setHoverFilter('serve', 'miss')" onmouseleave="clearHoverFilter('serve')">
-                        <td class="cat-name">ミス</td><td id="st-miss">0</td><td id="st-miss-rate">0%</td>
-                    </tr>
-                </tbody>
-            </table>
+<!-- ================= 2. サーブ統計画面 ================= -->
+<div id="view-analysis" class="view-content" style="max-width: 100%;">
+    <!-- ★ データ入力画面と統一した左右分割構造 -->
+    <div id="analysis-split-layout" class="split-layout">
+        
+        <!-- 再生時用の動画エリア（通常時は非表示） -->
+        <div class="split-left" id="analysis-video-area" style="display: none;"></div>
 
-            <div class="chart-box">
-                <div class="pie-container">
-                    <div class="pie-chart" id="pie-chart"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val">0本</span></div></div>
-                    <div class="pie-labels" id="pie-labels"></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot" style="background:#000000"></span>イン</div>
-                    <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+        <div class="split-right">
+            <div class="main-container">
+                <div class="left-panel">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
+                        <div id="player-grid-analysis" class="player-grid"></div>
+                    </div>
+                    <!-- アライメント：下部固定 -->
+                    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
+                        <button class="action-btn btn-team-all" style="background:#28a745; width: 100%;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
+                        <button id="btn-multi-serve" class="action-btn" style="background:#6c757d; width: 100%;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
+                        <button class="action-btn" style="background:#6f42c1; width: 100%;" onclick="goToCompare()">📊 比較機能</button>
+                    </div>
                 </div>
                 
-                <div class="ace-chart-card clickable-stat" id="filter-ace" onclick="setServeFilter('ace')" onmouseenter="setHoverFilter('serve', 'ace')" onmouseleave="clearHoverFilter('serve')">
-                    <div class="ace-stat-label">エース</div>
-                    <div class="ace-stat-val-row">
-                        <span class="ace-stat-num" id="st-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
-                        <span class="ace-stat-rate-spn">(<span id="st-ace-chart-rate">0%</span>)</span>
+                <div class="court-wrapper">
+                    <canvas id="analysis-canvas"></canvas>
+                    <div class="zone-overlay" onmouseleave="clearZoneHover('serve')">
+                        <div id="zone-serve-0-0" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 0)" onclick="toggleZoneLock('serve', 0, 0)">Z4</div>
+                        <div id="zone-serve-1-0" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 0)" onclick="toggleZoneLock('serve', 1, 0)">Z3</div>
+                        <div id="zone-serve-2-0" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 0)" onclick="toggleZoneLock('serve', 2, 0)">Z2</div>
+                        <div id="zone-serve-0-1" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 1)" onclick="toggleZoneLock('serve', 0, 1)">Z7</div>
+                        <div id="zone-serve-1-1" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 1)" onclick="toggleZoneLock('serve', 1, 1)">Z8</div>
+                        <div id="zone-serve-2-1" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 1)" onclick="toggleZoneLock('serve', 2, 1)">Z9</div>
+                        <div id="zone-serve-0-2" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 2)" onclick="toggleZoneLock('serve', 0, 2)">Z5</div>
+                        <div id="zone-serve-1-2" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 2)" onclick="toggleZoneLock('serve', 1, 2)">Z6</div>
+                        <div id="zone-serve-2-2" class="zone-cell" onmouseenter="setZoneHover('serve', 2, 2)" onclick="toggleZoneLock('serve', 2, 2)">Z1</div>
+                    </div>
+                    <!-- 動画連続再生ボタン：下部固定 -->
+                    <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: auto; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('serve')">▶ 表示中の動画を連続再生</button>
+                </div>
+                
+                <div class="right-panel">
+                    <div class="category-title" style="margin-top:0;">サーブ統計</div>
+                    
+                    <div class="stat-card-total clickable-stat" id="filter-all" onclick="setServeFilter('all')" onmouseenter="setHoverFilter('serve', 'all')" onmouseleave="clearHoverFilter('serve')">
+                        <div class="card-label-total">Total</div>
+                        <div class="total-val"><span id="st-total">0</span><span class="total-unit">本</span></div>
+                    </div>
+                    
+                    <table class="stat-table">
+                        <thead><tr><th style="text-align:left; padding-left:12px;">結果</th><th>本数</th><th>％</th></tr></thead>
+                        <tbody>
+                            <tr class="row-in clickable-stat" id="filter-in" onclick="setServeFilter('in')" onmouseenter="setHoverFilter('serve', 'in')" onmouseleave="clearHoverFilter('serve')">
+                                <td class="cat-name">イン</td><td id="st-in">0</td><td id="st-in-rate">0%</td>
+                            </tr>
+                            <tr class="row-miss clickable-stat" id="filter-miss" onclick="setServeFilter('miss')" onmouseenter="setHoverFilter('serve', 'miss')" onmouseleave="clearHoverFilter('serve')">
+                                <td class="cat-name">ミス</td><td id="st-miss">0</td><td id="st-miss-rate">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="chart-box">
+                        <div class="pie-container">
+                            <div class="pie-chart" id="pie-chart"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val">0本</span></div></div>
+                            <div class="pie-labels" id="pie-labels"></div>
+                        </div>
+                        <div class="legend">
+                            <div class="legend-item"><span class="dot" style="background:#000000"></span>イン</div>
+                            <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+                        </div>
+                        
+                        <div class="ace-chart-card clickable-stat" id="filter-ace" onclick="setServeFilter('ace')" onmouseenter="setHoverFilter('serve', 'ace')" onmouseleave="clearHoverFilter('serve')">
+                            <div class="ace-stat-label">エース</div>
+                            <div class="ace-stat-val-row">
+                                <span class="ace-stat-num" id="st-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
+                                <span class="ace-stat-rate-spn">(<span id="st-ace-chart-rate">0%</span>)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -404,64 +418,81 @@
     </div>
 </div>
 
-<div id="view-spike" class="view-content">
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
-            <div id="player-grid-spike" class="player-grid"></div>
-            <button class="action-btn btn-team-all" style="background:#28a745; width: 100%; margin-top:10px;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
-            <button id="btn-multi-spike" class="action-btn" style="background:#6c757d; width: 100%; margin-top:6px;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
-            <button class="action-btn" style="background:#6f42c1; width: 100%; margin-top:6px;" onclick="goToCompare()">📊 比較機能</button>
-        </div>
-        <div class="court-wrapper">
-            <canvas id="spike-canvas"></canvas>
-            <div class="zone-overlay" onmouseleave="clearZoneHover('spike')">
-                <div id="zone-spike-0-0" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 0)" onclick="toggleZoneLock('spike', 0, 0)">Z4</div>
-                <div id="zone-spike-1-0" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 0)" onclick="toggleZoneLock('spike', 1, 0)">Z3</div>
-                <div id="zone-spike-2-0" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 0)" onclick="toggleZoneLock('spike', 2, 0)">Z2</div>
-                <div id="zone-spike-0-1" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 1)" onclick="toggleZoneLock('spike', 0, 1)">Z7</div>
-                <div id="zone-spike-1-1" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 1)" onclick="toggleZoneLock('spike', 1, 1)">Z8</div>
-                <div id="zone-spike-2-1" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 1)" onclick="toggleZoneLock('spike', 2, 1)">Z9</div>
-                <div id="zone-spike-0-2" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 2)" onclick="toggleZoneLock('spike', 0, 2)">Z5</div>
-                <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
-                <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
-            </div>
-            <!-- 動画連続再生ボタン -->
-            <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: 15px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('spike')">▶ 表示中の動画を連続再生</button>
-        </div>
-        <div class="right-panel">
-            <div class="category-title" style="margin-top:0;">スパイク統計</div>
-            
-            <div class="stat-card-total clickable-stat" id="filter-all-sp" onclick="setSpikeFilter('all')" onmouseenter="setHoverFilter('spike', 'all')" onmouseleave="clearHoverFilter('spike')">
-                <div class="card-label-total">Total</div>
-                <div class="total-val"><span id="sp-total">0</span><span class="total-unit">本</span></div>
-            </div>
-            
-            <table class="stat-table">
-                <thead><tr><th style="text-align:left; padding-left:12px;">結果</th><th>本数</th><th>％</th></tr></thead>
-                <tbody>
-                    <tr class="row-in clickable-stat" id="filter-in-sp" onclick="setSpikeFilter('in')" onmouseenter="setHoverFilter('spike', 'in')" onmouseleave="clearHoverFilter('spike')">
-                        <td class="cat-name">Good</td><td id="sp-in">0</td><td id="sp-in-rate">0%</td>
-                    </tr>
-                    <tr class="row-miss clickable-stat" id="filter-miss-sp" onclick="setSpikeFilter('miss')" onmouseenter="setHoverFilter('spike', 'miss')" onmouseleave="clearHoverFilter('spike')">
-                        <td class="cat-name">ミス</td><td id="sp-miss">0</td><td id="sp-miss-rate">0%</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="chart-box">
-                <div class="pie-container">
-                    <div class="pie-chart" id="pie-chart-sp"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val-sp">0本</span></div></div>
-                    <div class="pie-labels" id="pie-labels-sp"></div>
+<!-- ================= 3. スパイク統計画面 ================= -->
+<div id="view-spike" class="view-content" style="max-width: 100%;">
+    <!-- ★ データ入力画面と統一した左右分割構造 -->
+    <div id="spike-split-layout" class="split-layout">
+        
+        <!-- 再生時用の動画エリア（通常時は非表示） -->
+        <div class="split-left" id="spike-video-area" style="display: none;"></div>
+
+        <div class="split-right">
+            <div class="main-container">
+                <div class="left-panel">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
+                        <div id="player-grid-spike" class="player-grid"></div>
+                    </div>
+                    <!-- アライメント：下部固定 -->
+                    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
+                        <button class="action-btn btn-team-all" style="background:#28a745; width: 100%;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
+                        <button id="btn-multi-spike" class="action-btn" style="background:#6c757d; width: 100%;" onclick="toggleMultiSelect()">✅ 複数選択：OFF</button>
+                        <button class="action-btn" style="background:#6f42c1; width: 100%;" onclick="goToCompare()">📊 比較機能</button>
+                    </div>
                 </div>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot" style="background:#000000"></span>Good</div>
-                    <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+                
+                <div class="court-wrapper">
+                    <canvas id="spike-canvas"></canvas>
+                    <div class="zone-overlay" onmouseleave="clearZoneHover('spike')">
+                        <div id="zone-spike-0-0" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 0)" onclick="toggleZoneLock('spike', 0, 0)">Z4</div>
+                        <div id="zone-spike-1-0" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 0)" onclick="toggleZoneLock('spike', 1, 0)">Z3</div>
+                        <div id="zone-spike-2-0" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 0)" onclick="toggleZoneLock('spike', 2, 0)">Z2</div>
+                        <div id="zone-spike-0-1" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 1)" onclick="toggleZoneLock('spike', 0, 1)">Z7</div>
+                        <div id="zone-spike-1-1" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 1)" onclick="toggleZoneLock('spike', 1, 1)">Z8</div>
+                        <div id="zone-spike-2-1" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 1)" onclick="toggleZoneLock('spike', 2, 1)">Z9</div>
+                        <div id="zone-spike-0-2" class="zone-cell" onmouseenter="setZoneHover('spike', 0, 2)" onclick="toggleZoneLock('spike', 0, 2)">Z5</div>
+                        <div id="zone-spike-1-2" class="zone-cell" onmouseenter="setZoneHover('spike', 1, 2)" onclick="toggleZoneLock('spike', 1, 2)">Z6</div>
+                        <div id="zone-spike-2-2" class="zone-cell" onmouseenter="setZoneHover('spike', 2, 2)" onclick="toggleZoneLock('spike', 2, 2)">Z1</div>
+                    </div>
+                    <!-- 動画連続再生ボタン：下部固定 -->
+                    <button class="action-btn" style="background:#dc3545; width: 220px; margin-top: auto; font-size: 13px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);" onclick="startPlaylist('spike')">▶ 表示中の動画を連続再生</button>
                 </div>
-                <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
-                    <div class="ace-stat-label">決定</div>
-                    <div class="ace-stat-val-row">
-                        <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
-                        <span class="ace-stat-rate-spn">(<span id="sp-ace-chart-rate">0%</span>)</span>
+                
+                <div class="right-panel">
+                    <div class="category-title" style="margin-top:0;">スパイク統計</div>
+                    
+                    <div class="stat-card-total clickable-stat" id="filter-all-sp" onclick="setSpikeFilter('all')" onmouseenter="setHoverFilter('spike', 'all')" onmouseleave="clearHoverFilter('spike')">
+                        <div class="card-label-total">Total</div>
+                        <div class="total-val"><span id="sp-total">0</span><span class="total-unit">本</span></div>
+                    </div>
+                    
+                    <table class="stat-table">
+                        <thead><tr><th style="text-align:left; padding-left:12px;">結果</th><th>本数</th><th>％</th></tr></thead>
+                        <tbody>
+                            <tr class="row-in clickable-stat" id="filter-in-sp" onclick="setSpikeFilter('in')" onmouseenter="setHoverFilter('spike', 'in')" onmouseleave="clearHoverFilter('spike')">
+                                <td class="cat-name">Good</td><td id="sp-in">0</td><td id="sp-in-rate">0%</td>
+                            </tr>
+                            <tr class="row-miss clickable-stat" id="filter-miss-sp" onclick="setSpikeFilter('miss')" onmouseenter="setHoverFilter('spike', 'miss')" onmouseleave="clearHoverFilter('spike')">
+                                <td class="cat-name">ミス</td><td id="sp-miss">0</td><td id="sp-miss-rate">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="chart-box">
+                        <div class="pie-container">
+                            <div class="pie-chart" id="pie-chart-sp"><div class="pie-inner"><span>Total</span><span class="pie-total-num" id="pie-total-val-sp">0本</span></div></div>
+                            <div class="pie-labels" id="pie-labels-sp"></div>
+                        </div>
+                        <div class="legend">
+                            <div class="legend-item"><span class="dot" style="background:#000000"></span>Good</div>
+                            <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
+                        </div>
+                        <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
+                            <div class="ace-stat-label">決定</div>
+                            <div class="ace-stat-val-row">
+                                <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
+                                <span class="ace-stat-rate-spn">(<span id="sp-ace-chart-rate">0%</span>)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -469,6 +500,7 @@
     </div>
 </div>
 
+<!-- ================= その他の画面（比較、リネーム、終了管理） ================= -->
 <div id="view-compare" class="view-content">
     <div class="main-container compare-layout">
         <div class="compare-header">
@@ -560,6 +592,7 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
+            // 大画面モード：左右分割を維持しつつ幅を全画面に拡張
             splitLayout.style.maxWidth = '100%'; 
             btn.innerText = '🗗 縮小';
             btn.style.background = '#ff9800';
@@ -612,16 +645,13 @@
         const lp = document.getElementById('local-player');
         lp.src = URL.createObjectURL(file);
         
-        if(document.activeElement) document.activeElement.blur(); // ★フォーカスを外す
-
         timerSeconds = 0;
         updateTimerDisplay();
         lp.play();
     }
 
     function loadYouTubeVideo() {
-        const urlInput = document.getElementById('yt-url-input');
-        const url = urlInput.value;
+        const url = document.getElementById('yt-url-input').value;
         if (!url) { alert("URLを入力してください。"); return; }
         
         const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -652,9 +682,6 @@
             rebuildYTPlayer(videoId);
         }
         
-        urlInput.blur(); // ★入力欄からフォーカスを外してスペースキー誤動作を防ぐ
-        if(document.activeElement) document.activeElement.blur();
-
         timerSeconds = 0;
         updateTimerDisplay();
     }
@@ -809,6 +836,7 @@
         }
     }
 
+    /* ====== プレイリスト（連続再生）の処理 ====== */
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -835,13 +863,19 @@
         playQueue = logs;
         playIndex = 0;
         
+        // --- 画面を左右分割（大画面）モードに変更 ---
+        const vc = document.getElementById('video-container-card');
+        const targetArea = document.getElementById(type === 'serve' ? 'analysis-video-area' : 'spike-video-area');
+        
+        targetArea.appendChild(vc);
+        targetArea.style.display = 'flex';
+        
         document.getElementById('video-source-ui').style.display = 'none';
         document.getElementById('video-seek-controls').style.display = 'none';
+        document.getElementById('playlist-controls').style.display = 'flex';
         
-        const vc = document.getElementById('video-container-card');
-        vc.style.marginBottom = '0';
-        document.getElementById('modal-video-placeholder').appendChild(vc);
-        document.getElementById('video-modal-overlay').style.display = 'flex';
+        // 統計画面のSplitLayoutの幅を100%（大画面表示）にする
+        document.getElementById(type === 'serve' ? 'analysis-split-layout' : 'spike-split-layout').style.maxWidth = '100%';
         
         playCurrentQueueItem();
     }
@@ -887,19 +921,23 @@
     function closePlaybackModal() {
         clearTimeout(playTimeout);
         
+        // --- データ入力画面の元の位置に動画プレイヤーを戻す ---
         const vc = document.getElementById('video-container-card');
-        vc.style.marginBottom = '15px';
+        const inputLeftArea = document.getElementById('input-video-area');
+        inputLeftArea.insertBefore(vc, inputLeftArea.firstChild);
         
-        const splitLeft = document.querySelector('.split-left');
-        splitLeft.insertBefore(vc, splitLeft.firstChild);
+        // 統計画面の動画エリアを非表示に戻す
+        document.getElementById('analysis-video-area').style.display = 'none';
+        document.getElementById('spike-video-area').style.display = 'none';
         
-        document.getElementById('video-modal-overlay').style.display = 'none';
+        // SplitLayoutの幅を元に戻す
+        document.getElementById('analysis-split-layout').style.maxWidth = '1400px';
+        document.getElementById('spike-split-layout').style.maxWidth = '1400px';
         
+        // コントロール表示の復元（大画面状態に応じてソースUI表示を判断）
         document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
-        
-        const controls = document.getElementById('video-seek-controls');
-        controls.style.display = 'flex';
-        controls.style.marginTop = 'auto'; 
+        document.getElementById('video-seek-controls').style.display = 'flex';
+        document.getElementById('playlist-controls').style.display = 'none';
         
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
@@ -908,6 +946,7 @@
         }
     }
 
+    /* ====== IndexedDB ＆ データ保存処理 ====== */
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -983,10 +1022,7 @@
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
             
             if (activeVideoType) {
-                if (e.key === ' ' || e.code === 'Space') { 
-                    e.preventDefault(); 
-                    toggleTimer(); 
-                }
+                if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); toggleTimer(); }
                 else if (e.key === 'ArrowLeft') { e.preventDefault(); seekVideo(-1); }
                 else if (e.key === 'ArrowRight') { e.preventDefault(); seekVideo(1); }
             }
