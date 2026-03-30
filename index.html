@@ -8,7 +8,7 @@
         /* 基本レイアウト */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 0 10px 15px 10px; margin: 0; touch-action: manipulation; }
         
-        /* タブメニュー（上部固定） */
+        /* タブメニュー（上部固定・スモークガラス効果） */
         .tab-menu { 
             position: sticky; top: 0; z-index: 1000; background: rgba(244, 247, 246, 0.95); backdrop-filter: blur(5px);
             width: 100%; max-width: 1400px; display: flex; gap: 8px; padding: 15px 0 10px 0; margin-bottom: 5px; flex-wrap: wrap; justify-content: center;
@@ -28,16 +28,12 @@
             width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
         }
 
-        /* ★ 新設：データ入力用の左右分割レスポンシブレイアウト */
-        .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: flex-start; }
-        .split-left { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
-        .split-right { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
-        /* スプリット内のコンテナは親の幅いっぱいに広がるように上書き */
-        .split-layout .main-container { max-width: 100%; margin-bottom: 0; }
-        
-        /* 大画面モード（左右分割を解除して縦積みにする） */
-        .large-video-mode { flex-direction: column !important; align-items: center; }
-        .large-video-mode .split-left, .large-video-mode .split-right { width: 100%; max-width: 960px; flex: none; }
+        /* ★ データ入力用の左右分割レスポンシブレイアウト */
+        .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; align-items: stretch; transition: max-width 0.3s; }
+        .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; }
+        .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; }
+        /* 左右の高さを完全に均一化 */
+        .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
 
         /* 左パネル：選手選択 */
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
@@ -95,8 +91,8 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウ（スクロール可能） */
-        #log-container { min-height: 155px; height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
+        /* ログウィンドウ（スクロール可能、下部までストレッチ） */
+        #log-container { flex: 1; min-height: 155px; background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; }
         .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
         .log-row:hover { background: #e2e6ea; }
         .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; pointer-events: none; }
@@ -176,7 +172,7 @@
         .rename-item input { border: none; background: transparent; border-bottom: 2px solid #ced4da; font-size: 15px; font-weight: bold; color: #333; outline: none; transition: 0.2s; padding-bottom: 4px; width: 100%; }
         .rename-item input:focus { border-bottom-color: #007BFF; }
 
-        /* スマホ用レスポンシブ */
+        /* スマホ用レスポンシブ（縦積み） */
         @media (max-width: 900px) {
             .split-layout { flex-direction: column; align-items: center; }
             .split-left, .split-right { width: 100%; max-width: 760px; }
@@ -225,6 +221,7 @@
     </div>
 </div>
 
+<!-- タブメニュー（常時上部固定） -->
 <div class="tab-menu">
     <button id="tab-input" class="tab-btn active" onclick="switchTab('input')">データ入力</button>
     <button id="tab-analysis" class="tab-btn" onclick="switchTab('analysis')">サーブ統計</button>
@@ -233,7 +230,7 @@
 </div>
 
 <div id="view-input" class="view-content active" style="max-width: 100%;">
-    <!-- ★ データ入力用 左右分割レイアウト -->
+    <!-- ★ データ入力用 左右分割レスポンシブレイアウト -->
     <div id="input-split-layout" class="split-layout">
         
         <!-- 左側：動画エリア -->
@@ -249,7 +246,8 @@
                     </div>
 
                     <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                        <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') loadYouTubeVideo()">
+                        <!-- ★ Enterキーで読み込み＆自動再生開始 -->
+                        <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); loadYouTubeVideo(); }">
                         <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
                         <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
                     </div>
@@ -260,7 +258,8 @@
                     <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
                 </div>
 
-                <div id="video-seek-controls" style="display: flex; gap: 8px; width: 100%; align-items: center; margin-top: 12px; justify-content: space-between; display: none; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;">
+                <!-- コントロールとタイマーを最下部にピッタリ揃える -->
+                <div id="video-seek-controls" style="display: none; gap: 8px; width: 100%; align-items: center; margin-top: auto; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap; box-sizing: border-box;">
                     <div style="display: flex; gap: 6px;">
                         <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
                         <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
@@ -284,14 +283,20 @@
         <div class="split-right">
             <div class="main-container">
                 <div class="left-panel">
-                    <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
-                    <div id="player-grid-input" class="player-grid"></div>
-                    <div style="display: flex; gap: 4px; width: 100%; margin-top: 10px;">
-                        <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
-                        <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
-                        <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
+                        <div id="player-grid-input" class="player-grid"></div>
                     </div>
-                    <button class="action-btn" style="background:#ff9800; font-size: 13px; margin-top: 6px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
+                    
+                    <!-- コントロール群を最下部にピッタリ揃える -->
+                    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
+                        <div style="display: flex; gap: 4px; width: 100%;">
+                            <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
+                            <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
+                            <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
+                        </div>
+                        <button class="action-btn" style="background:#ff9800; font-size: 13px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
+                    </div>
                 </div>
                 
                 <div class="court-wrapper">
@@ -453,6 +458,7 @@
                     <div class="legend-item"><span class="dot" style="background:#ff4d4d"></span>ミス</div>
                 </div>
                 <div class="ace-chart-card clickable-stat" id="filter-ace-sp" onclick="setSpikeFilter('ace')" onmouseenter="setHoverFilter('spike', 'ace')" onmouseleave="clearHoverFilter('spike')">
+                    <!-- 表記変更 -->
                     <div class="ace-stat-label">決定</div>
                     <div class="ace-stat-val-row">
                         <span class="ace-stat-num" id="sp-ace-chart-val">0</span><span class="ace-stat-unit">本</span>
@@ -555,12 +561,13 @@
 
         if (isLargeScreen) {
             sourceUi.style.display = 'none';
-            splitLayout.classList.add('large-video-mode');
-            btn.innerText = '🗗 分割に戻す';
+            // 大画面モード：左右分割を維持しつつ幅を全画面に拡張
+            splitLayout.style.maxWidth = '100%'; 
+            btn.innerText = '🗗 縮小';
             btn.style.background = '#ff9800';
         } else {
             sourceUi.style.display = 'block';
-            splitLayout.classList.remove('large-video-mode');
+            splitLayout.style.maxWidth = '1400px'; 
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
         }
@@ -577,7 +584,12 @@
 
     function showPlayer(type) {
         document.getElementById('video-player-wrapper').style.display = 'block';
-        document.getElementById('video-seek-controls').style.display = 'flex';
+        
+        const controls = document.getElementById('video-seek-controls');
+        controls.style.display = 'flex';
+        // flexが適用された後、マージン等を維持する
+        controls.style.marginTop = 'auto';
+
         const ytNode = document.getElementById('yt-player');
         const localNode = document.getElementById('local-player');
         
@@ -602,7 +614,11 @@
         if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
         const lp = document.getElementById('local-player');
         lp.src = URL.createObjectURL(file);
-        resetTimerInternal();
+        
+        // ★ 自動でタイマー0リセット＆再生開始
+        timerSeconds = 0;
+        updateTimerDisplay();
+        lp.play();
     }
 
     function loadYouTubeVideo() {
@@ -636,7 +652,10 @@
         } else {
             rebuildYTPlayer(videoId);
         }
-        resetTimerInternal();
+        
+        // ★ 自動でタイマー0リセット（loadVideoByIdが自動再生を引き起こすため、連動してタイマーが走る）
+        timerSeconds = 0;
+        updateTimerDisplay();
     }
 
     function rebuildYTPlayer(videoId) {
@@ -768,6 +787,7 @@
         } else if (event.data === 2) { 
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         } else if (event.data === 0) {
+            // ★YouTubeの動画終了時
             setTimerState(false); timerSeconds = Math.floor(ytPlayer.getCurrentTime()); updateTimerDisplay();
         }
     }
@@ -789,6 +809,7 @@
         }
     }
 
+    /* ====== プレイリスト（連続再生）の処理 ====== */
     function startPlaylist(type) {
         if (!activeVideoType) {
             alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。");
@@ -870,14 +891,16 @@
         const vc = document.getElementById('video-container-card');
         vc.style.marginBottom = '15px';
         
-        // 元のsplit-leftの中に戻す
         const splitLeft = document.querySelector('.split-left');
         splitLeft.insertBefore(vc, splitLeft.firstChild);
         
         document.getElementById('video-modal-overlay').style.display = 'none';
         
         document.getElementById('video-source-ui').style.display = isLargeScreen ? 'none' : 'block';
-        document.getElementById('video-seek-controls').style.display = 'flex';
+        
+        const controls = document.getElementById('video-seek-controls');
+        controls.style.display = 'flex';
+        controls.style.marginTop = 'auto'; // 再適用
         
         if (activeVideoType === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
@@ -886,6 +909,7 @@
         }
     }
 
+    /* ====== IndexedDB ＆ データ保存処理 ====== */
     const DB_NAME = 'VLinkDB'; const STORE_NAME = 'vlinkStore'; let db;
 
     function initDB(callback) {
@@ -948,11 +972,20 @@
         const lp = document.getElementById('local-player');
         lp.addEventListener('play', () => setTimerState(true));
         lp.addEventListener('pause', () => setTimerState(false));
+        // ★ ローカルの動画終了時
         lp.addEventListener('ended', () => setTimerState(false));
         lp.addEventListener('seeked', () => { timerSeconds = Math.floor(lp.currentTime); updateTimerDisplay(); });
 
         document.addEventListener('keydown', function(e) {
+            // ★ Escキーで大画面モード解除
+            if (e.key === 'Escape' && isLargeScreen) {
+                e.preventDefault();
+                toggleLargeScreen();
+                return;
+            }
+
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            
             if (activeVideoType) {
                 if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); toggleTimer(); }
                 else if (e.key === 'ArrowLeft') { e.preventDefault(); seekVideo(-1); }
