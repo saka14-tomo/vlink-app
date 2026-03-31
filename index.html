@@ -32,15 +32,11 @@
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; justify-content: center; align-items: stretch; transition: max-width 0.3s ease; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .split-center { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
-        
-        /* ★修正: min-height: 0; を追加して、親の行の高さを押し広げないようにする */
-        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; min-height: 0; }
+        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         
         /* 左右の高さを完全に均一化 */
         .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
-        
-        /* ★修正: min-height: 0; を追加 */
-        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 0; }
+        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; }
 
         /* 左パネル：選手選択 */
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
@@ -123,12 +119,25 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ログウィンドウのスクロール対応（独立パネル用） */
-        /* ★修正: flexを外し、min-height: 0 に変更して完璧に枠内に収める */
-        #log-container { 
-            flex: 1; min-height: 0; background: #fafafa; border: 1px solid #eee; 
-            border-radius: 8px; padding: 4px; display: block; overflow-y: auto; 
+        /* ========================================================= */
+        /* ★ ログ画面の無限伸び防止＆スクロール化設定 ★ */
+        /* ========================================================= */
+        .log-scroll-wrapper {
+            position: relative;
+            flex: 1 1 0; /* 親パネルの高さいっぱいに広がるが、自分自身で高さを押し広げない */
+            width: 100%;
+            min-height: 0; /* これが重要：フレックスコンテナが中身のサイズで膨張するのを防ぐ */
         }
+
+        #log-container { 
+            position: absolute; /* 絶対配置にすることで、レイアウトの高さ計算から除外する */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fafafa; border: 1px solid #eee; 
+            border-radius: 8px; padding: 4px; display: block; overflow-y: auto; 
+            box-sizing: border-box; /* paddingを含めたサイズに固定 */
+        }
+        /* ========================================================= */
+
         #log-container::-webkit-scrollbar { width: 6px; }
         #log-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
         
@@ -217,9 +226,10 @@
             .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
             .player-wrapper { width: 60px; height: 50px; }
-            #log-container { min-height: 120px; max-height: 250px; }
             .log-panel-container { height: auto; }
             #video-seek-controls { justify-content: center; }
+            /* スマホなど1カラムになったときはログエリアの高さを指定する */
+            .log-scroll-wrapper { flex: none; height: 250px; }
         }
 
         .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
@@ -541,11 +551,16 @@
 
     <div class="split-right-log" id="shared-log-area">
         <div class="main-container log-panel-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-bottom: 8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-bottom: 8px; flex-shrink: 0;">
                 <div class="category-title" style="margin:0;">入力ログ</div>
             </div>
-            <p style="font-size:11px; color:#666; margin:0 0 8px 0; text-align:center;">（クリックで再生）</p>
-            <div id="log-container"></div>
+            <p style="font-size:11px; color:#666; margin:0 0 8px 0; text-align:center; flex-shrink: 0;">（クリックで再生）</p>
+            
+            <!-- ここから変更: スクロールエリアを絶対配置のコンテナに閉じ込める -->
+            <div class="log-scroll-wrapper">
+                <div id="log-container"></div>
+            </div>
+
         </div>
     </div>
 </div>
