@@ -32,11 +32,15 @@
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; justify-content: center; align-items: stretch; transition: max-width 0.3s ease; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .split-center { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
-        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; }
+        
+        /* ★修正: min-height: 0; を追加して、親の行の高さを押し広げないようにする */
+        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; min-height: 0; }
         
         /* 左右の高さを完全に均一化 */
         .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
-        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; }
+        
+        /* ★修正: min-height: 0; を追加 */
+        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 0; }
 
         /* 左パネル：選手選択 */
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
@@ -120,9 +124,10 @@
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
         /* ログウィンドウのスクロール対応（独立パネル用） */
+        /* ★修正: flexを外し、min-height: 0 に変更して完璧に枠内に収める */
         #log-container { 
-            flex: 1; min-height: 100px; max-height: none; background: #fafafa; border: 1px solid #eee; 
-            border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; 
+            flex: 1; min-height: 0; background: #fafafa; border: 1px solid #eee; 
+            border-radius: 8px; padding: 4px; display: block; overflow-y: auto; 
         }
         #log-container::-webkit-scrollbar { width: 6px; }
         #log-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
