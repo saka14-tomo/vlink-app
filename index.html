@@ -538,7 +538,6 @@
         <div class="main-container log-panel-container">
             <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-bottom: 8px;">
                 <div class="category-title" style="margin:0;">入力ログ</div>
-                <button id="btn-toggle-logs" class="action-btn btn-utility" style="padding:6px 10px; font-size:10px; margin:0; flex-shrink: 0;" onclick="toggleAllLogs()">全件表示</button>
             </div>
             <p style="font-size:11px; color:#666; margin:0 0 8px 0; text-align:center;">（クリックで再生）</p>
             <div id="log-container"></div>
@@ -587,9 +586,6 @@
     let playQueue = [];
     let playIndex = 0;
     let playTimeout = null;
-
-    // ★ ログの全件表示ステート
-    let showAllLogs = false;
 
     function openSettings() { document.getElementById('settings-modal-overlay').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal-overlay').style.display = 'none'; }
@@ -1082,6 +1078,14 @@
         }
 
         const videoArea = document.getElementById('shared-video-area');
+        const logArea = document.getElementById('shared-log-area');
+
+        // データ入力タブ(input)の時だけログエリアを表示
+        if (target === 'input') {
+            logArea.style.display = 'flex';
+        } else {
+            logArea.style.display = 'none';
+        }
         
         if (target === 'input') {
             videoArea.style.display = 'flex';
@@ -1643,19 +1647,10 @@
         renderPlayerGrids(); 
     }
     
-    // ★ ログの表示・非表示切り替え処理
-    function toggleAllLogs() {
-        showAllLogs = !showAllLogs;
-        const btn = document.getElementById('btn-toggle-logs');
-        if(btn) btn.innerText = showAllLogs ? '最新5件に戻す' : '全件表示';
-        updateLog();
-    }
-
-    // ★ ログの更新処理（全件表示ステートに対応）
+    // ★ ログの更新処理（常に全データを表示する）
     function updateLog() { 
         const container = document.getElementById('log-container');
-        // 全件表示がオンなら全データ、オフなら最新5件を取得
-        const displayLogs = showAllLogs ? [...dataLog].reverse() : [...dataLog].reverse().slice(0, 5);
+        const displayLogs = [...dataLog].reverse();
         container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
