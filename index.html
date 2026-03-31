@@ -18,14 +18,14 @@
         .tab-btn.active { background: #007bff; color: white; box-shadow: 0 4px 12px rgba(0,123,255,0.3); transform: translateY(-1px); }
         
         /* コンテンツ表示切り替え */
-        .view-content { display: none; width: 100%; flex-direction: column; align-items: center; flex: 1; }
+        .view-content { display: none; width: 100%; flex-direction: column; align-items: center; }
         .view-content.active { display: flex; }
         
         /* メインパネル */
         .main-container { 
-            display: flex; gap: 15px; background: white; padding: 20px; border-radius: 12px; 
+            display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
             box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
-            width: 100%; max-width: 880px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
+            width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
         }
 
         /* アプリ全体の左右分割レスポンシブレイアウト */
@@ -33,31 +33,34 @@
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .split-right { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
         
+        /* 左右の高さを完全に均一化 */
+        .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
+
         /* 左パネル：選手選択 */
-        .left-panel { flex: 1; min-width: 140px; max-width: 180px; display: flex; flex-direction: column; gap: 8px; }
+        .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
         .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
-        /* モダン＆立体的な選手ボタンデザイン */
+        /* ★ モダン＆立体的な選手ボタンデザイン */
         .player-wrapper { 
             display: flex; flex-direction: column; width: 100%; 
             border-radius: 10px; overflow: hidden; 
             background: linear-gradient(135deg, #ffffff, #e6e9ec);
             border: 1px solid #d0d0d0;
-            border-bottom: 4px solid #b0b5ba; 
+            border-bottom: 4px solid #b0b5ba; /* 立体感用の底面エッジ */
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .player-wrapper:hover { 
             transform: translateY(-2px); 
-            border-bottom: 6px solid #b0b5ba; 
+            border-bottom: 6px solid #b0b5ba; /* 浮き上がる */
             box-shadow: 0 8px 12px rgba(0,0,0,0.1); 
         }
         .player-wrapper.active { 
             background: linear-gradient(135deg, #007bff, #0056b3); 
             border: 1px solid #004085; 
-            border-bottom: 1px solid #004085; 
+            border-bottom: 1px solid #004085; /* 押し込まれて平らになる */
             box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); 
-            transform: translateY(3px); 
+            transform: translateY(3px); /* 押し込まれる位置移動 */
         }
         .player-wrapper.compare-active { 
             background: linear-gradient(135deg, #6f42c1, #512da8); 
@@ -84,6 +87,7 @@
         .edit-single-btn:hover { background: rgba(0,0,0,0.08); }
         .player-wrapper.active .edit-single-btn { border-top-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); }
 
+        /* 追加/削除ボタンはフラットなデザインを維持 */
         .player-add-btn { 
             background: transparent !important; 
             border: 2px dashed #adb5bd !important; 
@@ -94,7 +98,11 @@
             justify-content: center !important; 
             align-items: center !important; 
         }
-        .player-add-btn:hover { background: #f8f9fa !important; border-color: #6c757d !important; transform: translateY(-2px) !important; }
+        .player-add-btn:hover { 
+            background: #f8f9fa !important; 
+            border-color: #6c757d !important; 
+            transform: translateY(-2px) !important; 
+        }
 
         /* 中央：コート */
         .court-wrapper { width: 220px; display: flex; flex-direction: column; align-items: center; position: relative; flex-shrink: 0; }
@@ -106,27 +114,23 @@
         .zone-cell:hover { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.9); color: #fff; }
         .zone-cell.locked { background: rgba(0, 123, 255, 0.65) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
 
-        /* 右パネル：操作ボタン (ログパネルを分離したため幅に余裕あり) */
-        .right-panel { flex: 1; min-width: 200px; max-width: 280px; display: flex; flex-direction: column; gap: 8px; } 
+        /* 右パネル：操作・統計 */
+        .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
-
-        /* ★ 独立したログパネル用 */
+        
+        /* ★ ログウィンドウのスクロール対応 */
         #log-container { 
-            flex: 1; min-height: 120px; background: #fafafa; border: 1px solid #eee; 
-            border-radius: 8px; padding: 4px; display: flex; flex-direction: column; 
-            overflow-y: auto; width: 100%; box-sizing: border-box;
+            flex: 1; min-height: 155px; max-height: 155px; background: #fafafa; border: 1px solid #eee; 
+            border-radius: 8px; padding: 4px; display: flex; flex-direction: column; overflow-y: auto; 
         }
-        #log-container::-webkit-scrollbar { width: 8px; }
-        #log-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+        #log-container::-webkit-scrollbar { width: 6px; }
+        #log-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
         
-        /* ログ行のデザイン調整（幅広対応） */
-        .log-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px dashed #eee; font-size: 12px; gap: 8px; flex-shrink: 0; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; border-bottom: 1px dashed #eee; font-size: 11px; gap: 4px; flex-shrink: 0; height: 28px; box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
         .log-row:hover { background: #e2e6ea; }
-        .log-time { color: #666; font-size: 11px; font-family: monospace; background: #e9ecef; padding: 3px 6px; border-radius: 4px; pointer-events: none; }
-        .log-name { font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; pointer-events: none; font-size: 14px; }
-        .log-type { color: #888; font-size: 11px; margin-left: 8px; font-weight: normal; }
-        .log-res { font-weight: bold; font-size: 11px; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; pointer-events: none; }
-        
+        .log-time { color: #666; font-size: 9px; font-family: monospace; background: #e9ecef; padding: 2px 4px; border-radius: 4px; pointer-events: none; }
+        .log-name { font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; pointer-events: none; }
+        .log-res { font-weight: bold; font-size: 10px; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; pointer-events: none; }
         .res-ace { background: #e0f0ff; color: #007BFF; } .res-in { background: #e0e0e0; color: #000000; } .res-err { background: #ffebee; color: #d32f2f; }
 
         /* 統計カード */
@@ -167,12 +171,12 @@
         .ace-stat-rate-spn { font-size: 20px; font-weight: bold; color: rgba(255,255,255,0.95); margin-left: 6px; }
 
         /* ボタン */
-        .action-btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 12px; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .action-btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .action-btn:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); transform: translateY(-2px); filter: brightness(1.05); } 
         .action-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.1); opacity: 0.9; }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(40%); box-shadow: none; transform: none; } 
         .btn-ace { background: #007BFF; } .btn-in { background: #212529; } .btn-error { background: #dc3545; }
-        .btn-utility { background: #6c757d; font-size: 11px; padding: 6px; }
+        .btn-utility { background: #6c757d; font-size: 11px; padding: 8px; }
 
         /* 比較画面 */
         .compare-layout { flex-direction: column; align-items: stretch; padding: 20px; }
@@ -204,11 +208,11 @@
             .split-layout { flex-direction: column; align-items: center; }
             .split-left, .split-right { width: 100%; max-width: 760px; }
             .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; }
-            .left-panel, .court-wrapper, .right-panel { max-width: 100%; width: 100%; flex: none; border: none; padding: 0; }
+            .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
             .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
             .player-wrapper { width: 60px; height: 50px; }
+            #log-container { min-height: 120px; height: 120px; }
             #video-seek-controls { justify-content: center; }
-            #log-container { min-height: 150px; }
         }
 
         .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
@@ -304,11 +308,8 @@
     <div class="split-right" id="shared-right-area">
         
         <!-- ================= 1. データ入力画面 ================= -->
-        <div id="view-input" class="view-content active" style="width: 100%; display: flex; flex-direction: column; gap: 15px;">
-            
-            <!-- 上段：入力インターフェース -->
-            <div class="main-container" style="margin-bottom: 0;">
-                <!-- 左列：選手 -->
+        <div id="view-input" class="view-content active">
+            <div class="main-container">
                 <div class="left-panel">
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
@@ -318,77 +319,50 @@
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
                         <div style="display: flex; gap: 4px; width: 100%;">
                             <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
-                            <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 戻る</button>
-                            <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 削除</button>
+                            <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
+                            <button class="action-btn" style="flex: 1; background:#dc3545; font-size:10px; padding:8px 4px;" onclick="undoLast()">🗑 ログ削除</button>
                         </div>
                         <button class="action-btn" style="background:#ff9800; font-size: 13px; width: 100%;" onclick="openFinishView()">⏹ 記録終了・管理</button>
                     </div>
                 </div>
                 
-                <!-- 中央：コート -->
                 <div class="court-wrapper">
                     <canvas id="input-canvas"></canvas>
                     <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
                 </div>
 
-                <!-- 右列：アクションボタン -->
                 <div class="right-panel">
                     <div class="category-title" style="margin-top:0;">サーブ結果</div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="action-btn btn-ace serve-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
-                        <button class="action-btn btn-in serve-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
+                        <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
                     </div>
-                    <div style="display:flex; gap:4px; margin-top:4px;">
-                        <button class="action-btn btn-error serve-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
-                        <button class="action-btn btn-error serve-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
+                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
                     </div>
                     
-                    <div class="category-title" style="margin-top:10px;">スパイク結果</div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="action-btn btn-ace spike-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('spike', '決定')" disabled>決定</button>
-                        <button class="action-btn btn-in spike-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
+                    <div class="category-title" style="margin-top:12px;">スパイク結果</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn btn-ace spike-action-btn" style="flex:1;" onclick="saveAction('spike', '決定')" disabled>決定</button>
+                        <button class="action-btn btn-in spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
                     </div>
-                    <div style="display:flex; gap:4px; margin-top:4px;">
-                        <button class="action-btn btn-error spike-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
-                        <button class="action-btn btn-error spike-action-btn" style="flex:1; padding:8px 4px; font-size:11px;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
+                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
                     </div>
-                    <div style="display:flex; gap:4px; margin-top:4px;">
-                        <button class="action-btn btn-error spike-action-btn" style="width:100%; padding:8px 4px; font-size:11px;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
                     </div>
-
-                    <!-- ★ 新規アクション -->
-                    <div class="category-title" style="margin-top:10px;">トス結果</div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="action-btn btn-ace new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('toss', '◎ Perfect')" disabled>◎ Perfect</button>
-                        <button class="action-btn btn-in new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('toss', '〇 Good')" disabled>〇 Good</button>
-                        <button class="action-btn btn-error new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('toss', '✕ 失敗')" disabled>✕ 失敗</button>
+                    
+                    <!-- ★ 全件表示ボタンとスクロール可能なログエリア -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-bottom: 4px;">
+                        <div class="category-title" style="margin:0;">入力ログ（クリックで再生）</div>
+                        <button id="btn-toggle-logs" class="action-btn btn-utility" style="padding:6px 10px; font-size:10px; margin:0;" onclick="toggleAllLogs()">全件表示</button>
                     </div>
-
-                    <div class="category-title" style="margin-top:10px;">レシーブ結果</div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="action-btn btn-ace new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('receive', '◎ Perfect')" disabled>◎ Perfect</button>
-                        <button class="action-btn btn-in new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('receive', '〇 Good')" disabled>〇 Good</button>
-                        <button class="action-btn btn-error new-action-btn" style="flex:1; padding:8px 4px; font-size:10px;" onclick="saveAction('receive', '✕ 失敗')" disabled>✕ 失敗</button>
-                    </div>
-
-                    <div class="category-title" style="margin-top:10px; font-size:11px;">サーブレシーブ結果</div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="action-btn btn-ace new-action-btn" style="flex:1; padding:8px 2px; font-size:10px;" onclick="saveAction('serveReceive', '◎ Perfect')" disabled>◎ Perfect</button>
-                        <button class="action-btn btn-in new-action-btn" style="flex:1; padding:8px 2px; font-size:10px;" onclick="saveAction('serveReceive', '〇 Good')" disabled>〇 Good</button>
-                        <button class="action-btn btn-error new-action-btn" style="flex:1; padding:8px 2px; font-size:10px;" onclick="saveAction('serveReceive', '✕ 失敗')" disabled>✕ 失敗</button>
-                    </div>
+                    <div id="log-container"></div>
                 </div>
             </div>
-            
-            <!-- ★ 独立させた下段ログ専用パネル -->
-            <div class="main-container" style="margin-bottom: 0; flex-direction: column; height: 100%; flex: 1; padding: 15px 20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                    <div class="category-title" style="margin:0; font-size:14px; border-left: 4px solid #28a745;">入力ログ（クリックで再生）</div>
-                    <button id="btn-toggle-logs" class="action-btn btn-utility" style="padding:6px 12px; font-size:11px; margin:0;" onclick="toggleAllLogs()">全件表示</button>
-                </div>
-                <div id="log-container"></div>
-            </div>
-            
         </div>
 
         <!-- ================= 2. サーブ統計画面 ================= -->
@@ -581,11 +555,9 @@
 </div>
 
 <script>
-    // ★ 新規アクション用の色設定を追加
     const colors = { 
         'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
         '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
-        '◎ Perfect': '#007BFF', '〇 Good': '#000000', '✕ 失敗': '#ff4d4d',
         'temp': '#FFFF00' 
     };
     
@@ -624,7 +596,7 @@
     let playIndex = 0;
     let playTimeout = null;
 
-    // ログの全件表示ステート
+    // ★ ログの全件表示ステート
     let showAllLogs = false;
 
     function openSettings() { document.getElementById('settings-modal-overlay').style.display = 'flex'; }
@@ -1266,9 +1238,10 @@
         updateDynamicPlaylist(); 
     }
 
+    // ★ 選手ボタンのサイズ拡大・デザイン変更を反映したレンダー関数
     function renderPlayerGrids() {
-        let wrapperHeight = '66px'; // 約1.3倍
-        let fontSize = '20px';      // フォント約2倍
+        let wrapperHeight = '66px'; // 約1.3倍に拡大
+        let fontSize = '20px';      // 名前の表示を約2倍に拡大
         let editHeight = '20px';
         let editFontSize = '10px';
 
@@ -1419,7 +1392,7 @@
         let csvContent = "\uFEFF";
         csvContent += "日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         dataLog.forEach(l => {
-            let typeStr = l.type === 'serve' ? 'サーブ' : l.type === 'spike' ? 'スパイク' : l.type === 'toss' ? 'トス' : l.type === 'receive' ? 'レシーブ' : 'サーブレシーブ';
+            let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
             csvContent += `${l.time},${l.sessionId},${l.videoTime || ''},${playerNames[l.playerId]},${typeStr},${l.result}\n`;
         });
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
@@ -1506,7 +1479,6 @@
     }
 
     function isLogInZone(log, zone) {
-        if(log.startX === null || log.startY === null) return false;
         let clampedX = Math.max(20, Math.min(log.startX, 199.9)), clampedY = Math.max(240, Math.min(log.startY, 419.9));
         return Math.floor((clampedX - 20) / 60) === zone.x && Math.floor((clampedY - 240) / 60) === zone.y;
     }
@@ -1514,9 +1486,6 @@
     function resetInput() { 
         inputState = 'idle'; serveStart = null; serveEnd = null; 
         document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
-        
-        const isPlayerSelected = selectedPlayerId !== null;
-        document.querySelectorAll('.new-action-btn').forEach(b => b.disabled = !isPlayerSelected);
     }
 
     function cancelCurrentInput() {
@@ -1600,25 +1569,13 @@
             let baseZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
             let mainLogs = getFilteredLogs(type, sFilter, baseZones);
 
-            mainLogs.forEach(l => {
-                if (l.startX !== null && l.endX !== null) {
-                    line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]);
-                } else if (l.startX !== null) {
-                    dot(ct, l.startX, l.startY, 5, colors[l.result]);
-                }
-            });
+            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
 
             if (hFilter !== null && hFilter !== sFilter) {
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 ct.globalAlpha = 0.25;
-                previewOnlyLogs.forEach(l => {
-                    if (l.startX !== null && l.endX !== null) {
-                        line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]);
-                    } else if (l.startX !== null) {
-                        dot(ct, l.startX, l.startY, 5, colors[l.result]);
-                    }
-                });
+                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
                 ct.globalAlpha = 1.0;
             }
 
@@ -1627,13 +1584,7 @@
                 if (!isHZoneLocked) {
                     let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
                     ct.globalAlpha = 0.25;
-                    previewLogs.forEach(l => {
-                        if (l.startX !== null && l.endX !== null) {
-                            line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]);
-                        } else if (l.startX !== null) {
-                            dot(ct, l.startX, l.startY, 5, colors[l.result]);
-                        }
-                    });
+                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]));
                     ct.globalAlpha = 1.0;
                 }
             }
@@ -1648,28 +1599,15 @@
     }
 
     function saveAction(type, result) {
-        let finalX = null, finalY = null, finalEndX = null, finalEndY = null;
-
-        if (serveStart) {
-            finalX = serveStart.x; finalY = serveStart.y;
-            if (type === 'serve') {
-                let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
-            } else if (type === 'spike' || type === 'toss' || type === 'receive' || type === 'serveReceive') {
-                let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60), yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
-                finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
-                if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
-            }
+        let finalX = serveStart.x, finalY = serveStart.y;
+        if (type === 'serve') {
+            let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
+        } else if (type === 'spike') {
+            let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60), yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
+            finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
+            if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
         }
-        
-        if (serveEnd) {
-            finalEndX = serveEnd.x; finalEndY = serveEnd.y;
-        }
-
-        dataLog.push({ 
-            id: Date.now(), sessionId: currentSessionId, playerId: selectedPlayerId, type: type, result: result, 
-            startX: finalX, startY: finalY, endX: finalEndX, endY: finalEndY, 
-            time: new Date().toLocaleString(), videoTime: formatTime(timerSeconds) 
-        });
+        dataLog.push({ id: Date.now(), sessionId: currentSessionId, playerId: selectedPlayerId, type: type, result: result, startX: finalX, startY: finalY, endX: serveEnd.x, endY: serveEnd.y, time: new Date().toLocaleString(), videoTime: formatTime(timerSeconds) });
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
@@ -1714,6 +1652,7 @@
         renderPlayerGrids(); 
     }
     
+    // ★ ログの表示・非表示切り替え処理
     function toggleAllLogs() {
         showAllLogs = !showAllLogs;
         const btn = document.getElementById('btn-toggle-logs');
@@ -1721,15 +1660,16 @@
         updateLog();
     }
 
+    // ★ ログの更新処理（全件表示ステートに対応）
     function updateLog() { 
         const container = document.getElementById('log-container');
+        // 全件表示がオンなら全データ、オフなら最新5件を取得
         const displayLogs = showAllLogs ? [...dataLog].reverse() : [...dataLog].reverse().slice(0, 5);
         container.innerHTML = displayLogs.map(l => {
-            let resClass = (l.result === 'エース' || l.result === '決定' || l.result === '◎ Perfect') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good' || l.result === '〇 Good') ? 'res-in' : 'res-err');
-            let typeStr = l.type === 'serve' ? 'サーブ' : l.type === 'spike' ? 'スパイク' : l.type === 'toss' ? 'トス' : l.type === 'receive' ? 'レシーブ' : 'サブレシ';
+            let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの4秒前から再生">${timeStr}<span class="log-name">${playerNames[l.playerId]} <span class="log-type">(${typeStr})</span></span><span class="log-res ${resClass}">${l.result}</span></div>`;
+            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの4秒前から再生">${timeStr}<span class="log-name">${playerNames[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
     }
     
@@ -1765,10 +1705,7 @@
             container.appendChild(card);
             const ct = setupCanvasContext(`cmp-canvas-${pid}`);
             ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-            logs.forEach(l => { 
-                if (l.startX !== null && l.endX !== null) { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]); }
-                else if (l.startX !== null) { dot(ct, l.startX, l.startY, 5, colors[l.result]); }
-            });
+            logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, colors[l.result]); });
         });
     }
 
