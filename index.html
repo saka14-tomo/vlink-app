@@ -32,11 +32,11 @@
         .split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; justify-content: center; align-items: stretch; transition: max-width 0.3s ease; }
         .split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .split-center { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
-        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; }
+        .split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; min-height: 0; }
         
         /* 左右の高さを完全に均一化 */
         .split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
-        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; }
+        .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 0; }
 
         /* 左パネル：選手選択 */
         .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
@@ -119,24 +119,21 @@
         .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
         .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
         
-        /* ========================================================= */
-        /* ★ ログ画面の無限伸び防止＆スクロール化設定 ★ */
-        /* ========================================================= */
+        /* ログウィンドウのスクロール対応（独立パネル用） */
         .log-scroll-wrapper {
             position: relative;
-            flex: 1 1 0; /* 親パネルの高さいっぱいに広がるが、自分自身で高さを押し広げない */
+            flex: 1 1 0;
             width: 100%;
-            min-height: 0; /* これが重要：フレックスコンテナが中身のサイズで膨張するのを防ぐ */
+            min-height: 0; 
         }
 
         #log-container { 
-            position: absolute; /* 絶対配置にすることで、レイアウトの高さ計算から除外する */
+            position: absolute; 
             top: 0; left: 0; width: 100%; height: 100%;
             background: #fafafa; border: 1px solid #eee; 
             border-radius: 8px; padding: 4px; display: block; overflow-y: auto; 
-            box-sizing: border-box; /* paddingを含めたサイズに固定 */
+            box-sizing: border-box; 
         }
-        /* ========================================================= */
 
         #log-container::-webkit-scrollbar { width: 6px; }
         #log-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
@@ -228,7 +225,6 @@
             .player-wrapper { width: 60px; height: 50px; }
             .log-panel-container { height: auto; }
             #video-seek-controls { justify-content: center; }
-            /* スマホなど1カラムになったときはログエリアの高さを指定する */
             .log-scroll-wrapper { flex: none; height: 250px; }
         }
 
@@ -537,6 +533,11 @@
                 <h3 style="margin-top:0; border-bottom: 3px solid #ff9800; padding-bottom: 12px; width: 100%; color: #333;">データ入力終了・管理</h3>
                 <p style="font-size: 14px; color: #555; margin-bottom: 25px;">記録したデータを保存するか、新しく記録を始めるか選択してください。</p>
                 <div style="display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px;">
+                    
+                    <!-- ★追加: クリップボードコピーツール -->
+                    <button class="action-btn" style="background:#6f42c1; font-size: 14px; padding: 14px;" onclick="copyForYouTube()">📋 YouTube説明欄用にログをコピー</button>
+                    <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 5px 0;">
+
                     <button class="action-btn" style="background:#28a745; font-size: 14px; padding: 14px;" onclick="exportData()">💾 V-Link復元用データを保存 (JSON)</button>
                     <button class="action-btn" style="background:#17a2b8; font-size: 14px; padding: 14px;" onclick="exportCSV()">📊 表計算ソフト用データを保存 (CSV)</button>
                     <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
@@ -556,7 +557,6 @@
             </div>
             <p style="font-size:11px; color:#666; margin:0 0 8px 0; text-align:center; flex-shrink: 0;">（クリックで再生）</p>
             
-            <!-- ここから変更: スクロールエリアを絶対配置のコンテナに閉じ込める -->
             <div class="log-scroll-wrapper">
                 <div id="log-container"></div>
             </div>
@@ -599,6 +599,7 @@
     let seekDuration = 5; 
     
     let currentVideoName = "";
+    let currentVideoId = null; // ★追加：現在紐付けられている動画の固有ID
     
     // 連続再生用ステート
     let isPlaylistActive = false;
@@ -663,6 +664,7 @@
         if (!file) return;
 
         currentVideoName = file.name.replace(/\.[^/.]+$/, "");
+        currentVideoId = "local_" + currentVideoName; // ★追加：動画IDを生成
 
         activeVideoType = 'local';
         showPlayer('local');
@@ -674,6 +676,9 @@
         timerSeconds = 0;
         updateTimerDisplay();
         lp.play();
+
+        // ★追加：データベースから過去の履歴を探す
+        checkAndLoadVideoData(currentVideoId);
     }
 
     function loadYouTubeVideo() {
@@ -690,6 +695,9 @@
             alert("⚠️ URLから動画IDを読み取れませんでした。正しいYouTubeのURLか確認してください。");
             return;
         }
+
+        currentVideoName = "YouTube Video";
+        currentVideoId = "yt_" + videoId; // ★追加：動画IDを生成
 
         activeVideoType = 'youtube';
         showPlayer('youtube');
@@ -712,6 +720,9 @@
 
         timerSeconds = 0;
         updateTimerDisplay();
+
+        // ★追加：データベースから過去の履歴を探す
+        checkAndLoadVideoData(currentVideoId);
     }
 
     function rebuildYTPlayer(videoId) {
@@ -1032,6 +1043,16 @@
         if (!db) return;
         const tx = db.transaction(STORE_NAME, 'readwrite'); const store = tx.objectStore(STORE_NAME);
         store.put(playerNames, 'players'); store.put(dataLog, 'log'); store.put(currentSessionId, 'session');
+        
+        // ★追加：紐付いた動画があれば、動画専用のIDでもデータを保存しておく
+        if (currentVideoId) {
+            store.put({
+                players: playerNames,
+                log: dataLog,
+                playerCount: activePlayerCount,
+                updatedAt: Date.now()
+            }, 'proj_' + currentVideoId);
+        }
     }
 
     function saveToLocal() {
@@ -1040,6 +1061,75 @@
         localStorage.setItem('vlink_current_session', currentSessionId);
         localStorage.setItem('vlink_player_count', activePlayerCount);
         saveToDB(); 
+    }
+
+    // ★追加：データ読み込み後の画面リセット共通処理
+    function updateAfterDataLoad() {
+        selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
+        resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
+        hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
+        updateZoneClasses('serve'); updateZoneClasses('spike');
+        renderPlayerGrids(); updateLog(); draw('input-canvas'); clearAnalysisDOM(); switchTab('input'); 
+    }
+
+    // ★追加：動画読み込み時に過去のデータがないか探す処理
+    function checkAndLoadVideoData(vidId) {
+        if (!db) return;
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get('proj_' + vidId);
+        req.onsuccess = (e) => {
+            const savedData = e.target.result;
+            if (savedData) {
+                // 過去のデータが見つかった場合
+                if (dataLog.length === 0 || confirm("この動画の過去のデータが保存されています。\n現在のデータを上書きして読み込みますか？")) {
+                    dataLog = savedData.log || [];
+                    playerNames = savedData.players || playerNames;
+                    activePlayerCount = savedData.playerCount || 7;
+                    updateAfterDataLoad();
+                }
+            } else {
+                // 過去のデータがない場合
+                if (dataLog.length > 0) {
+                    if(confirm("新しい動画が読み込まれました。\n現在の記録をリセットして新しく始めますか？\n\n（「キャンセル」を押すと、現在の記録をこの動画に引き継ぎます）")) {
+                        resetAllData(true); // true = confirmスキップ
+                    }
+                }
+            }
+            saveToLocal(); // 新しい動画IDでの紐付けを確定させる
+        };
+    }
+
+    // ★追加：クリップボードコピー処理（YouTube説明欄用）
+    function copyForYouTube() {
+        if (dataLog.length === 0) {
+            alert("コピーするデータがありません。");
+            return;
+        }
+        
+        // 動画時間が記録されているログのみを抽出・時間順にソート
+        const logsWithTime = dataLog.filter(l => l.videoTime);
+        logsWithTime.sort((a, b) => {
+            let ta = a.videoTime.split(':'); let sa = parseInt(ta[0])*60 + parseInt(ta[1]);
+            let tb = b.videoTime.split(':'); let sb = parseInt(tb[0])*60 + parseInt(tb[1]);
+            return sa - sb;
+        });
+
+        if (logsWithTime.length === 0) {
+            alert("動画の時間が記録されたデータがありません。");
+            return;
+        }
+
+        let copyText = "タイムスタンプ : 選手名 - プレー結果\n";
+        logsWithTime.forEach(l => {
+            copyText += `${l.videoTime} ${playerNames[l.playerId]} : ${l.result}\n`;
+        });
+
+        navigator.clipboard.writeText(copyText).then(() => {
+            alert("クリップボードにコピーしました！\nYouTubeの動画説明欄にそのまま貼り付け(Ctrl+V)できます。");
+        }).catch(err => {
+            alert("コピーに失敗しました。お使いのブラウザの権限を確認してください。");
+        });
     }
 
     function setupCanvasContext(id) {
@@ -1100,7 +1190,6 @@
         const videoArea = document.getElementById('shared-video-area');
         const logArea = document.getElementById('shared-log-area');
 
-        // データ入力タブ(input)の時だけログエリアを表示
         if (target === 'input') {
             logArea.style.display = 'flex';
         } else {
@@ -1445,11 +1534,7 @@
                     playerNames = data.players; dataLog = data.log; 
                     activePlayerCount = data.playerCount || 10;
                     saveToLocal(); 
-                    selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
-                    resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
-                    hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
-                    updateZoneClasses('serve'); updateZoneClasses('spike');
-                    renderPlayerGrids(); updateLog(); draw('input-canvas'); clearAnalysisDOM(); switchTab('input'); 
+                    updateAfterDataLoad();
                     alert("データの復元が完了しました。");
                 } else alert("データ形式が正しくありません。");
             } catch (err) { alert("ファイルの読み込みに失敗しました。"); }
@@ -1457,15 +1542,16 @@
         reader.readAsText(file); e.target.value = ''; 
     }
 
-    function resetAllData() {
-        if(confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
+    // ★修正：パラメータを受け取り、必要なら確認ダイアログをスキップ可能に
+    function resetAllData(skipConfirm = false) {
+        if(skipConfirm || confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
             dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
             activePlayerCount = 7; 
             playerNames = {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"};
-            resetInput(); currentSessionId = "session_" + Date.now(); resetTimerInternal(); saveToLocal(); 
-            serveFilter = 'all'; spikeFilter = 'all'; hoverServeZone = null; lockedServeZones = []; hoverSpikeZone = null; lockedSpikeZones = [];
-            updateZoneClasses('serve'); updateZoneClasses('spike');
-            renderPlayerGrids(); updateLog(); draw('input-canvas'); clearAnalysisDOM(); switchTab('input');
+            resetInput(); currentSessionId = "session_" + Date.now(); 
+            if(!skipConfirm) resetTimerInternal(); 
+            saveToLocal(); 
+            updateAfterDataLoad();
         }
     }
 
@@ -1667,7 +1753,6 @@
         renderPlayerGrids(); 
     }
     
-    // ★ ログの更新処理（常に全データを表示する）
     function updateLog() { 
         const container = document.getElementById('log-container');
         const displayLogs = [...dataLog].reverse();
