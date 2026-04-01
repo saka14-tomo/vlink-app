@@ -1043,7 +1043,6 @@
         const tx = db.transaction(STORE_NAME, 'readwrite'); const store = tx.objectStore(STORE_NAME);
         store.put(playerNames, 'players'); store.put(dataLog, 'log'); store.put(currentSessionId, 'session');
         
-        // ★追加：紐付いた動画があれば、動画専用のIDでもデータを保存しておく
         if (currentVideoId) {
             store.put({
                 players: playerNames,
@@ -1062,7 +1061,6 @@
         saveToDB(); 
     }
 
-    // ★追加：データ読み込み後の画面リセット共通処理
     function updateAfterDataLoad() {
         selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
         resetInput(); serveFilter = 'all'; spikeFilter = 'all'; 
@@ -1071,7 +1069,6 @@
         renderPlayerGrids(); updateLog(); draw('input-canvas'); clearAnalysisDOM(); switchTab('input'); 
     }
 
-    // ★追加：動画読み込み時に過去のデータがないか探す処理
     function checkAndLoadVideoData(vidId) {
         if (!db) return;
         const tx = db.transaction(STORE_NAME, 'readonly');
@@ -1080,7 +1077,6 @@
         req.onsuccess = (e) => {
             const savedData = e.target.result;
             if (savedData) {
-                // 過去のデータが見つかった場合
                 if (dataLog.length === 0 || confirm("この動画の過去のデータが保存されています。\n現在のデータを上書きして読み込みますか？")) {
                     dataLog = savedData.log || [];
                     playerNames = savedData.players || playerNames;
@@ -1088,18 +1084,17 @@
                     updateAfterDataLoad();
                 }
             } else {
-                // 過去のデータがない場合
                 if (dataLog.length > 0) {
                     if(confirm("新しい動画が読み込まれました。\n現在の記録をリセットして新しく始めますか？\n\n（「キャンセル」を押すと、現在の記録をこの動画に引き継ぎます）")) {
-                        resetAllData(true); // true = confirmスキップ
+                        resetAllData(true); 
                     }
                 }
             }
-            saveToLocal(); // 新しい動画IDでの紐付けを確定させる
+            saveToLocal(); 
         };
     }
 
-    // ★追加：クリップボードコピー処理（YouTube説明欄用）
+    // ★修正：クリップボードコピー処理（プレー項目を含めるように変更）
     function copyForYouTube() {
         if (dataLog.length === 0) {
             alert("コピーするデータがありません。");
@@ -1119,15 +1114,21 @@
             return;
         }
 
-        let copyText = "タイムスタンプ : 選手名 - プレー結果\n";
+        // ★修正: ヘッダー部分を変更
+        let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
+        
         logsWithTime.forEach(l => {
-            // ★修正：記録時間から5秒マイナスする（0秒未満にはならないようにする）
+            // 記録時間から5秒マイナスする（0秒未満にはならないようにする）
             let parts = l.videoTime.split(':');
             let totalSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
             let playSeconds = Math.max(0, totalSeconds - 5);
             let adjustedTimeStr = formatTime(playSeconds);
 
-            copyText += `${adjustedTimeStr} ${playerNames[l.playerId]} : ${l.result}\n`;
+            // ★追加: プレー項目を日本語化
+            let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
+
+            // ★修正: テキストのフォーマットにプレー項目を追加
+            copyText += `${adjustedTimeStr} ${playerNames[l.playerId]} : ${typeStr} - ${l.result}\n`;
         });
 
         navigator.clipboard.writeText(copyText).then(() => {
@@ -1547,7 +1548,6 @@
         reader.readAsText(file); e.target.value = ''; 
     }
 
-    // ★修正：パラメータを受け取り、必要なら確認ダイアログをスキップ可能に
     function resetAllData(skipConfirm = false) {
         if(skipConfirm || confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
             dataLog = []; selectedPlayerId = null; selectedStatsPlayers = []; comparePlayers = []; 
