@@ -146,7 +146,7 @@
         .compare-cards-wrapper { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-top: 10px; }
         .compare-card { display: flex; flex-direction: column; align-items: center; flex: 1 1 20%; min-width: 95px; max-width: 160px; background: #fff; padding: 10px 8px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; }
         .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #e9ecef; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); }
-        .compare-table { margin-top: 8px; font-size: 11px; width: 100%; border-collapse: collapse; text-align: center; }
+        .compare-table { margin-top: 8px; font-size: 10px; width: 100%; border-collapse: collapse; text-align: center; } /* フォントサイズ10pxに変更 */
         .compare-table td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
         .compare-table .row-in { background: #fff; color: #000; }
         .compare-table .row-miss { background: #fff5f5; color: #d32f2f; }
@@ -764,11 +764,22 @@
     // 4. 分析・フィルタ・Canvas描画制御 (Analytics Manager)
     // ==========================================
     
-    // CanvasのContextキャッシュによるパフォーマンス向上
     const canvasContexts = {};
     function getCanvasContext(id) {
+        const cv = document.getElementById(id);
+        if (!cv) return null;
+
+        // 比較用Canvasは毎回DOMが作り直されるためキャッシュしない
+        if (id.startsWith('cmp-canvas-')) {
+            const ct = cv.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            cv.width = AppConfig.CANVAS.width * dpr; cv.height = AppConfig.CANVAS.height * dpr;
+            cv.style.width = AppConfig.CANVAS.width + 'px'; cv.style.height = AppConfig.CANVAS.height + 'px';
+            ct.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return ct;
+        }
+
         if (!canvasContexts[id]) {
-            const cv = document.getElementById(id);
             const ct = cv.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
             cv.width = AppConfig.CANVAS.width * dpr; cv.height = AppConfig.CANVAS.height * dpr;
@@ -781,6 +792,7 @@
 
     function draw(id) {
         const ct = getCanvasContext(id); 
+        if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); // width再設定ではなくclearRectに最適化
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
         ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
@@ -956,9 +968,12 @@
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
             const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
             const card = document.createElement('div'); card.className = 'compare-card';
-            card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:12px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
+            // フォントサイズを10pxに縮小
+            card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:10px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
             container.appendChild(card);
+            
             const ct = getCanvasContext(`cmp-canvas-${pid}`);
+            if (!ct) return;
             ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
             ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
             logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, AppConfig.COLORS[l.result]); });
