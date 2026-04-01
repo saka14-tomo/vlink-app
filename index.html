@@ -196,7 +196,7 @@
 
 <div class="tab-menu">
     <button id="tab-input" class="tab-btn active" onclick="switchTab('input')">データ入力</button>
-    <button id="tab-analysis" class="tab-btn" onclick="switchTab('analysis')">サーブ統計</button>
+    <button id="tab-serve" class="tab-btn" onclick="switchTab('serve')">サーブ統計</button>
     <button id="tab-spike" class="tab-btn" onclick="switchTab('spike')">スパイク統計</button>
     <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
 </div>
@@ -300,12 +300,12 @@
             </div>
         </div>
 
-        <div id="view-analysis" class="view-content">
+        <div id="view-serve" class="view-content">
             <div class="main-container">
                 <div class="left-panel">
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
-                        <div id="player-grid-analysis" class="player-grid"></div>
+                        <div id="player-grid-serve" class="player-grid"></div>
                     </div>
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
                         <button class="action-btn btn-team-all" style="background:#28a745; width: 100%;" onclick="toggleAllTeam()">👨‍👩‍👦 チーム全体表示：OFF</button>
@@ -315,7 +315,7 @@
                 </div>
                 
                 <div class="court-wrapper">
-                    <canvas id="analysis-canvas"></canvas>
+                    <canvas id="serve-canvas"></canvas>
                     <div class="zone-overlay" onmouseleave="clearZoneHover('serve')">
                         <div id="zone-serve-0-0" class="zone-cell" onmouseenter="setZoneHover('serve', 0, 0)" onclick="toggleZoneLock('serve', 0, 0)">Z4</div>
                         <div id="zone-serve-1-0" class="zone-cell" onmouseenter="setZoneHover('serve', 1, 0)" onclick="toggleZoneLock('serve', 1, 0)">Z3</div>
@@ -593,7 +593,7 @@
     function openSettings() { document.getElementById('settings-modal-overlay').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal-overlay').style.display = 'none'; }
     function openFinishView() { switchTab('finish'); }
-    function goToCompare() { AppState.ui.compareType = (AppState.ui.currentTab === 'analysis') ? 'serve' : 'spike'; switchTab('compare'); }
+    function goToCompare() { AppState.ui.compareType = (AppState.ui.currentTab === 'serve') ? 'serve' : 'spike'; switchTab('compare'); }
 
     function toggleLargeScreen() {
         AppState.ui.isLargeScreen = !AppState.ui.isLargeScreen;
@@ -626,7 +626,7 @@
         if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
         else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
 
-        ['input', 'analysis', 'spike', 'compare'].forEach(type => {
+        ['input', 'serve', 'spike', 'compare'].forEach(type => {
             const container = document.getElementById(`player-grid-${type}`); if(!container) return;
             container.innerHTML = '';
             for(let i=1; i<=AppState.data.activePlayerCount; i++) {
@@ -789,8 +789,8 @@
         if (id === 'input-canvas') {
             if (AppState.input.start) dot(ct, AppState.input.start.x, AppState.input.start.y, 3.5, AppConfig.COLORS['temp']); 
             if (AppState.input.start && AppState.input.end) line(ct, AppState.input.start, AppState.input.end, AppConfig.COLORS['temp']);
-        } else if (id === 'analysis-canvas' || id === 'spike-canvas') {
-            const type = id === 'analysis-canvas' ? 'serve' : 'spike';
+        } else if (id === 'serve-canvas' || id === 'spike-canvas') {
+            const type = id === 'serve-canvas' ? 'serve' : 'spike';
             const sFilter = AppState.filters[type];
             const hFilter = AppState.hoverFilters[type];
             const lZones = AppState.lockedZones[type];
@@ -825,7 +825,7 @@
     function dot(ct, x, y, r, c) { ct.beginPath(); ct.arc(x,y,r,0,Math.PI*2); ct.fillStyle=c; ct.fill(); ct.strokeStyle = (c === '#FFFF00') ? '#333' : 'white'; ct.stroke(); }
 
     function getFilteredLogs(type, targetFilter, zones) {
-        let logs = AppState.data.logs.filter(l => AppState.ui.statsPlayers.includes(l.playerId) && (type === 'serve' ? l.type !== 'spike' : l.type === 'spike'));
+        let logs = AppState.data.logs.filter(l => AppState.ui.statsPlayers.includes(l.playerId) && l.type === type);
         if (zones && zones.length > 0) logs = logs.filter(l => zones.some(z => isLogInZone(l, z)));
 
         if (targetFilter && targetFilter !== 'all') {
@@ -847,11 +847,11 @@
 
     // DRY化：描画関数の統合
     function drawStatsCanvas(type) {
-        document.querySelectorAll(`#view-${type === 'serve' ? 'analysis' : 'spike'} .clickable-stat`).forEach(el => el.classList.remove('active-filter'));
+        document.querySelectorAll(`#view-${type} .clickable-stat`).forEach(el => el.classList.remove('active-filter'));
         const activeEl = document.getElementById(`filter-${type}-${AppState.filters[type]}`); 
         if(activeEl) activeEl.classList.add('active-filter');
         
-        draw(type === 'serve' ? 'analysis-canvas' : 'spike-canvas');
+        draw(type + '-canvas');
         
         let statZones = AppState.lockedZones[type].length > 0 ? AppState.lockedZones[type] : (AppState.hoverZones[type] ? [AppState.hoverZones[type]] : []);
         updateStatsUI(type, getFilteredLogs(type, 'all', statZones));
@@ -867,20 +867,20 @@
 
     function setHoverFilter(type, filter) {
         AppState.hoverFilters[type] = filter; 
-        draw(type === 'serve' ? 'analysis-canvas' : 'spike-canvas');
+        draw(type + '-canvas');
     }
     function clearHoverFilter(type) {
         AppState.hoverFilters[type] = null; 
-        draw(type === 'serve' ? 'analysis-canvas' : 'spike-canvas');
+        draw(type + '-canvas');
     }
 
     function setZoneHover(type, x, y) {
         AppState.hoverZones[type] = {x, y};
-        if(AppState.ui.currentTab === (type === 'serve' ? 'analysis' : 'spike')) drawStatsCanvas(type);
+        if(AppState.ui.currentTab === type) drawStatsCanvas(type);
     }
     function clearZoneHover(type) {
         AppState.hoverZones[type] = null;
-        if(AppState.ui.currentTab === (type === 'serve' ? 'analysis' : 'spike')) drawStatsCanvas(type);
+        if(AppState.ui.currentTab === type) drawStatsCanvas(type);
     }
 
     function toggleZoneLock(type, x, y) {
@@ -930,8 +930,8 @@
         }
     }
 
-    function clearAnalysisDOM() {
-        draw('analysis-canvas'); draw('spike-canvas');
+    function clearStatsDOM() {
+        draw('serve-canvas'); draw('spike-canvas');
         document.getElementById('st-total').innerText = '0'; document.getElementById('st-in').innerText = '0'; document.getElementById('st-in-rate').innerText = '0%';
         document.getElementById('st-miss').innerText = '0'; document.getElementById('st-miss-rate').innerText = '0%'; document.getElementById('st-ace-chart-val').innerText = '0'; document.getElementById('st-ace-chart-rate').innerText = '0%';
         document.getElementById('pie-total-val').innerText = '0本'; document.getElementById('pie-labels').innerHTML = ''; document.getElementById('pie-chart').style.backgroundImage = "conic-gradient(#eee 0% 100%)";
@@ -952,7 +952,7 @@
         const container = document.getElementById('compare-cards-container');
         container.innerHTML = (AppState.ui.comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択してください（最大8人）</p>' : '';
         AppState.ui.comparePlayers.forEach(pid => {
-            let logs = AppState.data.logs.filter(l => l.playerId === pid && (AppState.ui.compareType === 'serve' ? l.type !== 'spike' : l.type === 'spike'));
+            let logs = AppState.data.logs.filter(l => l.playerId === pid && l.type === AppState.ui.compareType);
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
             const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
             const card = document.createElement('div'); card.className = 'compare-card';
@@ -1352,7 +1352,7 @@
         AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; 
         resetInput(); AppConfig.TYPES.forEach(t => { AppState.filters[t] = 'all'; AppState.lockedZones[t] = []; AppState.hoverZones[t] = null; });
         updateZoneClasses('serve'); updateZoneClasses('spike');
-        renderPlayerGrids(); updateLog(); draw('input-canvas'); clearAnalysisDOM(); switchTab('input'); 
+        renderPlayerGrids(); updateLog(); draw('input-canvas'); clearStatsDOM(); switchTab('input'); 
     }
 
     function checkAndLoadVideoData(vidId) {
@@ -1474,7 +1474,7 @@
 
         initDB(() => {
             renderPlayerGrids(); updateLog(); draw('input-canvas');
-            clearAnalysisDOM(); drawStatsCanvas('serve'); drawStatsCanvas('spike'); updateTimerDisplay();
+            clearStatsDOM(); drawStatsCanvas('serve'); drawStatsCanvas('spike'); updateTimerDisplay();
             document.addEventListener('touchend', (e) => { const now = Date.now(); if (now - (window.lastTouchEnd || 0) <= 300) e.preventDefault(); window.lastTouchEnd = now; }, false);
         });
     };
