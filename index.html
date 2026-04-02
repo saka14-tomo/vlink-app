@@ -88,14 +88,11 @@
                 <div class="left-panel">
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <button class="action-btn" style="background:#17a2b8; font-size: 11px; padding: 8px; box-shadow:none;" onclick="openTeamSelectModal()">👥 チーム呼出</button>
-                        
                         <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                         <div id="player-grid-input" class="player-grid"></div>
                     </div>
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
-                        
                         <button class="action-btn" style="background:#28a745; font-size: 11px; padding: 8px;" onclick="registerCurrentTeam()">💾 現在の選手をチーム登録</button>
-
                         <div style="display: flex; gap: 4px; width: 100%;">
                             <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
                             <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
@@ -111,27 +108,70 @@
                 </div>
 
                 <div class="right-panel">
-                    <div class="category-title" style="margin-top:0;">サーブ結果</div>
-                    <div style="display:flex; gap:6px;">
-                        <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')" disabled>エース</button>
-                        <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')" disabled>イン</button>
-                    </div>
-                    <div style="display:flex; gap:6px; margin-top:6px;">
-                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'アウト')" disabled>アウト</button>
-                        <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'ネット')" disabled>ネット</button>
-                    </div>
                     
-                    <div class="category-title" style="margin-top:12px;">スパイク結果</div>
-                    <div style="display:flex; gap:6px;">
-                        <button class="action-btn btn-ace spike-action-btn" style="flex:1;" onclick="saveAction('spike', '決定')" disabled>決定</button>
-                        <button class="action-btn btn-in spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'Good')" disabled>Good</button>
+                    <div id="panel-direct" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                        <div class="category-title" style="margin:0 0 4px 0;">サーブレシーブ</div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-ace direct-btn" style="flex:1;" onclick="saveDirectAction('serve_receive', '成功')" disabled>〇 成功</button>
+                            <button class="action-btn btn-error direct-btn" style="flex:1;" onclick="saveDirectAction('serve_receive', 'ミス')" disabled>✕ ミス</button>
+                        </div>
+
+                        <div class="category-title" style="margin:8px 0 4px 0;">レシーブ</div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-ace direct-btn" style="flex:1;" onclick="saveDirectAction('receive', '成功')" disabled>〇 成功</button>
+                            <button class="action-btn btn-error direct-btn" style="flex:1;" onclick="saveDirectAction('receive', 'ミス')" disabled>✕ ミス</button>
+                        </div>
+
+                        <div class="category-title" style="margin:8px 0 4px 0;">トス</div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('レフト')" disabled>レフト</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('センター')" disabled>センター</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('クイック')" disabled>クイック</button>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('ライト')" disabled>ライト</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="saveDirectAction('toss', '２アタック')" disabled>２アタ</button>
+                            <button class="action-btn btn-error toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="saveDirectAction('toss', '失点')" disabled>失点</button>
+                        </div>
+                        
+                        <div style="margin-top:12px; padding:8px; text-align:center; font-size:11px; color:#555; background:#f8f9fa; border-radius:6px; border:1px dashed #ced4da;">
+                            👆 サーブ・スパイクはコートをタップ
+                        </div>
                     </div>
-                    <div style="display:flex; gap:6px; margin-top:6px;">
-                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
-                        <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
+
+                    <div id="panel-court" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
+                        <div class="category-title" style="margin:0 0 4px 0;">サーブ結果</div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-ace serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'エース')">エース</button>
+                            <button class="action-btn btn-in serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'イン')">イン</button>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'アウト')">アウト</button>
+                            <button class="action-btn btn-error serve-action-btn" style="flex:1;" onclick="saveAction('serve', 'ネット')">ネット</button>
+                        </div>
+                        
+                        <div class="category-title" style="margin:8px 0 4px 0;">スパイク結果</div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-ace spike-action-btn" style="flex:1;" onclick="saveAction('spike', '決定')">決定</button>
+                            <button class="action-btn btn-in spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'Good')">Good</button>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'アウト')">アウト</button>
+                            <button class="action-btn btn-error spike-action-btn" style="flex:1;" onclick="saveAction('spike', 'ネット')">ネット</button>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')">ブロックシャット</button>
+                        </div>
+                        
+                        <button class="action-btn btn-utility" style="margin-top: 12px; padding: 12px;" onclick="cancelCurrentInput()">◀ コート入力をやめる</button>
                     </div>
-                    <div style="display:flex; gap:6px; margin-top:6px;">
-                        <button class="action-btn btn-error spike-action-btn" style="width:100%;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロックシャット</button>
+
+                    <div id="panel-toss-eval" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
+                        <div class="category-title" style="margin:0 0 8px 0;" id="toss-eval-title">トス評価</div>
+                        <button class="action-btn btn-ace" style="padding: 16px; font-size: 15px;" onclick="saveTossEval('成功')">〇 成功</button>
+                        <button class="action-btn btn-error" style="padding: 16px; font-size: 15px; margin-bottom: 12px;" onclick="saveTossEval('ミス')">✕ ミス</button>
+                        
+                        <button class="action-btn btn-utility" style="padding: 12px;" onclick="cancelTossEval()">◀ 球種選択に戻る</button>
                     </div>
                 </div>
             </div>
@@ -306,10 +346,8 @@
                 <h3 style="margin-top:0; border-bottom: 3px solid #ff9800; padding-bottom: 12px; width: 100%; color: #333;">データ入力終了・管理</h3>
                 <p style="font-size: 14px; color: #555; margin-bottom: 25px;">記録したデータを保存するか、新しく記録を始めるか選択してください。</p>
                 <div style="display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px;">
-                    
                     <button class="action-btn" style="background:#6f42c1; font-size: 14px; padding: 14px;" onclick="copyForYouTube()">📋 YouTube説明欄用にログをコピー</button>
                     <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 5px 0;">
-
                     <button class="action-btn" style="background:#28a745; font-size: 14px; padding: 14px;" onclick="exportData()">💾 V-Link復元用データを保存 (JSON)</button>
                     <button class="action-btn" style="background:#17a2b8; font-size: 14px; padding: 14px;" onclick="exportCSV()">📊 表計算ソフト用データを保存 (CSV)</button>
                     <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
@@ -328,11 +366,9 @@
                 <div class="category-title" style="margin:0;">入力ログ</div>
             </div>
             <p style="font-size:11px; color:#666; margin:0 0 8px 0; text-align:center; flex-shrink: 0;">（クリックで再生）</p>
-            
             <div class="log-scroll-wrapper">
                 <div id="log-container"></div>
             </div>
-
         </div>
     </div>
 </div>
@@ -340,8 +376,7 @@
 <div id="team-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; padding:25px; border-radius:12px; width:80%; max-width:320px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
         <h3 style="margin:0; border-bottom:2px solid #17a2b8; padding-bottom:8px; font-size:16px;">👥 登録済みチーム</h3>
-        <div id="team-list-container" style="display:flex; flex-direction:column; gap:8px; max-height: 300px; overflow-y: auto;">
-            </div>
+        <div id="team-list-container" style="display:flex; flex-direction:column; gap:8px; max-height: 300px; overflow-y: auto;"></div>
         <div style="display:flex; justify-content:flex-end; margin-top:15px;">
             <button class="action-btn" style="background:#6c757d; width:90px;" onclick="closeTeamSelectModal()">閉じる</button>
         </div>
