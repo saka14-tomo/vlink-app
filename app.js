@@ -6,7 +6,7 @@
             'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
             '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
             '成功': '#007BFF', 'ミス': '#ff4d4d',
-            '２アタック': '#000000', '失点': '#ff4d4d',
+            '失点': '#ff4d4d',
             'temp': '#FFFF00' 
         },
         DEFAULT_PLAYERS: {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"},
@@ -35,8 +35,7 @@
             isTeamAll: false,
             isLargeScreen: false
         },
-        // ★ inputにtossTypeを追加
-        input: { state: 'idle', start: null, end: null, tossType: null },
+        input: { state: 'idle', start: null, end: null },
         filters: { serve: 'all', spike: 'all' },
         hoverFilters: { serve: null, spike: null },
         lockedZones: { serve: [], spike: [] },
@@ -300,12 +299,11 @@
         return canvasContexts[id].ct;
     }
 
-    // ★新規：結果文字からログの色を動的に判定
     function getColorForLog(result) {
         if (AppConfig.COLORS[result]) return AppConfig.COLORS[result];
         if (result.includes('成功')) return '#007BFF';
         if (result.includes('ミス') || result.includes('失点')) return '#ff4d4d';
-        return '#000000';
+        return '#000000'; // デフォルト色（黒）
     }
 
     function draw(id) {
@@ -501,17 +499,13 @@
     // 5. データ入力管理 (Input Manager)
     // ==========================================
 
-    // ★新規：右パネルの表示切り替え（ダイナミックUI）
     function setRightPanelMode(mode) {
         document.getElementById('panel-direct').style.display = (mode === 'direct') ? 'flex' : 'none';
         document.getElementById('panel-court').style.display = (mode === 'court') ? 'flex' : 'none';
-        document.getElementById('panel-toss-eval').style.display = (mode === 'toss-eval') ? 'flex' : 'none';
     }
 
-    // ★変更：リセット時にパネルもダイレクト（初期）モードに戻す
     function resetInput() { 
         AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
-        AppState.input.tossType = null;
         setRightPanelMode('direct');
 
         document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
@@ -520,7 +514,6 @@
         document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
     }
 
-    // ★変更：コートをタップしたら自動でサーブ/スパイク用のパネル（State B）に切り替える
     function handleCourtClick(e) {
         if (!AppState.ui.selectedPlayerId) return;
         const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
@@ -529,7 +522,7 @@
         if (AppState.input.state === 'idle') { 
             AppState.input.start = {x, y}; 
             AppState.input.state = 'waiting'; 
-            setRightPanelMode('court'); // コートタップでパネル切り替え
+            setRightPanelMode('court'); 
         } else if (AppState.input.state === 'waiting') { 
             AppState.input.end = {x, y}; 
             AppState.input.state = 'ready'; 
@@ -573,10 +566,9 @@
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
-    // ★新規：コートタップ不要なダイレクトアクションの保存
     function saveDirectAction(type, result) {
         if (!AppState.ui.selectedPlayerId) return;
-        let finalX = 110, finalY = 240; // コート非依存なので便宜上の中心座標
+        let finalX = 110, finalY = 240; 
         
         AppState.data.logs.push({ 
             id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, 
@@ -586,27 +578,6 @@
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
-    // ★新規：トス球種選択時（State Cへ切り替え）
-    function handleTossType(typeStr) {
-        if (!AppState.ui.selectedPlayerId) return;
-        AppState.input.tossType = typeStr;
-        document.getElementById('toss-eval-title').innerText = `トス評価 (${typeStr})`;
-        setRightPanelMode('toss-eval');
-    }
-
-    // ★新規：トス評価保存
-    function saveTossEval(evalStr) {
-        if (!AppState.input.tossType) return;
-        const result = `${AppState.input.tossType} - ${evalStr}`;
-        saveDirectAction('toss', result);
-    }
-
-    function cancelTossEval() {
-        AppState.input.tossType = null;
-        setRightPanelMode('direct');
-    }
-
-    // ★変更：新しい項目の色分け対応
     function updateLog() { 
         const container = document.getElementById('log-container');
         const displayLogs = [...AppState.data.logs].reverse();
@@ -989,7 +960,6 @@
         downloadBlob(blob, inputName, 'application/json', '.json', 'JSON File');
     }
 
-    // ★変更：追加項目のCSV書き出し対応
     async function exportCSV() {
         let inputName = prompt("保存するファイル名を入力してください。\nこの名前で保存しますか？", getSuggestFileName("Report"));
         if (inputName === null) return; if (inputName.trim() === "") inputName = getSuggestFileName("Report"); if (!inputName.endsWith('.csv')) inputName += '.csv';
@@ -1042,7 +1012,6 @@
         }
     }
 
-    // ★変更：追加項目のYouTubeコピー対応
     function copyForYouTube() {
         if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
         const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {
