@@ -141,13 +141,13 @@
         .compare-layout { flex-direction: column; align-items: stretch; padding: 20px; }
         .compare-header { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
         .compare-player-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; flex: 1; min-width: 180px; }
-        .compare-player-grid .player-wrapper { width: 54px; height: 45px; border-radius: 6px; } /* 他タブと同じ比率(1.2:1)のまま適したサイズに */
-        .compare-player-grid .player-btn span { font-size: 10px; } /* ボタンの文字を少し小さめに */
+        .compare-player-grid .player-wrapper { width: 48px; height: 34px; border-radius: 6px; }
+        .compare-player-grid .player-btn span { font-size: 11px; }
         .compare-cards-wrapper { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-top: 10px; }
         .compare-card { display: flex; flex-direction: column; align-items: center; flex: 1 1 20%; min-width: 95px; max-width: 160px; background: #fff; padding: 10px 8px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; }
         .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #e9ecef; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); }
-        .compare-table { margin-top: 8px; font-size: 12px; width: 100%; border-collapse: collapse; text-align: center; } /* 10pxから12pxに拡大 */
-        .compare-table td { padding: 6px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; } /* 余白を少し調整 */
+        .compare-table { margin-top: 8px; font-size: 10px; width: 100%; border-collapse: collapse; text-align: center; } /* フォントサイズ10pxに変更 */
+        .compare-table td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
         .compare-table .row-in { background: #fff; color: #000; }
         .compare-table .row-miss { background: #fff5f5; color: #d32f2f; }
         .compare-table .row-ace { background: #e0f0ff; color: #007BFF; }
@@ -967,8 +967,8 @@
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
             const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
             const card = document.createElement('div'); card.className = 'compare-card';
-            // フォントサイズを14pxに拡大、marginを6pxに調整
-            card.innerHTML = `<div style="font-weight:bold; margin-bottom:6px; font-size:14px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
+            // フォントサイズを10pxに縮小
+            card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:10px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
             container.appendChild(card);
             
             const ct = getCanvasContext(`cmp-canvas-${pid}`);
@@ -1058,8 +1058,7 @@
 
     function saveBatchRename() {
         for(let i = 1; i <= AppState.data.activePlayerCount; i++) {
-            const val = document.getElementById(`rename-input-${i}`).value.trim();
-            AppState.data.players[i] = val !== "" ? val : String(i);
+            AppState.data.players[i] = document.getElementById(`rename-input-${i}`).value || String(i);
         }
         saveToLocal(); renderPlayerGrids(); switchTab('input');
     }
@@ -1067,9 +1066,8 @@
     function editSingleName(e, id) {
         e.stopPropagation();
         const newName = prompt(`No.${id} の選手名を入力してください:`, AppState.data.players[id]);
-        if (newName !== null) {
-            AppState.data.players[id] = newName.trim() !== "" ? newName.trim() : String(id);
-            saveToLocal(); renderPlayerGrids(); updateLog();
+        if (newName !== null && newName.trim() !== "") {
+            AppState.data.players[id] = newName.trim(); saveToLocal(); renderPlayerGrids(); updateLog();
             if (AppState.ui.currentTab === 'compare') renderCompareVisual();
         }
     }
