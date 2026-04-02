@@ -141,13 +141,13 @@
         .compare-layout { flex-direction: column; align-items: stretch; padding: 20px; }
         .compare-header { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
         .compare-player-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; flex: 1; min-width: 180px; }
-        .compare-player-grid .player-wrapper { width: 54px; height: 45px; border-radius: 6px; }
-        .compare-player-grid .player-btn span { font-size: 10px; }
+        .compare-player-grid .player-wrapper { width: 48px; height: 34px; border-radius: 6px; }
+        .compare-player-grid .player-btn span { font-size: 11px; }
         .compare-cards-wrapper { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-top: 10px; }
         .compare-card { display: flex; flex-direction: column; align-items: center; flex: 1 1 20%; min-width: 95px; max-width: 160px; background: #fff; padding: 10px 8px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; }
         .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #e9ecef; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); }
-        .compare-table { margin-top: 8px; font-size: 12px; width: 100%; border-collapse: collapse; text-align: center; }
-        .compare-table td { padding: 6px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
+        .compare-table { margin-top: 8px; font-size: 10px; width: 100%; border-collapse: collapse; text-align: center; } /* フォントサイズ10pxに変更 */
+        .compare-table td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
         .compare-table .row-in { background: #fff; color: #000; }
         .compare-table .row-miss { background: #fff5f5; color: #d32f2f; }
         .compare-table .row-ace { background: #e0f0ff; color: #007BFF; }
@@ -267,12 +267,12 @@
             <div class="main-container">
                 <div class="left-panel">
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="action-btn" style="background: #17a2b8; width: 100%; font-size: 11px; padding: 10px;" onclick="openTeamLoadModal()">👥 チーム選択(呼出)</button>
-                        <div class="category-title" style="width: 100%; box-sizing: border-box; margin-top:0;">選手選択</div>
+                        <button class="action-btn" style="background: #17a2b8; width: 100%; font-size: 11px; padding: 8px;" onclick="openTeamLoadModal()">👥 チーム選択(呼出)</button>
+                        <div class="category-title" style="width: 100%; box-sizing: border-box; margin-top: 0;">選手選択</div>
                         <div id="player-grid-input" class="player-grid"></div>
+                        <button class="action-btn" style="background: #28a745; width: 100%; font-size: 11px; padding: 8px; margin-top: 4px;" onclick="saveCurrentTeam()">💾 現在のチームを登録</button>
                     </div>
                     <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
-                        <button class="action-btn" style="background: #28a745; width: 100%; font-size: 11px; padding: 10px;" onclick="saveCurrentTeam()">💾 現在のチームを登録</button>
                         <div style="display: flex; gap: 4px; width: 100%;">
                             <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
                             <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 1つ戻る</button>
@@ -1071,8 +1071,7 @@
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
             const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
             const card = document.createElement('div'); card.className = 'compare-card';
-            // フォントサイズを14pxに拡大、marginを6pxに調整
-            card.innerHTML = `<div style="font-weight:bold; margin-bottom:6px; font-size:14px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
+            card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:10px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
             container.appendChild(card);
             
             const ct = getCanvasContext(`cmp-canvas-${pid}`);
@@ -1139,7 +1138,6 @@
         container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
-            // ツールチップを「7秒前から再生」に変更
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
             return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
