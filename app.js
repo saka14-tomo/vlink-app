@@ -20,7 +20,8 @@
         data: {
             players: { ...AppConfig.DEFAULT_PLAYERS },
             logs: [],
-            activePlayerCount: 7
+            activePlayerCount: 7,
+            teams: [] // チーム保存用配列を追加
         },
         ui: {
             currentTab: 'input',
@@ -132,7 +133,6 @@
                 let currentWrapperHeight = wrapperHeight;
                 let currentFontSize = fontSize;
 
-                // ★ 比較タブの場合のみ、他タブと縦横比が合うように高さと文字を少し小さめに調整
                 if (type === 'compare') {
                     currentWrapperHeight = '46px';
                     currentFontSize = '12px';
@@ -307,7 +307,7 @@
     function draw(id) {
         const ct = getCanvasContext(id); 
         if (!ct) return;
-        ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); // width再設定ではなくclearRectに最適化
+        ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); 
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
         ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
         ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
@@ -371,7 +371,6 @@
         return logs;
     }
 
-    // DRY化：描画関数の統合
     function drawStatsCanvas(type) {
         document.querySelectorAll(`#view-${type} .clickable-stat`).forEach(el => el.classList.remove('active-filter'));
         const activeEl = document.getElementById(`filter-${type}-${AppState.filters[type]}`); 
@@ -383,7 +382,6 @@
         updateStatsUI(type, getFilteredLogs(type, 'all', statZones));
     }
 
-    // DRY化：フィルタ更新関数の統合
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
         if(AppState.filters[type] === 'all') { AppState.lockedZones[type] = []; updateZoneClasses(type); }
@@ -482,7 +480,6 @@
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
             const rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
             const card = document.createElement('div'); card.className = 'compare-card';
-            // ★ 文字サイズを14pxに拡大
             card.innerHTML = `<div style="font-weight:bold; margin-bottom:4px; font-size:14px; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${AppState.data.players[pid]}</div><canvas id="cmp-canvas-${pid}" class="compare-canvas"></canvas><table class="compare-table"><tbody><tr><td style="text-align:left;">Total</td><td colspan="2">${tot}</td></tr><tr class="row-in"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'イン' : 'Good'}</td><td>${goodOrIn}</td><td>${rate(goodOrIn)}</td></tr><tr class="row-miss"><td style="text-align:left;">ミス</td><td>${miss}</td><td>${rate(miss)}</td></tr><tr class="row-ace"><td style="text-align:left;">${AppState.ui.compareType === 'serve' ? 'エース' : '決定'}</td><td>${aceOrDecide}</td><td>${rate(aceOrDecide)}</td></tr></tbody></table>`;
             container.appendChild(card);
             
@@ -550,7 +547,6 @@
         container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
-            // ツールチップを「7秒前から再生」に変更
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
             return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
@@ -573,7 +569,6 @@
 
     function saveBatchRename() {
         for(let i = 1; i <= AppState.data.activePlayerCount; i++) {
-            // ★ 空文字なら番号に戻す
             const val = document.getElementById(`rename-input-${i}`).value.trim();
             AppState.data.players[i] = val === "" ? String(i) : val;
         }
@@ -584,7 +579,6 @@
         e.stopPropagation();
         const newName = prompt(`No.${id} の選手名を入力してください:`, AppState.data.players[id]);
         if (newName !== null) {
-            // ★ 空文字なら番号に戻す
             const trimmed = newName.trim();
             AppState.data.players[id] = trimmed === "" ? String(id) : trimmed;
             saveToLocal(); renderPlayerGrids(); updateLog();
@@ -730,7 +724,6 @@
         const parts = timeStr.split(':');
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
             let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-            // ★4秒前から「7秒前」からの再生に変更
             let playSeconds = Math.max(0, targetSeconds - 7);
             AppState.video.time = playSeconds; updateTimerDisplay();
 
@@ -811,7 +804,6 @@
         seekToLogTime(log.videoTime); 
         
         clearTimeout(AppState.playlist.timeout);
-        // ★開始位置が3秒早くなったため、再生時間を8秒から11秒に延長
         AppState.playlist.timeout = setTimeout(() => {
             if (AppState.playlist.index < AppState.playlist.queue.length - 1) { AppState.playlist.index++; playCurrentQueueItem(); } 
             else document.getElementById('playback-status-text').innerText = "⏹ すべての再生が終了しました";
@@ -850,11 +842,13 @@
     function loadFromDB(callback) {
         const tx = db.transaction(STORE_NAME, 'readonly'); const store = tx.objectStore(STORE_NAME);
         const reqP = store.get('players'), reqL = store.get('log'), reqS = store.get('session');
+        const reqT = store.get('teams'); // チーム情報を取得
         tx.oncomplete = () => {
             let needsMigration = false;
             if (reqP.result) AppState.data.players = reqP.result; else needsMigration = true;
             if (reqL.result) AppState.data.logs = reqL.result; else needsMigration = true;
             if (reqS.result) AppState.session.id = reqS.result; else needsMigration = true;
+            if (reqT.result) AppState.data.teams = reqT.result; // チーム情報を復元
             if (needsMigration) fallbackLoad(); callback();
         };
     }
@@ -865,6 +859,11 @@
         if (localStorage.getItem('vlink_current_session')) AppState.session.id = localStorage.getItem('vlink_current_session');
         if (localStorage.getItem('vlink_player_count')) AppState.data.activePlayerCount = parseInt(localStorage.getItem('vlink_player_count'), 10);
         else if (localStorage.getItem('vlink_players')) AppState.data.activePlayerCount = 7; 
+        
+        // チーム情報のフォールバック
+        if (localStorage.getItem('vlink_teams')) AppState.data.teams = JSON.parse(localStorage.getItem('vlink_teams'));
+        else AppState.data.teams = [];
+        
         if (db) saveToDB(); 
     }
 
@@ -872,6 +871,7 @@
         if (!db) return;
         const tx = db.transaction(STORE_NAME, 'readwrite'); const store = tx.objectStore(STORE_NAME);
         store.put(AppState.data.players, 'players'); store.put(AppState.data.logs, 'log'); store.put(AppState.session.id, 'session');
+        store.put(AppState.data.teams, 'teams'); // チーム情報を保存
         if (AppState.video.id) {
             store.put({ players: AppState.data.players, log: AppState.data.logs, playerCount: AppState.data.activePlayerCount, updatedAt: Date.now() }, 'proj_' + AppState.video.id);
         }
@@ -882,6 +882,7 @@
         localStorage.setItem('vlink_data', JSON.stringify(AppState.data.logs));
         localStorage.setItem('vlink_current_session', AppState.session.id);
         localStorage.setItem('vlink_player_count', AppState.data.activePlayerCount);
+        localStorage.setItem('vlink_teams', JSON.stringify(AppState.data.teams)); // チーム情報を保存
         saveToDB(); 
     }
 
@@ -980,7 +981,6 @@
         let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
         logsWithTime.forEach(l => {
             let parts = l.videoTime.split(':'); 
-            // ★ 5秒前から「8秒前」に変更
             let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 8);
             copyText += `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${l.type === 'serve' ? 'サーブ' : 'スパイク'} - ${l.result}\n`;
         });
@@ -989,7 +989,68 @@
     }
 
     // ==========================================
-    // 8. 初期化・イベントバインディング (Init)
+    // 8. チーム管理機能 (Team Manager)
+    // ==========================================
+    function registerCurrentTeam() {
+        if (AppState.data.teams.length >= 10) {
+            alert("登録できるチームは最大10チームまでです。\n不要なチームを削除してから登録してください。");
+            return;
+        }
+        const teamName = prompt("現在の選手セットを保存します。\nチーム名を入力してください:");
+        if (teamName) {
+            const newTeam = {
+                id: Date.now(),
+                name: teamName,
+                players: JSON.parse(JSON.stringify(AppState.data.players)),
+                count: AppState.data.activePlayerCount
+            };
+            AppState.data.teams.push(newTeam);
+            saveToLocal();
+            alert(`チーム「${teamName}」を保存しました。`);
+        }
+    }
+
+    function openTeamSelectModal() {
+        const container = document.getElementById('team-list-container');
+        if (AppState.data.teams.length === 0) {
+            container.innerHTML = '<p style="font-size:13px; color:#666; text-align:center;">登録されているチームはありません。</p>';
+        } else {
+            container.innerHTML = AppState.data.teams.map(team => `
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="action-btn" style="flex:1; background:#007bff; font-size:13px; padding:10px;" onclick="loadTeam(${team.id})">${team.name}</button>
+                    <button class="action-btn" style="background:#dc3545; padding:10px; font-size:12px;" onclick="deleteTeam(${team.id})" title="削除">✖</button>
+                </div>
+            `).join('');
+        }
+        document.getElementById('team-modal-overlay').style.display = 'flex';
+    }
+
+    function closeTeamSelectModal() {
+        document.getElementById('team-modal-overlay').style.display = 'none';
+    }
+
+    function loadTeam(teamId) {
+        const team = AppState.data.teams.find(t => t.id === teamId);
+        if (!team) return;
+        if (confirm(`チーム「${team.name}」の選手データを呼び出しますか？\n※現在入力されている選手名は上書きされます。`)) {
+            AppState.data.players = JSON.parse(JSON.stringify(team.players));
+            AppState.data.activePlayerCount = team.count;
+            saveToLocal();
+            renderPlayerGrids();
+            closeTeamSelectModal();
+        }
+    }
+
+    function deleteTeam(teamId) {
+        if (confirm("このチームの登録を削除しますか？")) {
+            AppState.data.teams = AppState.data.teams.filter(t => t.id !== teamId);
+            saveToLocal();
+            openTeamSelectModal(); // リストを再描画
+        }
+    }
+
+    // ==========================================
+    // 9. 初期化・イベントバインディング (Init)
     // ==========================================
     window.onload = () => { 
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
