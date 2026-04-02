@@ -62,7 +62,7 @@
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
-                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
+                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手手動修正">00:00</div>
                     <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
                 </div>
@@ -124,14 +124,14 @@
 
                         <div class="category-title" style="margin:8px 0 4px 0;">トス</div>
                         <div style="display:flex; gap:6px;">
-                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('レフト')" disabled>レフト</button>
-                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('センター')" disabled>センター</button>
-                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('クイック')" disabled>クイック</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', 'レフト')" disabled>レフト</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', 'センター')" disabled>センター</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', 'ライト')" disabled>ライト</button>
                         </div>
                         <div style="display:flex; gap:6px;">
-                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="handleTossType('ライト')" disabled>ライト</button>
-                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="saveDirectAction('toss', '２アタック')" disabled>２アタ</button>
-                            <button class="action-btn btn-error toss-btn" style="flex:1; font-size:11px; padding:10px 4px;" onclick="saveDirectAction('toss', '失点')" disabled>失点</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', '２アタック')" disabled>２アタック</button>
+                            <button class="action-btn btn-in toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
+                            <button class="action-btn btn-error toss-btn" style="flex:1; font-size:11px; padding:10px 2px;" onclick="saveDirectAction('toss', '失点')" disabled>失点</button>
                         </div>
                         
                         <div style="margin-top:12px; padding:8px; text-align:center; font-size:11px; color:#555; background:#f8f9fa; border-radius:6px; border:1px dashed #ced4da;">
@@ -166,13 +166,6 @@
                         <button class="action-btn btn-utility" style="margin-top: 12px; padding: 12px;" onclick="cancelCurrentInput()">◀ コート入力をやめる</button>
                     </div>
 
-                    <div id="panel-toss-eval" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
-                        <div class="category-title" style="margin:0 0 8px 0;" id="toss-eval-title">トス評価</div>
-                        <button class="action-btn btn-ace" style="padding: 16px; font-size: 15px;" onclick="saveTossEval('成功')">〇 成功</button>
-                        <button class="action-btn btn-error" style="padding: 16px; font-size: 15px; margin-bottom: 12px;" onclick="saveTossEval('ミス')">✕ ミス</button>
-                        
-                        <button class="action-btn btn-utility" style="padding: 12px;" onclick="cancelTossEval()">◀ 球種選択に戻る</button>
-                    </div>
                 </div>
             </div>
         </div>
