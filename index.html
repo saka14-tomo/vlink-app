@@ -769,7 +769,6 @@
         const cv = document.getElementById(id);
         if (!cv) return null;
 
-        // 比較用Canvasは毎回DOMが作り直されるためキャッシュしない
         if (id.startsWith('cmp-canvas-')) {
             const ct = cv.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
@@ -1036,8 +1035,9 @@
         container.innerHTML = displayLogs.map(l => {
             let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
+            // ツールチップを「7秒前から再生」に変更
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの4秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
     }
     
@@ -1210,7 +1210,8 @@
         const parts = timeStr.split(':');
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
             let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-            let playSeconds = Math.max(0, targetSeconds - 4);
+            // ★4秒前から「7秒前」からの再生に変更
+            let playSeconds = Math.max(0, targetSeconds - 7);
             AppState.video.time = playSeconds; updateTimerDisplay();
 
             if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1290,10 +1291,11 @@
         seekToLogTime(log.videoTime); 
         
         clearTimeout(AppState.playlist.timeout);
+        // ★開始位置が3秒早くなったため、再生時間を8秒から11秒に延長
         AppState.playlist.timeout = setTimeout(() => {
             if (AppState.playlist.index < AppState.playlist.queue.length - 1) { AppState.playlist.index++; playCurrentQueueItem(); } 
             else document.getElementById('playback-status-text').innerText = "⏹ すべての再生が終了しました";
-        }, 8000);
+        }, 11000);
     }
 
     function skipNextPlayback() { if (AppState.playlist.index < AppState.playlist.queue.length - 1) { AppState.playlist.index++; playCurrentQueueItem(); } }
@@ -1457,7 +1459,9 @@
 
         let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
         logsWithTime.forEach(l => {
-            let parts = l.videoTime.split(':'); let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 5);
+            let parts = l.videoTime.split(':'); 
+            // ★ 5秒前から「8秒前」に変更
+            let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 8);
             copyText += `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${l.type === 'serve' ? 'サーブ' : 'スパイク'} - ${l.result}\n`;
         });
         navigator.clipboard.writeText(copyText).then(() => alert("クリップボードにコピーしました！\nYouTubeの動画説明欄にそのまま貼り付け(Ctrl+V)できます。"))
