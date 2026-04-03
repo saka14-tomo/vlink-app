@@ -41,7 +41,8 @@
         lockedZones: { serve: [], spike: [] },
         hoverZones: { serve: null, spike: null },
         video: { type: null, id: null, name: "", time: 0, seekDuration: 5, isRunning: false, ytPlayer: null },
-        playlist: { active: false, type: null, queue: [], index: 0, timeout: null }
+        playlist: { active: false, type: null, queue: [], index: 0, timeout: null },
+        videoHistory: [] // ★追加: 動画履歴
     };
 
     // ==========================================
@@ -260,7 +261,6 @@
                 else AppState.ui.statsPlayers = [id]; 
             }
             
-            // ★他の選手選択時にゾーンロックを解除
             AppConfig.TYPES.forEach(t => { 
                 if(AppState.filters[t]) AppState.filters[t] = 'all'; 
                 if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; 
@@ -713,7 +713,7 @@
     }
 
     // ==========================================
-    // 6. 動画制御 (Video Manager)
+    // 6. 動画制御 (Video Manager) & 履歴機能
     // ==========================================
     function showYouTubeInput() {
         document.getElementById('source-btn-group').style.display = 'none';
@@ -738,8 +738,11 @@
         const file = event.target.files[0]; if (!file) return;
         AppState.video.name = file.name.replace(/\.[^/.]+$/, "");
         AppState.video.id = "local_" + AppState.video.name; 
+        AppState.video.type = 'local'; 
+        
+        addToHistory(AppState.video.id, AppState.video.name, 'local', ''); // ★履歴に追加
 
-        AppState.video.type = 'local'; showPlayer('local');
+        showPlayer('local');
         if (AppState.video.ytPlayer && typeof AppState.video.ytPlayer.pauseVideo === 'function') AppState.video.ytPlayer.pauseVideo();
         const lp = document.getElementById('local-player');
         lp.src = URL.createObjectURL(file);
@@ -756,7 +759,11 @@
         if (match && match[1].length === 11) videoId = match[1]; else { alert("⚠️ URLから動画IDを読み取れませんでした。"); return; }
 
         AppState.video.name = "YouTube Video"; AppState.video.id = "yt_" + videoId;
-        AppState.video.type = 'youtube'; showPlayer('youtube');
+        AppState.video.type = 'youtube'; 
+        
+        addToHistory(AppState.video.id, AppState.video.name, 'youtube', url); // ★履歴に追加
+        
+        showPlayer('youtube');
         
         const localPlayer = document.getElementById('local-player'); if (localPlayer) localPlayer.pause();
         if (typeof YT === 'undefined' || !YT.Player) { alert("⏳ YouTubeのシステムを準備中です。数秒待ってからもう一度ボタンを押してください。"); return; }
@@ -768,6 +775,107 @@
         document.getElementById('yt-url-input').blur();
         AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
     }
+
+    // ★追加: 履歴管理関数
+    function addToHistory(id, name, type, url) {
+        let history = AppState.videoHistory || [];
+        let index = history.findIndex(h => h.id === id);
+        
+        if (index > -1) {
+            history[index].lastAccessed = Date.now();
+            if(name !== "YouTube Video") history[index].name = name; 
+            if (url) history[index].url = url;
+        } else {
+            history.push({ id, name, type, url, hasData: false, lastAccessed: Date.now() });
+        }
+        
+        history.sort((a, b) => b.lastAccessed - a.lastAccessed);
+        if (history.length > 5) history = history.slice(0, 5); // 直近5件を保存
+        
+        AppState.videoHistory = history;
+        saveVideoHistory();
+        renderVideoHistory();
+    }
+
+    function updateHistoryName(id, name) {
+        let item = (AppState.videoHistory || []).find(h => h.id === id);
+        if (item) {
+            item.name = name;
+            saveVideoHistory();
+            renderVideoHistory();
+        }
+    }
+
+    function updateHistoryDataFlag(id, hasData) {
+        let item = (AppState.videoHistory || []).find(h => h.id === id);
+        if (item && item.hasData !== hasData) {
+            item.hasData = hasData;
+            saveVideoHistory();
+            renderVideoHistory();
+        }
+    }
+
+    function saveVideoHistory() {
+        localStorage.setItem('vlink_video_history', JSON.stringify(AppState.videoHistory || []));
+    }
+
+    function renderVideoHistory() {
+        let container = document.getElementById('video-history-container');
+        if (!container) {
+            const sourceUi = document.getElementById('video-source-ui');
+            if (!sourceUi) return;
+            container = document.createElement('div');
+            container.id = 'video-history-container';
+            container.style.marginTop = '20px';
+            container.style.borderTop = '1px solid #ccc';
+            container.style.paddingTop = '10px';
+            sourceUi.appendChild(container);
+        }
+        
+        if (!AppState.videoHistory || AppState.videoHistory.length === 0) {
+            container.innerHTML = '<p style="font-size:12px; color:#666; text-align:center;">動画の履歴はありません</p>';
+            return;
+        }
+        
+        let html = '<div style="font-size:12px; font-weight:bold; color:#333; margin-bottom:8px;">🕒 最近使用した動画</div>';
+        html += '<div style="display:flex; flex-direction:column; gap:6px;">';
+        
+        AppState.videoHistory.forEach(item => {
+            // ファイルが紐づいていない場合はファイルマークに×印を上書き
+            const iconHTML = item.hasData 
+                ? '<span style="font-size:16px;">📁</span>' 
+                : '<div style="position:relative; display:inline-block; font-size:16px;">📁<span style="position:absolute; top:-2px; right:-2px; color:red; font-size:10px; font-weight:bold; background:white; border-radius:50%; width:12px; height:12px; line-height:12px; text-align:center;">✕</span></div>';
+                
+            const typeStr = item.type === 'youtube' ? 'YouTube' : '端末動画';
+            const bgColor = item.type === 'youtube' ? '#fff0f0' : '#f0f8ff';
+            
+            html += `
+                <div style="display:flex; align-items:center; background:${bgColor}; border:1px solid #ddd; padding:8px 10px; border-radius:4px; cursor:pointer;" onclick="loadFromHistory('${item.id}')">
+                    <div style="width:24px; text-align:center; margin-right:8px;">${iconHTML}</div>
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:12px; font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.name}">${item.name}</div>
+                        <div style="font-size:10px; color:#666;">${typeStr}</div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function loadFromHistory(id) {
+        const item = AppState.videoHistory.find(h => h.id === id);
+        if (!item) return;
+        
+        if (item.type === 'youtube') {
+            showYouTubeInput(); 
+            document.getElementById('yt-url-input').value = item.url;
+            loadYouTubeVideo();
+        } else if (item.type === 'local') {
+            alert(`「${item.name}」は端末内の動画です。\nセキュリティ上、自動で読み込むことはできません。\n「端末から選択」ボタンを押し、対象のファイルを再度選択してください。`);
+        }
+    }
+    // ★ここまで追加
 
     function rebuildYTPlayer(videoId) {
         const wrapper = document.getElementById('video-player-wrapper'); const oldPlayer = document.getElementById('yt-player');
@@ -863,7 +971,11 @@
 
     function onYouTubeStateChange(event) {
         if (AppState.video.ytPlayer && typeof AppState.video.ytPlayer.getVideoData === 'function') {
-            let vData = AppState.video.ytPlayer.getVideoData(); if (vData && vData.title) AppState.video.name = vData.title;
+            let vData = AppState.video.ytPlayer.getVideoData(); 
+            if (vData && vData.title && AppState.video.name !== vData.title) {
+                AppState.video.name = vData.title;
+                updateHistoryName(AppState.video.id, vData.title); // ★タイトル取得時に履歴名も更新
+            }
         }
         if (event.data === 1) { setTimerState(true); AppState.video.time = Math.floor(AppState.video.ytPlayer.getCurrentTime()); updateTimerDisplay(); } 
         else if (event.data === 2 || event.data === 0) { setTimerState(false); AppState.video.time = Math.floor(AppState.video.ytPlayer.getCurrentTime()); updateTimerDisplay(); }
@@ -988,6 +1100,10 @@
         if (localStorage.getItem('vlink_teams')) AppState.data.teams = JSON.parse(localStorage.getItem('vlink_teams'));
         else AppState.data.teams = [];
         
+        // ★追加: 履歴データのロード
+        if (localStorage.getItem('vlink_video_history')) AppState.videoHistory = JSON.parse(localStorage.getItem('vlink_video_history'));
+        else AppState.videoHistory = [];
+        
         if (db) saveToDB(); 
     }
 
@@ -998,6 +1114,8 @@
         store.put(AppState.data.teams, 'teams'); 
         if (AppState.video.id) {
             store.put({ players: AppState.data.players, log: AppState.data.logs, playerCount: AppState.data.activePlayerCount, updatedAt: Date.now() }, 'proj_' + AppState.video.id);
+            // ★保存のタイミングでデータ有無を履歴フラグに反映
+            updateHistoryDataFlag(AppState.video.id, AppState.data.logs.length > 0);
         }
     }
 
@@ -1206,6 +1324,7 @@
         });
 
         initDB(() => {
+            renderVideoHistory(); // ★初期化時に履歴を描画
             renderPlayerGrids(); updateLog(); draw('input-canvas');
             clearStatsDOM(); 
             drawStatsCanvas('serve'); drawStatsCanvas('spike'); 
