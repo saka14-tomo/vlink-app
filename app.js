@@ -260,7 +260,12 @@
                 else AppState.ui.statsPlayers = [id]; 
             }
             
-            AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; updateZoneClasses(t); });
+            // ★他の選手選択時にゾーンロックを解除
+            AppConfig.TYPES.forEach(t => { 
+                if(AppState.filters[t]) AppState.filters[t] = 'all'; 
+                if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; 
+                updateZoneClasses(t); 
+            });
             if (['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
         }
         renderPlayerGrids(); 
@@ -366,42 +371,45 @@
             const type = id === 'serve-canvas' ? 'serve' : 'spike';
             const sFilter = AppState.filters[type];
             const hFilter = AppState.hoverFilters[type];
-            const lZones = AppState.lockedZones[type];
+            const lZones = AppState.lockedZones[type] || [];
             const hZone = AppState.hoverZones[type];
 
             let mainLogs = [];
             let thinLogs = [];
 
-            // ★修正：描画の制御ロジック
+            // ★ 新しい描画・プレビュー判定ロジック
             if (lZones.length === 0) {
-                // ロックなし：常に全ゾーンを実線で表示（ホバーによる非表示を廃止）
+                // 条件1＆2: ロックなし -> 常に全ログを実線で表示（ホバーしても消えない）
                 mainLogs = getFilteredLogs(type, sFilter, []);
             } else {
-                // ロックあり：ロックしたゾーンのみを実線で表示
+                // 条件3: ロックあり -> ロックされたゾーンのログのみ実線表示
                 mainLogs = getFilteredLogs(type, sFilter, lZones);
 
-                // ロック中に別ゾーンをホバーした場合、そのゾーンのログを薄く表示
+                // 条件4: ロック中に別ゾーンにカーソルが置かれたら、そのゾーンのログを薄くプレビュー
                 if (hZone && !lZones.some(z => z.x === hZone.x && z.y === hZone.y)) {
                     thinLogs = getFilteredLogs(type, sFilter, [hZone]);
                 }
             }
 
-            // 背面：薄いログ（ロック中の別ゾーンプレビュー）
+            // まず背景に薄いログ（ロック中のホバープレビュー）を描画
             if (thinLogs.length > 0) {
-                ct.globalAlpha = 0.25; // 薄く
+                ct.globalAlpha = 0.25; // 薄く表示
                 thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-                ct.globalAlpha = 1.0;
             }
 
-            // 前面：実線ログ
-            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            // 次に前面に実線のログを描画
+            ct.globalAlpha = 1.0; // 実線表示に戻す
+            if (mainLogs.length > 0) {
+                mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            }
 
-            // 統計ボタン（イン、ミスなど）のホバープレビュー処理
+            // 統計ボタン（イン、ミスなど）のホバープレビュー処理は現状維持
             if (hFilter !== null && hFilter !== sFilter) {
-                let activeZones = lZones.length > 0 ? lZones : []; // 未選択時は全体を対象にする
+                let activeZones = lZones.length > 0 ? lZones : [];
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
-                ct.globalAlpha = 0.25;
+                
+                ct.globalAlpha = 0.25; // 薄く表示
                 previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
                 ct.globalAlpha = 1.0;
             }
@@ -446,7 +454,7 @@
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
         
-        // 統計ボタンが新たに選択されたら固定表示を解除
+        // ★ 各統計ボタン（イン、ミスなど）が選択されたら固定表示を解除する
         AppState.lockedZones[type] = []; 
         updateZoneClasses(type);
 
