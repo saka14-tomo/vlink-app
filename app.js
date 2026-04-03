@@ -369,29 +369,47 @@
             const lZones = AppState.lockedZones[type];
             const hZone = AppState.hoverZones[type];
 
-            // ★変更：ホバーだけでは絞り込まない（全表示を維持）
-            let baseZones = lZones.length > 0 ? lZones : [];
-            let mainLogs = getFilteredLogs(type, sFilter, baseZones);
+            let mainLogs = [];
+            let thinLogs = [];
 
+            // ★指定条件に基づく描画ロジックの再構築
+            if (lZones.length === 0) {
+                if (hZone) {
+                    // ロックなし＋ホバーあり：ホバーゾーンは実線、それ以外は薄くプレビュー
+                    mainLogs = getFilteredLogs(type, sFilter, [hZone]);
+                    let allLogs = getFilteredLogs(type, sFilter, []);
+                    thinLogs = allLogs.filter(l => !mainLogs.some(ml => ml.id === l.id));
+                } else {
+                    // ロックなし＋ホバーなし：すべて実線
+                    mainLogs = getFilteredLogs(type, sFilter, []);
+                }
+            } else {
+                // ロックあり：ロックされたゾーンは常に実線
+                mainLogs = getFilteredLogs(type, sFilter, lZones);
+                if (hZone && !lZones.some(z => z.x === hZone.x && z.y === hZone.y)) {
+                    // ロックあり＋他ゾーンをホバー：ホバーしたゾーンを薄くプレビュー
+                    thinLogs = getFilteredLogs(type, sFilter, [hZone]);
+                }
+            }
+
+            // まず薄いログ（thinLogs）を背面に描画する
+            if (thinLogs.length > 0) {
+                ct.globalAlpha = 0.2; // 薄く表示
+                thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            }
+
+            // 次に実線ログ（mainLogs）を前面に描画する
+            ct.globalAlpha = 1.0;
             mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
 
+            // 統計ボタン（イン、ミスなど）のホバープレビュー処理
             if (hFilter !== null && hFilter !== sFilter) {
-                let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
+                let activeZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
+                let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 ct.globalAlpha = 0.25;
                 previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
                 ct.globalAlpha = 1.0;
-            }
-
-            // ★変更：ゾーンがロックされている状態でのみ、他ゾーンのホバープレビューを薄く表示する
-            if (lZones.length > 0 && hZone) {
-                const isHZoneLocked = lZones.some(z => z.x === hZone.x && z.y === hZone.y);
-                if (!isHZoneLocked) {
-                    let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
-                    ct.globalAlpha = 0.25; // 薄く表示
-                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-                    ct.globalAlpha = 1.0;
-                }
             }
         }
     }
@@ -434,10 +452,10 @@
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
         
-        // ★追加：統計ボタンが新たに選択されたら固定表示を解除
+        // ★各統計ボタン（イン、ミスなど）が選択されたら固定表示を解除する
         AppState.lockedZones[type] = []; 
         updateZoneClasses(type);
-        
+
         drawStatsCanvas(type); 
         updateDynamicPlaylist(); 
     }
