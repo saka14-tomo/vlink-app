@@ -5,13 +5,11 @@
         COLORS: { 
             'エース': '#007BFF', 'イン': '#000000', 'アウト': '#ff4d4d', 'ネット': '#ff4d4d', 
             '決定': '#007BFF', 'Good': '#000000', 'ブロックシャット': '#ff4d4d',
-            '成功': '#007BFF', 'ミス': '#ff4d4d',
-            '失点': '#ff4d4d',
             'temp': '#FFFF00' 
         },
         DEFAULT_PLAYERS: {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"10", 11:"11", 12:"12"},
         CANVAS: { width: 220, height: 440 },
-        TYPES: ['serve', 'spike', 'serve_receive', 'receive', 'toss']
+        TYPES: ['serve', 'spike'] // 今後 'receive' 等を追加しやすく
     };
 
     // ==========================================
@@ -23,7 +21,7 @@
             players: { ...AppConfig.DEFAULT_PLAYERS },
             logs: [],
             activePlayerCount: 7,
-            teams: []
+            teams: [] // チーム保存用配列を追加
         },
         ui: {
             currentTab: 'input',
@@ -81,7 +79,7 @@
             else pauseManualVideo();
         }
         
-        if(['serve', 'spike'].includes(target)) drawStatsCanvas(target);
+        if(AppConfig.TYPES.includes(target)) drawStatsCanvas(target);
         if(target === 'compare') {
             document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
             document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
@@ -114,6 +112,7 @@
         }
     }
 
+    // プレイヤー選択とグリッド生成
     function renderPlayerGrids() {
         let wrapperHeight = '66px'; let fontSize = '20px';      
         let editHeight = '20px'; let editFontSize = '10px';
@@ -130,6 +129,7 @@
             container.innerHTML = '';
             for(let i=1; i<=AppState.data.activePlayerCount; i++) {
                 const wrapper = document.createElement('div');
+                
                 let currentWrapperHeight = wrapperHeight;
                 let currentFontSize = fontSize;
 
@@ -163,6 +163,7 @@
             if (AppState.data.activePlayerCount < 12) {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'player-wrapper player-add-btn';
+                
                 let currentWrapperHeight = type === 'compare' ? '46px' : wrapperHeight;
                 let currentFontSize = type === 'compare' ? '12px' : fontSize;
 
@@ -179,6 +180,7 @@
             if (AppState.data.activePlayerCount > 1) {
                 const removeWrapper = document.createElement('div');
                 removeWrapper.className = 'player-wrapper player-add-btn';
+                
                 let currentWrapperHeight = type === 'compare' ? '46px' : wrapperHeight;
 
                 removeWrapper.style.height = currentWrapperHeight; 
@@ -189,11 +191,13 @@
                     if(confirm(`No.${AppState.data.activePlayerCount} (${AppState.data.players[AppState.data.activePlayerCount]}) の選手枠を削除しますか？\n※記録済みのデータ自体は残りますが、選択できなくなります。`)) {
                         const removingId = AppState.data.activePlayerCount;
                         AppState.data.activePlayerCount--;
+                        
                         if(AppState.ui.selectedPlayerId === removingId) {
                             AppState.ui.selectedPlayerId = null; resetInput(); draw('input-canvas');
                         }
                         AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                         AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
+                        
                         saveToLocal(); renderPlayerGrids();
                     }
                 };
@@ -228,8 +232,8 @@
                 else AppState.ui.statsPlayers = [id]; 
             }
             
-            AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; updateZoneClasses(t); });
-            if (['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
+            AppConfig.TYPES.forEach(t => { AppState.filters[t] = 'all'; AppState.lockedZones[t] = []; updateZoneClasses(t); });
+            if (AppConfig.TYPES.includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
         }
         renderPlayerGrids(); 
     }
@@ -244,9 +248,9 @@
             AppState.ui.statsPlayers = [];
             btns.forEach(b => { b.innerHTML = '👨‍👩‍👦 チーム全体表示：OFF'; b.style.background = '#28a745'; });
         }
-        AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; updateZoneClasses(t); });
+        AppConfig.TYPES.forEach(t => { AppState.filters[t] = 'all'; AppState.lockedZones[t] = []; updateZoneClasses(t); });
         
-        if (['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
+        if (AppConfig.TYPES.includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
         renderPlayerGrids();
     }
 
@@ -263,9 +267,9 @@
             
             if (AppState.ui.statsPlayers.length > 1) {
                 AppState.ui.statsPlayers = [AppState.ui.statsPlayers[AppState.ui.statsPlayers.length - 1]];
-                AppConfig.TYPES.forEach(t => { if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; updateZoneClasses(t); });
+                AppConfig.TYPES.forEach(t => { AppState.lockedZones[t] = []; updateZoneClasses(t); });
                 
-                if(['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
+                if(AppConfig.TYPES.includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
                 renderPlayerGrids();
             }
         }
@@ -274,6 +278,7 @@
     // ==========================================
     // 4. 分析・フィルタ・Canvas描画制御 (Analytics Manager)
     // ==========================================
+    
     const canvasContexts = {};
     function getCanvasContext(id) {
         const cv = document.getElementById(id);
@@ -299,13 +304,6 @@
         return canvasContexts[id].ct;
     }
 
-    function getColorForLog(result) {
-        if (AppConfig.COLORS[result]) return AppConfig.COLORS[result];
-        if (result.includes('成功')) return '#007BFF';
-        if (result.includes('ミス') || result.includes('失点')) return '#ff4d4d';
-        return '#000000'; // デフォルト色（黒）
-    }
-
     function draw(id) {
         const ct = getCanvasContext(id); 
         if (!ct) return;
@@ -327,13 +325,13 @@
             let baseZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
             let mainLogs = getFilteredLogs(type, sFilter, baseZones);
 
-            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, AppConfig.COLORS[l.result]));
 
             if (hFilter !== null && hFilter !== sFilter) {
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 ct.globalAlpha = 0.25;
-                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, AppConfig.COLORS[l.result]));
                 ct.globalAlpha = 1.0;
             }
 
@@ -342,7 +340,7 @@
                 if (!isHZoneLocked) {
                     let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
                     ct.globalAlpha = 0.25;
-                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, AppConfig.COLORS[l.result]));
                     ct.globalAlpha = 1.0;
                 }
             }
@@ -411,7 +409,6 @@
 
     function toggleZoneLock(type, x, y) {
         let lockedZones = AppState.lockedZones[type];
-        if(!lockedZones) return;
         let index = lockedZones.findIndex(z => z.x === x && z.y === y);
         if (index > -1) lockedZones.splice(index, 1); else lockedZones.push({x, y});
         updateZoneClasses(type);
@@ -421,7 +418,6 @@
 
     function updateZoneClasses(type) {
         let lockedZones = AppState.lockedZones[type];
-        if(!lockedZones) return;
         for(let x=0; x<3; x++) {
             for(let y=0; y<3; y++) {
                 let el = document.getElementById(`zone-${type}-${x}-${y}`); if(!el) continue;
@@ -434,9 +430,9 @@
         const tot = logs.length; let ace, goodOrIn, miss;
         if (type === 'serve') {
             ace = logs.filter(l => l.result === 'エース').length; goodOrIn = logs.filter(l => l.result === 'イン').length; miss = logs.filter(l => l.result === 'アウト' || l.result === 'ネット').length;
-        } else if (type === 'spike') {
+        } else {
             ace = logs.filter(l => l.result === '決定').length; goodOrIn = logs.filter(l => l.result === 'Good').length; miss = logs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
-        } else return;
+        }
         
         const totalIn = ace + goodOrIn, rate = (v) => tot === 0 ? "0%" : Math.round((v/tot)*100) + "%";
         const p = type === 'serve' ? 'st' : 'sp', pie = type === 'serve' ? '' : '-sp';
@@ -491,65 +487,44 @@
             if (!ct) return;
             ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
             ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-            logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+            logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, AppConfig.COLORS[l.result]); });
         });
     }
 
     // ==========================================
     // 5. データ入力管理 (Input Manager)
     // ==========================================
-
-    function setRightPanelMode(mode) {
-        document.getElementById('panel-direct').style.display = (mode === 'direct') ? 'flex' : 'none';
-        document.getElementById('panel-court').style.display = (mode === 'court') ? 'flex' : 'none';
-    }
-
-    function resetInput() { 
-        AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
-        setRightPanelMode('direct');
-
-        document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
-        
-        const hasPlayer = AppState.ui.selectedPlayerId !== null;
-        document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
-    }
-
     function handleCourtClick(e) {
         if (!AppState.ui.selectedPlayerId) return;
         const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
         const x = Math.round(e.clientX - r.left), y = Math.round(e.clientY - r.top);
-        
-        if (AppState.input.state === 'idle') { 
-            AppState.input.start = {x, y}; 
-            AppState.input.state = 'waiting'; 
-            setRightPanelMode('court'); 
-        } else if (AppState.input.state === 'waiting') { 
-            AppState.input.end = {x, y}; 
-            AppState.input.state = 'ready'; 
+        if (AppState.input.state === 'idle') { AppState.input.start = {x, y}; AppState.input.state = 'waiting'; }
+        else if (AppState.input.state === 'waiting') { 
+            AppState.input.end = {x, y}; AppState.input.state = 'ready'; 
+            if (AppState.input.start.y >= 400) { document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = false); document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = true); }
+            else { document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = true); document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = false); }
         }
-        
-        if (AppState.input.start) {
-            const isServe = AppState.input.start.y >= 400;
-            document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
-            document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
-        }
-        
         draw('input-canvas');
+    }
+
+    function isLogInZone(log, zone) {
+        let clampedX = Math.max(20, Math.min(log.startX, 199.9)), clampedY = Math.max(240, Math.min(log.startY, 419.9));
+        return Math.floor((clampedX - 20) / 60) === zone.x && Math.floor((clampedY - 240) / 60) === zone.y;
+    }
+
+    function resetInput() { 
+        AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
+        document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
     }
 
     function cancelCurrentInput() {
         if (AppState.input.state === 'ready') {
             AppState.input.end = null; AppState.input.state = 'waiting';
-            if (AppState.input.start) {
-                const isServe = AppState.input.start.y >= 400;
-                document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
-                document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
-            }
+            document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true);
             draw('input-canvas');
         } else if (AppState.input.state === 'waiting') {
-            resetInput(); draw('input-canvas');
-        } else {
-            resetInput();
+            AppState.input.start = null; AppState.input.state = 'idle';
+            draw('input-canvas');
         }
     }
 
@@ -566,26 +541,11 @@
         resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
     }
 
-    function saveDirectAction(type, result) {
-        if (!AppState.ui.selectedPlayerId) return;
-        let finalX = 110, finalY = 240; 
-        
-        AppState.data.logs.push({ 
-            id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, 
-            type: type, result: result, startX: finalX, startY: finalY, endX: finalX, endY: finalY, 
-            time: new Date().toLocaleString(), videoTime: formatTime(AppState.video.time) 
-        });
-        resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
-    }
-
     function updateLog() { 
         const container = document.getElementById('log-container');
         const displayLogs = [...AppState.data.logs].reverse();
         container.innerHTML = displayLogs.map(l => {
-            let resClass = 'res-in';
-            if (l.result.includes('成功') || l.result === 'エース' || l.result === '決定') resClass = 'res-ace';
-            else if (l.result.includes('ミス') || l.result === 'アウト' || l.result === 'ネット' || l.result === 'ブロックシャット' || l.result === '失点') resClass = 'res-err';
-
+            let resClass = (l.result === 'エース' || l.result === '決定') ? 'res-ace' : ((l.result === 'イン' || l.result === 'Good') ? 'res-in' : 'res-err');
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
             return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
@@ -881,13 +841,14 @@
 
     function loadFromDB(callback) {
         const tx = db.transaction(STORE_NAME, 'readonly'); const store = tx.objectStore(STORE_NAME);
-        const reqP = store.get('players'), reqL = store.get('log'), reqS = store.get('session'), reqT = store.get('teams'); 
+        const reqP = store.get('players'), reqL = store.get('log'), reqS = store.get('session');
+        const reqT = store.get('teams'); // チーム情報を取得
         tx.oncomplete = () => {
             let needsMigration = false;
             if (reqP.result) AppState.data.players = reqP.result; else needsMigration = true;
             if (reqL.result) AppState.data.logs = reqL.result; else needsMigration = true;
             if (reqS.result) AppState.session.id = reqS.result; else needsMigration = true;
-            if (reqT.result) AppState.data.teams = reqT.result; 
+            if (reqT.result) AppState.data.teams = reqT.result; // チーム情報を復元
             if (needsMigration) fallbackLoad(); callback();
         };
     }
@@ -899,6 +860,7 @@
         if (localStorage.getItem('vlink_player_count')) AppState.data.activePlayerCount = parseInt(localStorage.getItem('vlink_player_count'), 10);
         else if (localStorage.getItem('vlink_players')) AppState.data.activePlayerCount = 7; 
         
+        // チーム情報のフォールバック
         if (localStorage.getItem('vlink_teams')) AppState.data.teams = JSON.parse(localStorage.getItem('vlink_teams'));
         else AppState.data.teams = [];
         
@@ -909,7 +871,7 @@
         if (!db) return;
         const tx = db.transaction(STORE_NAME, 'readwrite'); const store = tx.objectStore(STORE_NAME);
         store.put(AppState.data.players, 'players'); store.put(AppState.data.logs, 'log'); store.put(AppState.session.id, 'session');
-        store.put(AppState.data.teams, 'teams'); 
+        store.put(AppState.data.teams, 'teams'); // チーム情報を保存
         if (AppState.video.id) {
             store.put({ players: AppState.data.players, log: AppState.data.logs, playerCount: AppState.data.activePlayerCount, updatedAt: Date.now() }, 'proj_' + AppState.video.id);
         }
@@ -920,13 +882,13 @@
         localStorage.setItem('vlink_data', JSON.stringify(AppState.data.logs));
         localStorage.setItem('vlink_current_session', AppState.session.id);
         localStorage.setItem('vlink_player_count', AppState.data.activePlayerCount);
-        localStorage.setItem('vlink_teams', JSON.stringify(AppState.data.teams)); 
+        localStorage.setItem('vlink_teams', JSON.stringify(AppState.data.teams)); // チーム情報を保存
         saveToDB(); 
     }
 
     function updateAfterDataLoad() {
         AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; 
-        resetInput(); AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; AppState.hoverZones[t] = null; });
+        resetInput(); AppConfig.TYPES.forEach(t => { AppState.filters[t] = 'all'; AppState.lockedZones[t] = []; AppState.hoverZones[t] = null; });
         updateZoneClasses('serve'); updateZoneClasses('spike');
         renderPlayerGrids(); updateLog(); draw('input-canvas'); clearStatsDOM(); switchTab('input'); 
     }
@@ -966,11 +928,7 @@
 
         let csvContent = "\uFEFF日時,セッションID,動画時間,選手名,プレー種類,結果\n";
         AppState.data.logs.forEach(l => {
-            let typeStr = l.type === 'serve' ? 'サーブ' : 
-                          l.type === 'spike' ? 'スパイク' : 
-                          l.type === 'serve_receive' ? 'サーブレシーブ' : 
-                          l.type === 'receive' ? 'レシーブ' : 
-                          l.type === 'toss' ? 'トス' : l.type;
+            let typeStr = l.type === 'serve' ? 'サーブ' : 'スパイク';
             csvContent += `${l.time},${l.sessionId},${l.videoTime || ''},${AppState.data.players[l.playerId]},${typeStr},${l.result}\n`;
         });
         downloadBlob(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }), inputName, 'text/csv', '.csv', 'CSVファイル');
@@ -1024,12 +982,7 @@
         logsWithTime.forEach(l => {
             let parts = l.videoTime.split(':'); 
             let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 8);
-            let typeStr = l.type === 'serve' ? 'サーブ' : 
-                          l.type === 'spike' ? 'スパイク' : 
-                          l.type === 'serve_receive' ? 'サーブレシーブ' : 
-                          l.type === 'receive' ? 'レシーブ' : 
-                          l.type === 'toss' ? 'トス' : l.type;
-            copyText += `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${typeStr} - ${l.result}\n`;
+            copyText += `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${l.type === 'serve' ? 'サーブ' : 'スパイク'} - ${l.result}\n`;
         });
         navigator.clipboard.writeText(copyText).then(() => alert("クリップボードにコピーしました！\nYouTubeの動画説明欄にそのまま貼り付け(Ctrl+V)できます。"))
         .catch(err => alert("コピーに失敗しました。お使いのブラウザの権限を確認してください。"));
@@ -1121,9 +1074,7 @@
 
         initDB(() => {
             renderPlayerGrids(); updateLog(); draw('input-canvas');
-            clearStatsDOM(); 
-            drawStatsCanvas('serve'); drawStatsCanvas('spike'); 
-            updateTimerDisplay();
+            clearStatsDOM(); drawStatsCanvas('serve'); drawStatsCanvas('spike'); updateTimerDisplay();
             document.addEventListener('touchend', (e) => { const now = Date.now(); if (now - (window.lastTouchEnd || 0) <= 300) e.preventDefault(); window.lastTouchEnd = now; }, false);
         });
     };
