@@ -374,45 +374,39 @@
             const lZones = AppState.lockedZones[type] || [];
             const hZone = AppState.hoverZones[type];
 
-            let mainLogs = [];
-            let thinLogs = [];
+            // 1. すべての該当ログ（現在のフィルタ条件に合うもの）を薄く描画
+            const allFilteredLogs = getFilteredLogs(type, sFilter, []);
+            ct.globalAlpha = 0.15; // ベースの透明度を低めに設定
+            allFilteredLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
 
-            // ★ 新しい描画・プレビュー判定ロジック
-            if (lZones.length === 0) {
-                // 条件1＆2: ロックなし -> 常に全ログを実線で表示（ホバーしても消えない）
-                mainLogs = getFilteredLogs(type, sFilter, []);
+            // 2. ゾーンがロックされている場合、そのゾーンのログを実線で強調描画
+            if (lZones.length > 0) {
+                const highlightedLogs = getFilteredLogs(type, sFilter, lZones);
+                ct.globalAlpha = 1.0; // 実線表示
+                highlightedLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             } else {
-                // 条件3: ロックあり -> ロックされたゾーンのログのみ実線表示
-                mainLogs = getFilteredLogs(type, sFilter, lZones);
-
-                // 条件4: ロック中に別ゾーンにカーソルが置かれたら、そのゾーンのログを薄くプレビュー
-                if (hZone && !lZones.some(z => z.x === hZone.x && z.y === hZone.y)) {
-                    thinLogs = getFilteredLogs(type, sFilter, [hZone]);
-                }
+                // ゾーン選択がない場合は、全ログを通常濃度で表示
+                ct.globalAlpha = 0.8; 
+                allFilteredLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             }
 
-            // まず背景に薄いログ（ロック中のホバープレビュー）を描画
-            if (thinLogs.length > 0) {
-                ct.globalAlpha = 0.25; // 薄く表示
-                thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            // 3. ホバー中のゾーンがある場合、そのログをプレビュー表示
+            if (hZone) {
+                const hoverPreviewLogs = getFilteredLogs(type, sFilter, [hZone]);
+                ct.globalAlpha = 0.4; // ホバー時は少し濃いめに
+                hoverPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             }
 
-            // 次に前面に実線のログを描画
-            ct.globalAlpha = 1.0; // 実線表示に戻す
-            if (mainLogs.length > 0) {
-                mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-            }
-
-            // 統計ボタン（イン、ミスなど）のホバープレビュー処理は現状維持
+            // 4. 統計ボタン（エースのみ等）のホバープレビュー処理
             if (hFilter !== null && hFilter !== sFilter) {
                 let activeZones = lZones.length > 0 ? lZones : [];
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
-                let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 
-                ct.globalAlpha = 0.25; // 薄く表示
-                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-                ct.globalAlpha = 1.0;
+                ct.globalAlpha = 0.3; 
+                filterPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             }
+            
+            ct.globalAlpha = 1.0; // アルファ値を戻す
         }
     }
 
