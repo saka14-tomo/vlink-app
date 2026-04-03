@@ -717,13 +717,67 @@
     // ==========================================
     function showYouTubeInput() {
         document.getElementById('source-btn-group').style.display = 'none';
-        document.getElementById('youtube-input-group').style.display = 'flex';
+        let ytGroup = document.getElementById('youtube-input-group');
+        ytGroup.style.display = 'flex';
+        
+        // モード切替のラジオボタンを追加（未作成の場合）
+        if(!document.getElementById('yt-mode-toggle')) {
+            let toggleDiv = document.createElement('div');
+            toggleDiv.id = 'yt-mode-toggle';
+            toggleDiv.style.marginBottom = '10px';
+            toggleDiv.style.width = '100%';
+            toggleDiv.style.display = 'flex';
+            toggleDiv.style.gap = '10px';
+            toggleDiv.innerHTML = `
+                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="single" checked onchange="toggleYtMode()"> 単一動画</label>
+                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="playlist" onchange="toggleYtMode()"> 再生リスト一括</label>
+            `;
+            ytGroup.insertBefore(toggleDiv, ytGroup.firstChild);
+            
+            let listContainer = document.createElement('div');
+            listContainer.id = 'yt-playlist-container';
+            listContainer.style.display = 'none';
+            listContainer.style.flexDirection = 'column';
+            listContainer.style.gap = '5px';
+            listContainer.style.marginTop = '10px';
+            listContainer.style.maxHeight = '200px';
+            listContainer.style.overflowY = 'auto';
+            listContainer.style.border = '1px solid #ccc';
+            listContainer.style.padding = '8px';
+            listContainer.style.background = '#f9f9f9';
+            listContainer.style.borderRadius = '4px';
+            listContainer.style.width = '100%';
+            listContainer.style.boxSizing = 'border-box';
+            ytGroup.appendChild(listContainer);
+        }
+    }
+    
+    function toggleYtMode() {
+        let mode = document.querySelector('input[name="yt-mode"]:checked').value;
+        let btn = document.querySelector('#youtube-input-group button[onclick="loadYouTubeVideo()"]');
+        let listContainer = document.getElementById('yt-playlist-container');
+        let inputField = document.getElementById('yt-url-input');
+        
+        if(mode === 'single') {
+            inputField.placeholder = "YouTubeのURLを貼り付け...";
+            if(btn) btn.innerHTML = "読み込み";
+            listContainer.style.display = 'none';
+        } else {
+            inputField.placeholder = "再生リスト(list=...)のURLを貼り付け...";
+            if(btn) btn.innerHTML = "リストを取得";
+            listContainer.style.display = 'none';
+            listContainer.innerHTML = '';
+        }
     }
     
     function hideYouTubeInput() {
         document.getElementById('source-btn-group').style.display = 'flex';
         document.getElementById('youtube-input-group').style.display = 'none';
         document.getElementById('yt-url-input').value = '';
+        if (document.getElementById('yt-playlist-container')) {
+            document.getElementById('yt-playlist-container').style.display = 'none';
+            document.getElementById('yt-playlist-container').innerHTML = '';
+        }
     }
 
     function showPlayer(type) {
@@ -756,31 +810,159 @@
     function loadYouTubeVideo() {
         const url = document.getElementById('yt-url-input').value;
         if (!url) { alert("URLを入力してください。"); return; }
-        const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = url.match(regExp); let videoId = '';
-        if (match && match[1].length === 11) videoId = match[1]; else { alert("⚠️ URLから動画IDを読み取れませんでした。"); return; }
+        
+        let modeNode = document.querySelector('input[name="yt-mode"]:checked');
+        let mode = modeNode ? modeNode.value : 'single';
+        
+        if (mode === 'single') {
+            const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regExp); let videoId = '';
+            if (match && match[1].length === 11) videoId = match[1]; 
+            else { alert("⚠️ URLから動画IDを読み取れませんでした。"); return; }
 
-        let existingItem = (AppState.videoHistory || []).find(h => h.id === "yt_" + videoId);
-        let vidName = (existingItem && existingItem.name !== "YouTube Video") ? existingItem.name : "YouTube Video";
+            let existingItem = (AppState.videoHistory || []).find(h => h.id === "yt_" + videoId);
+            let vidName = (existingItem && existingItem.name !== "YouTube Video") ? existingItem.name : "YouTube Video";
 
-        AppState.video.name = vidName; 
-        AppState.video.id = "yt_" + videoId;
-        AppState.video.type = 'youtube'; 
-        
-        addToHistory(AppState.video.id, AppState.video.name, 'youtube', url);
-        
-        showPlayer('youtube');
-        
-        const localPlayer = document.getElementById('local-player'); if (localPlayer) localPlayer.pause();
-        if (typeof YT === 'undefined' || !YT.Player) { alert("⏳ YouTubeのシステムを準備中です。数秒待ってからもう一度ボタンを押してください。"); return; }
+            AppState.video.name = vidName; 
+            AppState.video.id = "yt_" + videoId;
+            AppState.video.type = 'youtube'; 
+            
+            addToHistory(AppState.video.id, AppState.video.name, 'youtube', url);
+            showPlayer('youtube');
+            
+            const localPlayer = document.getElementById('local-player'); if (localPlayer) localPlayer.pause();
+            if (typeof YT === 'undefined' || !YT.Player) { alert("⏳ YouTubeのシステムを準備中です。数秒待ってからもう一度ボタンを押してください。"); return; }
 
-        if (AppState.video.ytPlayer && typeof AppState.video.ytPlayer.loadVideoById === 'function') {
-            try { AppState.video.ytPlayer.loadVideoById(videoId); } catch (e) { rebuildYTPlayer(videoId); }
-        } else { rebuildYTPlayer(videoId); }
-        
-        document.getElementById('yt-url-input').blur();
-        AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
+            if (AppState.video.ytPlayer && typeof AppState.video.ytPlayer.loadVideoById === 'function') {
+                try { AppState.video.ytPlayer.loadVideoById(videoId); } catch (e) { rebuildYTPlayer(videoId); }
+            } else { rebuildYTPlayer(videoId); }
+            
+            document.getElementById('yt-url-input').blur();
+            AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
+        } else {
+            // プレイリスト一括取得処理
+            const listRegExp = /[?&]list=([^#\&\?]+)/;
+            const match = url.match(listRegExp);
+            if (match && match[1]) {
+                fetchPlaylistData(match[1]);
+            } else {
+                alert("⚠️ URLから再生リストIDを読み取れませんでした。\nURLに「list=...」が含まれているか確認してください。");
+            }
+        }
     }
+    
+    // プレイリストの情報を取得するための隠しプレイヤー処理
+    function fetchPlaylistData(listId) {
+        let listContainer = document.getElementById('yt-playlist-container');
+        listContainer.style.display = 'flex';
+        listContainer.innerHTML = '<p style="font-size:12px; color:#666; text-align:center; padding:10px;">⏳ リスト情報を取得中...<br>(数秒かかる場合があります)</p>';
+        
+        let hiddenDiv = document.getElementById('hidden-yt-player-wrapper');
+        if (!hiddenDiv) {
+            hiddenDiv = document.createElement('div');
+            hiddenDiv.id = 'hidden-yt-player-wrapper';
+            hiddenDiv.style.position = 'absolute';
+            hiddenDiv.style.left = '-9999px'; // 画面外に隠す
+            hiddenDiv.innerHTML = '<div id="hidden-yt-player"></div>';
+            document.body.appendChild(hiddenDiv);
+        } else {
+            hiddenDiv.innerHTML = '<div id="hidden-yt-player"></div>';
+        }
+        
+        const originUrl = window.location.origin !== "null" ? window.location.origin : "http://localhost";
+        window.hiddenYtPlayer = new YT.Player('hidden-yt-player', {
+            height: '1', width: '1',
+            playerVars: { listType: 'playlist', list: listId, origin: originUrl, mute: 1, autoplay: 1 },
+            events: {
+                onReady: (e) => {
+                    setTimeout(() => {
+                        let ids = e.target.getPlaylist();
+                        if(ids && ids.length > 0) {
+                            e.target.stopVideo();
+                            renderPlaylistSelection(ids);
+                        }
+                    }, 1500);
+                },
+                onStateChange: (e) => {
+                    if (e.data !== -1) {
+                        let ids = e.target.getPlaylist();
+                        if(ids && ids.length > 0) {
+                            e.target.stopVideo();
+                            renderPlaylistSelection(ids);
+                        }
+                    }
+                },
+                onError: (e) => {
+                    listContainer.innerHTML = '<p style="color:#dc3545; font-size:12px; text-align:center; padding:10px;">⚠️ リストの取得に失敗しました。<br>非公開リスト、またはURLが間違っている可能性があります。</p>';
+                }
+            }
+        });
+        
+        setTimeout(() => {
+            if(listContainer.innerHTML.includes('取得中')) {
+                 listContainer.innerHTML = '<p style="color:#dc3545; font-size:12px; text-align:center; padding:10px;">⚠️ タイムアウト: 取得できませんでした。<br>動画数が多すぎるか、ネットワークに問題があります。</p>';
+            }
+        }, 10000);
+    }
+    
+    // プレイリストのチェックボックス一覧を生成
+    function renderPlaylistSelection(ids) {
+        let listContainer = document.getElementById('yt-playlist-container');
+        let html = '<div style="font-size:12px; font-weight:bold; margin-bottom:5px;">インポートする動画を選択してください:</div>';
+        
+        html += `<div style="margin-bottom:8px; font-size:12px;">
+            <button type="button" onclick="toggleAllPlaylistItems(true)" style="background:#6c757d; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:10px; margin-right:5px;">全選択</button>
+            <button type="button" onclick="toggleAllPlaylistItems(false)" style="background:#6c757d; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:10px;">全解除</button>
+        </div>`;
+
+        html += '<div id="playlist-checkboxes" style="display:flex; flex-direction:column; gap:5px;">';
+        
+        ids.forEach((id, index) => {
+            let existing = (AppState.videoHistory || []).find(h => h.id === 'yt_' + id);
+            let name = (existing && existing.name && existing.name !== 'YouTube Video') ? existing.name : `動画 ${index + 1} (ID: ${id})`;
+            
+            html += `<label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" class="yt-playlist-item-cb" value="${id}" checked>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${name}</span>
+            </label>`;
+        });
+        
+        html += '</div>';
+        html += `<button type="button" onclick="importSelectedPlaylistItems()" style="margin-top:10px; background:#28a745; color:white; border:none; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer;">選択した動画を履歴に追加</button>`;
+        
+        listContainer.innerHTML = html;
+    }
+    
+    // プレイリスト一覧のチェック状態を切り替え（グローバル関数）
+    window.toggleAllPlaylistItems = function(check) {
+        document.querySelectorAll('.yt-playlist-item-cb').forEach(cb => cb.checked = check);
+    };
+    
+    // 選択した動画を履歴に一括追加（グローバル関数）
+    window.importSelectedPlaylistItems = function() {
+        let checkboxes = document.querySelectorAll('.yt-playlist-item-cb:checked');
+        if(checkboxes.length === 0) {
+            alert("インポートする動画を選択してください。");
+            return;
+        }
+        
+        let importedCount = 0;
+        checkboxes.forEach(cb => {
+            let id = cb.value;
+            let existing = (AppState.videoHistory || []).find(h => h.id === 'yt_' + id);
+            let name = existing ? existing.name : "YouTube Video";
+            let url = "https://www.youtube.com/watch?v=" + id;
+            
+            addToHistory('yt_' + id, name, 'youtube', url, true);
+            importedCount++;
+        });
+        
+        renderVideoHistory();
+        alert(`${importedCount}件の動画を履歴に追加しました。\n「最近使用した動画」一覧から選択して読み込んでください。`);
+        
+        document.getElementById('yt-url-input').value = '';
+        document.getElementById('yt-playlist-container').style.display = 'none';
+    };
 
     function initVideoHistoryUI() {
         const sourceUi = document.getElementById('video-source-ui');
@@ -819,7 +1001,8 @@
         }
     }
 
-    function addToHistory(id, name, type, url) {
+    // skipRenderフラグを追加し、一括取り込み時の描画負荷を軽減
+    function addToHistory(id, name, type, url, skipRender = false) {
         let history = AppState.videoHistory || [];
         let index = history.findIndex(h => h.id === id);
         
@@ -832,10 +1015,12 @@
         }
         
         history.sort((a, b) => b.lastAccessed - a.lastAccessed);
+        // 保存上限を50件に拡張
+        if (history.length > 50) history = history.slice(0, 50);
         
         AppState.videoHistory = history;
         saveVideoHistory();
-        renderVideoHistory();
+        if (!skipRender) renderVideoHistory();
     }
 
     function updateHistoryName(id, name) {
@@ -869,7 +1054,13 @@
             return;
         }
         
-        let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+        // 履歴一覧ヘッダー（一括削除ボタン追加）
+        let html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+        html += '<span style="font-size:11px; font-weight:bold; color:#666;">履歴一覧 (最大50件)</span>';
+        html += '<button type="button" onclick="clearAllHistory()" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:3px; font-size:10px; cursor:pointer;">一括削除</button>';
+        html += '</div>';
+        
+        html += '<div style="display:flex; flex-direction:column; gap:6px;">';
         
         AppState.videoHistory.forEach(item => {
             const iconHTML = item.hasData 
@@ -880,11 +1071,14 @@
             const bgColor = item.type === 'youtube' ? '#fff0f0' : '#f0f8ff';
             
             html += `
-                <div style="display:flex; align-items:center; background:${bgColor}; border:1px solid #ddd; padding:8px 10px; border-radius:4px; cursor:pointer;" onclick="loadFromHistory('${item.id}')">
-                    <div style="width:24px; text-align:center; margin-right:8px;">${iconHTML}</div>
-                    <div style="flex:1; overflow:hidden;">
+                <div style="display:flex; align-items:center; background:${bgColor}; border:1px solid #ddd; padding:8px 10px; border-radius:4px; cursor:pointer;">
+                    <div style="width:24px; text-align:center; margin-right:8px;" onclick="loadFromHistory('${item.id}')">${iconHTML}</div>
+                    <div style="flex:1; overflow:hidden;" onclick="loadFromHistory('${item.id}')">
                         <div style="font-size:12px; font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.name}">${item.name}</div>
                         <div style="font-size:10px; color:#666;">${typeStr}</div>
+                    </div>
+                    <div style="margin-left:8px;">
+                        <button type="button" onclick="deleteHistoryItem(event, '${item.id}')" style="background:transparent; border:none; color:#dc3545; font-size:16px; cursor:pointer; padding:4px;" title="削除">🗑️</button>
                     </div>
                 </div>
             `;
@@ -892,6 +1086,25 @@
         html += '</div>';
         container.innerHTML = html;
     }
+
+    // 選択した履歴の削除
+    window.deleteHistoryItem = function(e, id) {
+        e.stopPropagation();
+        if(confirm("この履歴を削除しますか？\n（記録されたデータ自体は消えません）")) {
+            AppState.videoHistory = AppState.videoHistory.filter(h => h.id !== id);
+            saveVideoHistory();
+            renderVideoHistory();
+        }
+    };
+
+    // 履歴の一括削除
+    window.clearAllHistory = function() {
+        if(confirm("すべての履歴を削除しますか？\n（記録されたデータ自体は消えません）")) {
+            AppState.videoHistory = [];
+            saveVideoHistory();
+            renderVideoHistory();
+        }
+    };
 
     function loadFromHistory(id) {
         const item = AppState.videoHistory.find(h => h.id === id);
@@ -902,6 +1115,12 @@
         
         if (item.type === 'youtube') {
             showYouTubeInput(); 
+            // 単一動画モードに切り替えてからURLをセット
+            let singleModeRadio = document.querySelector('input[name="yt-mode"][value="single"]');
+            if (singleModeRadio) {
+                singleModeRadio.checked = true;
+                toggleYtMode();
+            }
             document.getElementById('yt-url-input').value = item.url;
             loadYouTubeVideo();
         } else if (item.type === 'local') {
