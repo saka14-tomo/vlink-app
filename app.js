@@ -85,15 +85,6 @@
         if(target === 'compare') {
             document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
             document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
-            
-            const btnAll = document.getElementById('btn-compare-all');
-            if(btnAll) {
-                if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount && AppState.data.activePlayerCount > 0) {
-                    btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-                } else {
-                    btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-                }
-            }
             renderCompareVisual();
         }
         renderPlayerGrids();
@@ -203,18 +194,7 @@
                         }
                         AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                         AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
-                        
-                        const btnAll = document.getElementById('btn-compare-all');
-                        if(btnAll && AppState.ui.currentTab === 'compare') {
-                            if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
-                                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-                            } else {
-                                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-                            }
-                        }
-                        
                         saveToLocal(); renderPlayerGrids();
-                        if(AppState.ui.currentTab === 'compare') renderCompareVisual();
                     }
                 };
                 removeWrapper.innerHTML = `<span style="color:#dc3545; font-size:24px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>`;
@@ -231,20 +211,8 @@
             }
         } 
         else if (AppState.ui.currentTab === 'compare') {
-            if (AppState.ui.comparePlayers.includes(id)) {
-                AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== id); 
-            } else {
-                AppState.ui.comparePlayers.push(id);
-            }
-            
-            const btnAll = document.getElementById('btn-compare-all');
-            if(btnAll) {
-                if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
-                    btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-                } else {
-                    btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-                }
-            }
+            if (AppState.ui.comparePlayers.includes(id)) AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== id); 
+            else if (AppState.ui.comparePlayers.length < 8) AppState.ui.comparePlayers.push(id);
             renderCompareVisual();
         } else {
             if (AppState.ui.isTeamAll) {
@@ -260,28 +228,10 @@
                 else AppState.ui.statsPlayers = [id]; 
             }
             
-            // ★他の選手選択時にゾーンロックを解除
-            AppConfig.TYPES.forEach(t => { 
-                if(AppState.filters[t]) AppState.filters[t] = 'all'; 
-                if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; 
-                updateZoneClasses(t); 
-            });
+            AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; updateZoneClasses(t); });
             if (['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
         }
         renderPlayerGrids(); 
-    }
-
-    function toggleAllCompare() {
-        const btnAll = document.getElementById('btn-compare-all');
-        if (AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
-            AppState.ui.comparePlayers = [];
-            if(btnAll) { btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8'; }
-        } else {
-            AppState.ui.comparePlayers = Array.from({length: AppState.data.activePlayerCount}, (_, i) => i + 1);
-            if(btnAll) { btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d'; }
-        }
-        renderPlayerGrids();
-        renderCompareVisual();
     }
 
     function toggleAllTeam() {
@@ -353,7 +303,7 @@
         if (AppConfig.COLORS[result]) return AppConfig.COLORS[result];
         if (result.includes('成功')) return '#007BFF';
         if (result.includes('ミス') || result.includes('失点')) return '#ff4d4d';
-        return '#000000'; 
+        return '#000000'; // デフォルト色（黒）
     }
 
     function draw(id) {
@@ -371,42 +321,31 @@
             const type = id === 'serve-canvas' ? 'serve' : 'spike';
             const sFilter = AppState.filters[type];
             const hFilter = AppState.hoverFilters[type];
-            const lZones = AppState.lockedZones[type] || [];
+            const lZones = AppState.lockedZones[type];
             const hZone = AppState.hoverZones[type];
 
-            // 1. すべての該当ログ（現在のフィルタ条件に合うもの）を薄く描画
-            const allFilteredLogs = getFilteredLogs(type, sFilter, []);
-            ct.globalAlpha = 0.15; // ベースの透明度を低めに設定
-            allFilteredLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            let baseZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
+            let mainLogs = getFilteredLogs(type, sFilter, baseZones);
 
-            // 2. ゾーンがロックされている場合、そのゾーンのログを実線で強調描画
-            if (lZones.length > 0) {
-                const highlightedLogs = getFilteredLogs(type, sFilter, lZones);
-                ct.globalAlpha = 1.0; // 実線表示
-                highlightedLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-            } else {
-                // ゾーン選択がない場合は、全ログを通常濃度で表示
-                ct.globalAlpha = 0.8; 
-                allFilteredLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-            }
+            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
 
-            // 3. ホバー中のゾーンがある場合、そのログをプレビュー表示
-            if (hZone) {
-                const hoverPreviewLogs = getFilteredLogs(type, sFilter, [hZone]);
-                ct.globalAlpha = 0.4; // ホバー時は少し濃いめに
-                hoverPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
-            }
-
-            // 4. 統計ボタン（エースのみ等）のホバープレビュー処理
             if (hFilter !== null && hFilter !== sFilter) {
-                let activeZones = lZones.length > 0 ? lZones : [];
-                let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
-                
-                ct.globalAlpha = 0.3; 
-                filterPreviewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                let filterPreviewLogs = getFilteredLogs(type, hFilter, baseZones);
+                let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
+                ct.globalAlpha = 0.25;
+                previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                ct.globalAlpha = 1.0;
             }
-            
-            ct.globalAlpha = 1.0; // アルファ値を戻す
+
+            if (lZones.length > 0 && hZone) {
+                const isHZoneLocked = lZones.some(z => z.x === hZone.x && z.y === hZone.y);
+                if (!isHZoneLocked) {
+                    let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
+                    ct.globalAlpha = 0.25;
+                    previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                    ct.globalAlpha = 1.0;
+                }
+            }
         }
     }
 
@@ -447,11 +386,7 @@
 
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
-        
-        // ★ 各統計ボタン（イン、ミスなど）が選択されたら固定表示を解除する
-        AppState.lockedZones[type] = []; 
-        updateZoneClasses(type);
-
+        if(AppState.filters[type] === 'all') { AppState.lockedZones[type] = []; updateZoneClasses(type); }
         drawStatsCanvas(type); 
         updateDynamicPlaylist(); 
     }
@@ -543,7 +478,7 @@
 
     function renderCompareVisual() {
         const container = document.getElementById('compare-cards-container');
-        container.innerHTML = (AppState.ui.comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択、または「一括表示」を押してください</p>' : '';
+        container.innerHTML = (AppState.ui.comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択してください（最大8人）</p>' : '';
         AppState.ui.comparePlayers.forEach(pid => {
             let logs = AppState.data.logs.filter(l => l.playerId === pid && l.type === AppState.ui.compareType);
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
@@ -1157,7 +1092,7 @@
         if (confirm("このチームの登録を削除しますか？")) {
             AppState.data.teams = AppState.data.teams.filter(t => t.id !== teamId);
             saveToLocal();
-            openTeamSelectModal(); 
+            openTeamSelectModal(); // リストを再描画
         }
     }
 
