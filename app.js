@@ -372,39 +372,33 @@
             let mainLogs = [];
             let thinLogs = [];
 
-            // ★指定条件に基づく描画ロジックの再構築
+            // ★修正：描画の制御ロジック
             if (lZones.length === 0) {
-                if (hZone) {
-                    // ロックなし＋ホバーあり：ホバーゾーンは実線、それ以外は薄くプレビュー
-                    mainLogs = getFilteredLogs(type, sFilter, [hZone]);
-                    let allLogs = getFilteredLogs(type, sFilter, []);
-                    thinLogs = allLogs.filter(l => !mainLogs.some(ml => ml.id === l.id));
-                } else {
-                    // ロックなし＋ホバーなし：すべて実線
-                    mainLogs = getFilteredLogs(type, sFilter, []);
-                }
+                // ロックなし：常に全ゾーンを実線で表示（ホバーによる非表示を廃止）
+                mainLogs = getFilteredLogs(type, sFilter, []);
             } else {
-                // ロックあり：ロックされたゾーンは常に実線
+                // ロックあり：ロックしたゾーンのみを実線で表示
                 mainLogs = getFilteredLogs(type, sFilter, lZones);
+
+                // ロック中に別ゾーンをホバーした場合、そのゾーンのログを薄く表示
                 if (hZone && !lZones.some(z => z.x === hZone.x && z.y === hZone.y)) {
-                    // ロックあり＋他ゾーンをホバー：ホバーしたゾーンを薄くプレビュー
                     thinLogs = getFilteredLogs(type, sFilter, [hZone]);
                 }
             }
 
-            // まず薄いログ（thinLogs）を背面に描画する
+            // 背面：薄いログ（ロック中の別ゾーンプレビュー）
             if (thinLogs.length > 0) {
-                ct.globalAlpha = 0.2; // 薄く表示
+                ct.globalAlpha = 0.25; // 薄く
                 thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+                ct.globalAlpha = 1.0;
             }
 
-            // 次に実線ログ（mainLogs）を前面に描画する
-            ct.globalAlpha = 1.0;
+            // 前面：実線ログ
             mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
 
             // 統計ボタン（イン、ミスなど）のホバープレビュー処理
             if (hFilter !== null && hFilter !== sFilter) {
-                let activeZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
+                let activeZones = lZones.length > 0 ? lZones : []; // 未選択時は全体を対象にする
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 ct.globalAlpha = 0.25;
@@ -452,7 +446,7 @@
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
         
-        // ★各統計ボタン（イン、ミスなど）が選択されたら固定表示を解除する
+        // 統計ボタンが新たに選択されたら固定表示を解除
         AppState.lockedZones[type] = []; 
         updateZoneClasses(type);
 
