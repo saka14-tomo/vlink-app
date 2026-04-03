@@ -62,7 +62,7 @@
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
-                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手手動修正">00:00</div>
+                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
                     <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
                 </div>
@@ -108,7 +108,6 @@
                 </div>
 
                 <div class="right-panel">
-                    
                     <div id="panel-direct" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
                         <div class="category-title" style="margin:0 0 4px 0;">サーブレシーブ</div>
                         <div style="display:flex; gap:6px;">
@@ -165,7 +164,6 @@
                         
                         <button class="action-btn btn-utility" style="margin-top: 12px; padding: 12px;" onclick="cancelCurrentInput()">◀ コート入力をやめる</button>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -312,7 +310,10 @@
         <div id="view-compare" class="view-content">
             <div class="main-container compare-layout">
                 <div class="compare-header">
-                    <div class="category-title" style="margin:0; border:none; padding:0 6px 0 0; background:transparent;">比較(最大8人)</div>
+                    <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+                        <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">比較</div>
+                        <button id="btn-compare-all" class="action-btn" style="background:#17a2b8; font-size:10px; padding:6px 8px; box-shadow:none;" onclick="toggleAllCompare()">☑️ 一括表示</button>
+                    </div>
                     <div id="player-grid-compare" class="compare-player-grid"></div>
                     <div style="display: flex; gap: 8px;">
                         <button id="cmp-btn-serve" class="action-btn btn-ace cmp-mode-btn" onclick="setCompareType('serve')">サーブ</button>

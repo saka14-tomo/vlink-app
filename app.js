@@ -85,6 +85,16 @@
         if(target === 'compare') {
             document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
             document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
+            
+            // 一括表示ボタンの状態をリセット（表示時は常に全解除にしておく、等お好みで設定可能ですが今回は状態を維持します）
+            const btnAll = document.getElementById('btn-compare-all');
+            if(btnAll) {
+                if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount && AppState.data.activePlayerCount > 0) {
+                    btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
+                } else {
+                    btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
+                }
+            }
             renderCompareVisual();
         }
         renderPlayerGrids();
@@ -194,7 +204,19 @@
                         }
                         AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                         AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
+                        
+                        // 人数が減った時に一括ボタンの表示を更新
+                        const btnAll = document.getElementById('btn-compare-all');
+                        if(btnAll && AppState.ui.currentTab === 'compare') {
+                            if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
+                                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
+                            } else {
+                                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
+                            }
+                        }
+                        
                         saveToLocal(); renderPlayerGrids();
+                        if(AppState.ui.currentTab === 'compare') renderCompareVisual();
                     }
                 };
                 removeWrapper.innerHTML = `<span style="color:#dc3545; font-size:24px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>`;
@@ -211,8 +233,22 @@
             }
         } 
         else if (AppState.ui.currentTab === 'compare') {
-            if (AppState.ui.comparePlayers.includes(id)) AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== id); 
-            else if (AppState.ui.comparePlayers.length < 8) AppState.ui.comparePlayers.push(id);
+            // ★変更：8人の上限を撤廃しました
+            if (AppState.ui.comparePlayers.includes(id)) {
+                AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== id); 
+            } else {
+                AppState.ui.comparePlayers.push(id);
+            }
+            
+            // 一括ボタンの表示切り替え
+            const btnAll = document.getElementById('btn-compare-all');
+            if(btnAll) {
+                if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
+                    btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
+                } else {
+                    btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
+                }
+            }
             renderCompareVisual();
         } else {
             if (AppState.ui.isTeamAll) {
@@ -232,6 +268,22 @@
             if (['serve', 'spike'].includes(AppState.ui.currentTab)) { drawStatsCanvas(AppState.ui.currentTab); updateDynamicPlaylist(); }
         }
         renderPlayerGrids(); 
+    }
+
+    // ★新規：比較タブの一括表示ボタン用関数
+    function toggleAllCompare() {
+        const btnAll = document.getElementById('btn-compare-all');
+        if (AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
+            // 全解除
+            AppState.ui.comparePlayers = [];
+            if(btnAll) { btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8'; }
+        } else {
+            // 一括表示
+            AppState.ui.comparePlayers = Array.from({length: AppState.data.activePlayerCount}, (_, i) => i + 1);
+            if(btnAll) { btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d'; }
+        }
+        renderPlayerGrids();
+        renderCompareVisual();
     }
 
     function toggleAllTeam() {
@@ -303,7 +355,7 @@
         if (AppConfig.COLORS[result]) return AppConfig.COLORS[result];
         if (result.includes('成功')) return '#007BFF';
         if (result.includes('ミス') || result.includes('失点')) return '#ff4d4d';
-        return '#000000'; // デフォルト色（黒）
+        return '#000000'; 
     }
 
     function draw(id) {
@@ -478,7 +530,7 @@
 
     function renderCompareVisual() {
         const container = document.getElementById('compare-cards-container');
-        container.innerHTML = (AppState.ui.comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択してください（最大8人）</p>' : '';
+        container.innerHTML = (AppState.ui.comparePlayers.length === 0) ? '<p style="margin-top:20px; color:#666; font-size:12px; text-align:center; width:100%;">上のリストから比較する選手を選択、または「一括表示」を押してください</p>' : '';
         AppState.ui.comparePlayers.forEach(pid => {
             let logs = AppState.data.logs.filter(l => l.playerId === pid && l.type === AppState.ui.compareType);
             const tot = logs.length; let aceOrDecide = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'エース' : '決定')).length; let goodOrIn = logs.filter(l => l.result === (AppState.ui.compareType === 'serve' ? 'イン' : 'Good')).length; let miss = logs.filter(l => AppState.ui.compareType === 'serve' ? (l.result === 'アウト' || l.result === 'ネット') : ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
