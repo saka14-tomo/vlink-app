@@ -86,7 +86,6 @@
             document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
             document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
             
-            // 一括表示ボタンの状態をリセット（表示時は常に全解除にしておく、等お好みで設定可能ですが今回は状態を維持します）
             const btnAll = document.getElementById('btn-compare-all');
             if(btnAll) {
                 if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount && AppState.data.activePlayerCount > 0) {
@@ -205,7 +204,6 @@
                         AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                         AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
                         
-                        // 人数が減った時に一括ボタンの表示を更新
                         const btnAll = document.getElementById('btn-compare-all');
                         if(btnAll && AppState.ui.currentTab === 'compare') {
                             if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
@@ -233,14 +231,12 @@
             }
         } 
         else if (AppState.ui.currentTab === 'compare') {
-            // ★変更：8人の上限を撤廃しました
             if (AppState.ui.comparePlayers.includes(id)) {
                 AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== id); 
             } else {
                 AppState.ui.comparePlayers.push(id);
             }
             
-            // 一括ボタンの表示切り替え
             const btnAll = document.getElementById('btn-compare-all');
             if(btnAll) {
                 if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
@@ -270,15 +266,12 @@
         renderPlayerGrids(); 
     }
 
-    // ★新規：比較タブの一括表示ボタン用関数
     function toggleAllCompare() {
         const btnAll = document.getElementById('btn-compare-all');
         if (AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
-            // 全解除
             AppState.ui.comparePlayers = [];
             if(btnAll) { btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8'; }
         } else {
-            // 一括表示
             AppState.ui.comparePlayers = Array.from({length: AppState.data.activePlayerCount}, (_, i) => i + 1);
             if(btnAll) { btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d'; }
         }
@@ -376,7 +369,8 @@
             const lZones = AppState.lockedZones[type];
             const hZone = AppState.hoverZones[type];
 
-            let baseZones = lZones.length > 0 ? lZones : (hZone ? [hZone] : []);
+            // ★変更：ホバーだけでは絞り込まない（全表示を維持）
+            let baseZones = lZones.length > 0 ? lZones : [];
             let mainLogs = getFilteredLogs(type, sFilter, baseZones);
 
             mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
@@ -389,11 +383,12 @@
                 ct.globalAlpha = 1.0;
             }
 
+            // ★変更：ゾーンがロックされている状態でのみ、他ゾーンのホバープレビューを薄く表示する
             if (lZones.length > 0 && hZone) {
                 const isHZoneLocked = lZones.some(z => z.x === hZone.x && z.y === hZone.y);
                 if (!isHZoneLocked) {
                     let previewLogs = getFilteredLogs(type, sFilter, [hZone]);
-                    ct.globalAlpha = 0.25;
+                    ct.globalAlpha = 0.25; // 薄く表示
                     previewLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
                     ct.globalAlpha = 1.0;
                 }
@@ -438,7 +433,11 @@
 
     function setStatFilter(type, filter) { 
         AppState.filters[type] = (AppState.filters[type] === filter) ? 'all' : filter;
-        if(AppState.filters[type] === 'all') { AppState.lockedZones[type] = []; updateZoneClasses(type); }
+        
+        // ★追加：統計ボタンが新たに選択されたら固定表示を解除
+        AppState.lockedZones[type] = []; 
+        updateZoneClasses(type);
+        
         drawStatsCanvas(type); 
         updateDynamicPlaylist(); 
     }
@@ -1144,7 +1143,7 @@
         if (confirm("このチームの登録を削除しますか？")) {
             AppState.data.teams = AppState.data.teams.filter(t => t.id !== teamId);
             saveToLocal();
-            openTeamSelectModal(); // リストを再描画
+            openTeamSelectModal(); 
         }
     }
 
