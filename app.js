@@ -378,37 +378,31 @@
             let thinLogs = [];
 
             if (lZones.length === 0) {
-                // ロックなし -> 常に全ログを実線で表示
                 mainLogs = getFilteredLogs(type, sFilter, []);
             } else {
-                // ロックあり -> ロックされたゾーンのログのみ実線表示
                 mainLogs = getFilteredLogs(type, sFilter, lZones);
 
-                // ロック中に別ゾーンにカーソルが置かれたら、そのゾーンのログを薄くプレビュー
                 if (hZone && !lZones.some(z => z.x === hZone.x && z.y === hZone.y)) {
                     thinLogs = getFilteredLogs(type, sFilter, [hZone]);
                 }
             }
 
-            // まず背景に薄いログ（ロック中のホバープレビュー）を描画
             if (thinLogs.length > 0) {
-                ct.globalAlpha = 0.25; // 薄く表示
+                ct.globalAlpha = 0.25; 
                 thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             }
 
-            // 次に前面に実線のログを描画
-            ct.globalAlpha = 1.0; // 実線表示に戻す
+            ct.globalAlpha = 1.0; 
             if (mainLogs.length > 0) {
                 mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
             }
 
-            // 統計ボタンのホバープレビュー処理
             if (hFilter !== null && hFilter !== sFilter) {
                 let activeZones = lZones.length > 0 ? lZones : [];
                 let filterPreviewLogs = getFilteredLogs(type, hFilter, activeZones);
                 let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
                 
-                ct.globalAlpha = 0.25; // 薄く表示
+                ct.globalAlpha = 0.25; 
                 previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
                 ct.globalAlpha = 1.0;
             }
@@ -498,11 +492,12 @@
         let lockedZones = AppState.lockedZones[type];
         if(!lockedZones) return;
         
-        let isSameZone = lockedZones.length === 1 && lockedZones[0].x === x && lockedZones[0].y === y;
-        if (isSameZone) {
-            AppState.lockedZones[type] = []; 
+        let index = lockedZones.findIndex(z => z.x === x && z.y === y);
+        
+        if (index > -1) {
+            lockedZones.splice(index, 1);
         } else {
-            AppState.lockedZones[type] = [{x, y}]; 
+            lockedZones.push({x, y});
         }
         
         updateZoneClasses(type);
