@@ -715,25 +715,121 @@
     // ==========================================
     // 6. 動画制御 (Video Manager) & 履歴機能
     // ==========================================
+
+    // ★変更: 既存のボタングループを非表示にし、JavaScriptから「3つ並んだボタン」を生成する
+    function initVideoSourceUI() {
+        const sourceUi = document.getElementById('video-source-ui');
+        if (!sourceUi) return;
+
+        // 既存のHTMLボタングループを隠す
+        const originalGroup = document.getElementById('source-btn-group');
+        if (originalGroup) originalGroup.style.display = 'none';
+
+        // 新しい「3並列ボタン」グループを作成
+        let newGroup = document.getElementById('custom-source-btn-group');
+        if (!newGroup) {
+            newGroup = document.createElement('div');
+            newGroup.id = 'custom-source-btn-group';
+            newGroup.style.display = 'flex';
+            newGroup.style.gap = '10px';
+            newGroup.style.marginBottom = '15px';
+            newGroup.style.width = '100%';
+
+            let btnLocal = document.createElement('button');
+            btnLocal.className = 'action-btn';
+            btnLocal.style.flex = '1';
+            btnLocal.style.background = '#007bff';
+            btnLocal.style.padding = '10px';
+            btnLocal.style.fontSize = '12px';
+            btnLocal.innerHTML = '📁 デバイスから';
+            btnLocal.onclick = () => document.getElementById('local-video-input').click();
+
+            let btnYt = document.createElement('button');
+            btnYt.className = 'action-btn';
+            btnYt.style.flex = '1';
+            btnYt.style.background = '#dc3545';
+            btnYt.style.padding = '10px';
+            btnYt.style.fontSize = '12px';
+            btnYt.innerHTML = '▶️ YouTubeから';
+            btnYt.onclick = showYouTubeInput;
+
+            let btnHist = document.createElement('button');
+            btnHist.className = 'action-btn';
+            btnHist.style.flex = '1';
+            btnHist.style.background = '#6c757d';
+            btnHist.style.padding = '10px';
+            btnHist.style.fontSize = '12px';
+            btnHist.innerHTML = '🕒 過去の履歴から';
+            btnHist.onclick = toggleVideoHistory;
+
+            newGroup.appendChild(btnLocal);
+            newGroup.appendChild(btnYt);
+            newGroup.appendChild(btnHist);
+
+            // YouTube入力フォームの手前に挿入
+            const ytGroup = document.getElementById('youtube-input-group');
+            if (ytGroup) {
+                sourceUi.insertBefore(newGroup, ytGroup);
+            } else {
+                sourceUi.appendChild(newGroup);
+            }
+        }
+
+        // 履歴一覧ドロップダウン枠の生成
+        let container = document.getElementById('video-history-dropdown');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'video-history-dropdown';
+            container.style.display = 'none'; 
+            container.style.marginTop = '5px';
+            container.style.border = '1px solid #ccc';
+            container.style.borderRadius = '4px';
+            container.style.padding = '8px';
+            container.style.background = '#fff';
+            container.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+            container.style.maxHeight = '250px';
+            container.style.overflowY = 'auto';
+            sourceUi.appendChild(container);
+        }
+        renderVideoHistory();
+
+        // ★変更: URL入力欄の縦並び化＆拡大調整
+        const ytGroup = document.getElementById('youtube-input-group');
+        if (ytGroup) {
+            ytGroup.style.flexDirection = 'column';
+            ytGroup.style.gap = '10px';
+        }
+        const urlInput = document.getElementById('yt-url-input');
+        if (urlInput) {
+            urlInput.style.width = '100%';
+            urlInput.style.padding = '12px';
+            urlInput.style.fontSize = '14px';
+            urlInput.style.boxSizing = 'border-box';
+        }
+    }
+
     function showYouTubeInput() {
-        document.getElementById('source-btn-group').style.display = 'none';
+        const customGroup = document.getElementById('custom-source-btn-group');
+        if(customGroup) customGroup.style.display = 'none'; // 3並列ボタンを隠す
+        
         let ytGroup = document.getElementById('youtube-input-group');
         ytGroup.style.display = 'flex';
         
-        // モード切替のラジオボタンを追加（未作成の場合）
+        // ★追加: 単一/一括 モード切替のラジオボタンを生成
         if(!document.getElementById('yt-mode-toggle')) {
             let toggleDiv = document.createElement('div');
             toggleDiv.id = 'yt-mode-toggle';
-            toggleDiv.style.marginBottom = '10px';
+            toggleDiv.style.marginBottom = '5px';
             toggleDiv.style.width = '100%';
             toggleDiv.style.display = 'flex';
-            toggleDiv.style.gap = '10px';
+            toggleDiv.style.gap = '15px';
             toggleDiv.innerHTML = `
-                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="single" checked onchange="toggleYtMode()"> 単一動画</label>
-                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="playlist" onchange="toggleYtMode()"> 再生リスト一括</label>
+                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="single" checked onchange="toggleYtMode()"> 1つの動画を読み込む</label>
+                <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="playlist" onchange="toggleYtMode()"> 再生リストを一括取り込み</label>
             `;
             ytGroup.insertBefore(toggleDiv, ytGroup.firstChild);
             
+            // 一括取り込み用のチェックボックス表示枠
             let listContainer = document.createElement('div');
             listContainer.id = 'yt-playlist-container';
             listContainer.style.display = 'none';
@@ -752,8 +848,11 @@
         }
     }
     
+    // ★追加: YouTube読み込みモードの切り替え処理
     function toggleYtMode() {
-        let mode = document.querySelector('input[name="yt-mode"]:checked').value;
+        let modeNode = document.querySelector('input[name="yt-mode"]:checked');
+        if(!modeNode) return;
+        let mode = modeNode.value;
         let btn = document.querySelector('#youtube-input-group button[onclick="loadYouTubeVideo()"]');
         let listContainer = document.getElementById('yt-playlist-container');
         let inputField = document.getElementById('yt-url-input');
@@ -771,7 +870,9 @@
     }
     
     function hideYouTubeInput() {
-        document.getElementById('source-btn-group').style.display = 'flex';
+        const customGroup = document.getElementById('custom-source-btn-group');
+        if(customGroup) customGroup.style.display = 'flex'; // 3並列ボタンを再表示
+        
         document.getElementById('youtube-input-group').style.display = 'none';
         document.getElementById('yt-url-input').value = '';
         if (document.getElementById('yt-playlist-container')) {
@@ -840,7 +941,7 @@
             document.getElementById('yt-url-input').blur();
             AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
         } else {
-            // プレイリスト一括取得処理
+            // ★追加: プレイリスト一括取得処理
             const listRegExp = /[?&]list=([^#\&\?]+)/;
             const match = url.match(listRegExp);
             if (match && match[1]) {
@@ -851,7 +952,7 @@
         }
     }
     
-    // プレイリストの情報を取得するための隠しプレイヤー処理
+    // ★追加: プレイリストの情報を取得するための隠しプレイヤー処理
     function fetchPlaylistData(listId) {
         let listContainer = document.getElementById('yt-playlist-container');
         listContainer.style.display = 'flex';
@@ -905,11 +1006,14 @@
         }, 10000);
     }
     
-    // プレイリストのチェックボックス一覧を生成
+    // ★追加: プレイリストのチェックボックス一覧を生成
     function renderPlaylistSelection(ids) {
         let listContainer = document.getElementById('yt-playlist-container');
         let html = '<div style="font-size:12px; font-weight:bold; margin-bottom:5px;">インポートする動画を選択してください:</div>';
         
+        // IFrame APIの仕様上、再生しないとタイトルが取れないことを説明
+        html += '<p style="font-size:10px; color:#dc3545; margin-bottom:10px; line-height:1.2;">※YouTubeのシステム制約上、一括取得時は再生するまで動画のタイトルを取得できません。再生した際に正しいタイトルに自動更新されます。</p>';
+
         html += `<div style="margin-bottom:8px; font-size:12px;">
             <button type="button" onclick="toggleAllPlaylistItems(true)" style="background:#6c757d; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:10px; margin-right:5px;">全選択</button>
             <button type="button" onclick="toggleAllPlaylistItems(false)" style="background:#6c757d; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:10px;">全解除</button>
@@ -919,6 +1023,7 @@
         
         ids.forEach((id, index) => {
             let existing = (AppState.videoHistory || []).find(h => h.id === 'yt_' + id);
+            // 履歴にタイトルが残っていればそれを使い、なければ「動画n (ID:xxx)」とする
             let name = (existing && existing.name && existing.name !== 'YouTube Video') ? existing.name : `動画 ${index + 1} (ID: ${id})`;
             
             html += `<label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
@@ -928,17 +1033,15 @@
         });
         
         html += '</div>';
-        html += `<button type="button" onclick="importSelectedPlaylistItems()" style="margin-top:10px; background:#28a745; color:white; border:none; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer;">選択した動画を履歴に追加</button>`;
+        html += `<button type="button" onclick="importSelectedPlaylistItems()" style="margin-top:10px; background:#28a745; color:white; border:none; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">選択した動画を履歴に保存</button>`;
         
         listContainer.innerHTML = html;
     }
     
-    // プレイリスト一覧のチェック状態を切り替え（グローバル関数）
     window.toggleAllPlaylistItems = function(check) {
         document.querySelectorAll('.yt-playlist-item-cb').forEach(cb => cb.checked = check);
     };
     
-    // 選択した動画を履歴に一括追加（グローバル関数）
     window.importSelectedPlaylistItems = function() {
         let checkboxes = document.querySelectorAll('.yt-playlist-item-cb:checked');
         if(checkboxes.length === 0) {
@@ -953,46 +1056,15 @@
             let name = existing ? existing.name : "YouTube Video";
             let url = "https://www.youtube.com/watch?v=" + id;
             
-            addToHistory('yt_' + id, name, 'youtube', url, true);
+            addToHistory('yt_' + id, name, 'youtube', url, true); // skipRender=true
             importedCount++;
         });
         
         renderVideoHistory();
-        alert(`${importedCount}件の動画を履歴に追加しました。\n「最近使用した動画」一覧から選択して読み込んでください。`);
+        alert(`${importedCount}件の動画を履歴に保存しました。\n「🕒過去の履歴から」ボタンを開いて確認してください。`);
         
-        document.getElementById('yt-url-input').value = '';
-        document.getElementById('yt-playlist-container').style.display = 'none';
+        hideYouTubeInput(); // 完了後にYouTube入力欄を閉じて元に戻す
     };
-
-    function initVideoHistoryUI() {
-        const sourceUi = document.getElementById('video-source-ui');
-        if (!sourceUi) return;
-
-        let histBtn = document.createElement('button');
-        histBtn.id = 'btn-show-history';
-        histBtn.className = 'action-btn';
-        histBtn.style.background = '#6c757d';
-        histBtn.style.marginTop = '10px';
-        histBtn.style.width = '100%';
-        histBtn.innerHTML = '🕒 最近使用した動画 ▼';
-        histBtn.onclick = toggleVideoHistory;
-        sourceUi.appendChild(histBtn);
-
-        let container = document.createElement('div');
-        container.id = 'video-history-dropdown';
-        container.style.display = 'none'; 
-        container.style.marginTop = '5px';
-        container.style.border = '1px solid #ccc';
-        container.style.borderRadius = '4px';
-        container.style.padding = '8px';
-        container.style.background = '#fff';
-        container.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-        container.style.maxHeight = '250px';
-        container.style.overflowY = 'auto';
-        sourceUi.appendChild(container);
-        
-        renderVideoHistory();
-    }
 
     function toggleVideoHistory() {
         const container = document.getElementById('video-history-dropdown');
@@ -1001,7 +1073,6 @@
         }
     }
 
-    // skipRenderフラグを追加し、一括取り込み時の描画負荷を軽減
     function addToHistory(id, name, type, url, skipRender = false) {
         let history = AppState.videoHistory || [];
         let index = history.findIndex(h => h.id === id);
@@ -1054,10 +1125,10 @@
             return;
         }
         
-        // 履歴一覧ヘッダー（一括削除ボタン追加）
+        // ★変更: 履歴一覧ヘッダー（一括削除ボタン追加）
         let html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
         html += '<span style="font-size:11px; font-weight:bold; color:#666;">履歴一覧 (最大50件)</span>';
-        html += '<button type="button" onclick="clearAllHistory()" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:3px; font-size:10px; cursor:pointer;">一括削除</button>';
+        html += '<button type="button" onclick="clearAllHistory()" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:3px; font-size:10px; cursor:pointer;">すべて削除</button>';
         html += '</div>';
         
         html += '<div style="display:flex; flex-direction:column; gap:6px;">';
@@ -1070,6 +1141,7 @@
             const typeStr = item.type === 'youtube' ? 'YouTube' : '端末動画';
             const bgColor = item.type === 'youtube' ? '#fff0f0' : '#f0f8ff';
             
+            // ★変更: 削除ボタンの追加
             html += `
                 <div style="display:flex; align-items:center; background:${bgColor}; border:1px solid #ddd; padding:8px 10px; border-radius:4px; cursor:pointer;">
                     <div style="width:24px; text-align:center; margin-right:8px;" onclick="loadFromHistory('${item.id}')">${iconHTML}</div>
@@ -1078,7 +1150,7 @@
                         <div style="font-size:10px; color:#666;">${typeStr}</div>
                     </div>
                     <div style="margin-left:8px;">
-                        <button type="button" onclick="deleteHistoryItem(event, '${item.id}')" style="background:transparent; border:none; color:#dc3545; font-size:16px; cursor:pointer; padding:4px;" title="削除">🗑️</button>
+                        <button type="button" onclick="deleteHistoryItem(event, '${item.id}')" style="background:transparent; border:none; color:#dc3545; font-size:16px; cursor:pointer; padding:4px;" title="履歴から削除">🗑️</button>
                     </div>
                 </div>
             `;
@@ -1087,7 +1159,6 @@
         container.innerHTML = html;
     }
 
-    // 選択した履歴の削除
     window.deleteHistoryItem = function(e, id) {
         e.stopPropagation();
         if(confirm("この履歴を削除しますか？\n（記録されたデータ自体は消えません）")) {
@@ -1097,7 +1168,6 @@
         }
     };
 
-    // 履歴の一括削除
     window.clearAllHistory = function() {
         if(confirm("すべての履歴を削除しますか？\n（記録されたデータ自体は消えません）")) {
             AppState.videoHistory = [];
@@ -1573,7 +1643,7 @@
         });
 
         initDB(() => {
-            initVideoHistoryUI(); 
+            initVideoSourceUI(); // ★初期化時にボタン配置とUIを調整
             renderPlayerGrids(); updateLog(); draw('input-canvas');
             clearStatsDOM(); 
             drawStatsCanvas('serve'); drawStatsCanvas('spike'); 
