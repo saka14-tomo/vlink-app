@@ -110,14 +110,24 @@
         const sourceUi = document.getElementById('video-source-ui');
         const splitLayout = document.getElementById('shared-split-layout');
         const btn = document.getElementById('btn-large-screen');
+        const changeBtn = document.getElementById('btn-toggle-video-source');
 
         if (AppState.ui.isLargeScreen) {
-            sourceUi.style.display = 'none';
+            if (sourceUi) sourceUi.style.display = 'none';
+            if (changeBtn) changeBtn.style.display = 'none';
             splitLayout.style.maxWidth = '100%'; 
             btn.innerText = '🗗 縮小';
             btn.style.background = '#ff9800';
         } else {
-            sourceUi.style.display = 'block';
+            if (AppState.video.id) {
+                if (changeBtn) {
+                    changeBtn.style.display = 'block';
+                    changeBtn.innerHTML = '🔄 別の動画を読み込む / ソース選択を表示';
+                }
+                if (sourceUi) sourceUi.style.display = 'none';
+            } else {
+                if (sourceUi) sourceUi.style.display = 'block';
+            }
             splitLayout.style.maxWidth = '1600px'; 
             btn.innerText = '🔲 大画面';
             btn.style.background = '#17a2b8';
@@ -674,7 +684,7 @@
 
             let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
             let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+            return `<div class="log-row" ${clickAction} title="クリックでこのシーンの3秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
         }).join('');
     }
     
@@ -739,7 +749,11 @@
             btnLocal.style.padding = '10px';
             btnLocal.style.fontSize = '12px';
             btnLocal.innerHTML = '📁 デバイスから';
-            btnLocal.onclick = () => document.getElementById('local-video-input').click();
+            btnLocal.onclick = () => {
+                const histDrop = document.getElementById('video-history-dropdown');
+                if (histDrop) histDrop.style.display = 'none';
+                document.getElementById('local-video-input').click();
+            };
 
             let btnYt = document.createElement('button');
             btnYt.className = 'action-btn';
@@ -803,6 +817,9 @@
     }
 
     function showYouTubeInput() {
+        const histDrop = document.getElementById('video-history-dropdown');
+        if (histDrop) histDrop.style.display = 'none';
+
         const customGroup = document.getElementById('custom-source-btn-group');
         if(customGroup) customGroup.style.display = 'none'; 
         
@@ -880,6 +897,42 @@
         const ytNode = document.getElementById('yt-player'); const localNode = document.getElementById('local-player');
         if (type === 'youtube') { if (ytNode) ytNode.style.display = 'block'; if (localNode) localNode.style.display = 'none'; } 
         else if (type === 'local') { if (ytNode) ytNode.style.display = 'none'; if (localNode) localNode.style.display = 'block'; }
+
+        const sourceUi = document.getElementById('video-source-ui');
+        if (sourceUi && !AppState.ui.isLargeScreen) {
+            sourceUi.style.display = 'none'; 
+        }
+
+        let changeBtn = document.getElementById('btn-toggle-video-source');
+        if (!changeBtn) {
+            changeBtn = document.createElement('button');
+            changeBtn.id = 'btn-toggle-video-source';
+            changeBtn.className = 'action-btn';
+            changeBtn.style.background = '#6c757d';
+            changeBtn.style.marginBottom = '10px';
+            changeBtn.style.padding = '8px';
+            changeBtn.style.fontSize = '12px';
+            changeBtn.style.width = '100%';
+            changeBtn.innerHTML = '🔄 別の動画を読み込む / ソース選択を表示';
+            changeBtn.onclick = () => {
+                if (sourceUi) {
+                    if (sourceUi.style.display === 'none') {
+                        sourceUi.style.display = 'block';
+                        changeBtn.innerHTML = '▲ 動画ソース選択を閉じる';
+                    } else {
+                        sourceUi.style.display = 'none';
+                        changeBtn.innerHTML = '🔄 別の動画を読み込む / ソース選択を表示';
+                    }
+                }
+            };
+            const videoArea = document.getElementById('shared-video-area');
+            const wrapper = document.getElementById('video-player-wrapper');
+            if (videoArea && wrapper) {
+                videoArea.insertBefore(changeBtn, wrapper);
+            }
+        }
+        changeBtn.style.display = 'block';
+        changeBtn.innerHTML = '🔄 別の動画を読み込む / ソース選択を表示';
     }
 
     function loadLocalVideo(event) {
@@ -1024,7 +1077,6 @@
         listContainer.innerHTML = html;
     }
     
-    // ★修正: 属性(Attribute)とプロパティ(Property)を同時に更新して強制的に表示を切り替える
     window.toggleAllPlaylistItems = function(check) {
         document.querySelectorAll('.yt-playlist-item-cb').forEach(cb => {
             cb.checked = check;
@@ -1269,7 +1321,7 @@
         const parts = timeStr.split(':');
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
             let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-            let playSeconds = Math.max(0, targetSeconds - 7);
+            let playSeconds = Math.max(0, targetSeconds - 3);
             AppState.video.time = playSeconds; updateTimerDisplay();
 
             if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1315,7 +1367,26 @@
     function resetPlaylistUI() {
         AppState.playlist.active = false; AppState.playlist.type = null; clearTimeout(AppState.playlist.timeout);
         pauseManualVideo();
-        document.getElementById('video-source-ui').style.display = AppState.ui.isLargeScreen ? 'none' : 'block';
+        
+        const sourceUi = document.getElementById('video-source-ui');
+        const changeBtn = document.getElementById('btn-toggle-video-source');
+        
+        if (AppState.ui.isLargeScreen) {
+            if (sourceUi) sourceUi.style.display = 'none';
+            if (changeBtn) changeBtn.style.display = 'none';
+        } else {
+            if (AppState.video.id) {
+                if (sourceUi) sourceUi.style.display = 'none';
+                if (changeBtn) {
+                    changeBtn.style.display = 'block';
+                    changeBtn.innerHTML = '🔄 別の動画を読み込む / ソース選択を表示';
+                }
+            } else {
+                if (sourceUi) sourceUi.style.display = 'block';
+                if (changeBtn) changeBtn.style.display = 'none';
+            }
+        }
+
         document.getElementById('video-seek-controls').style.display = 'flex';
         document.getElementById('playlist-controls').style.display = 'none';
         if (!AppState.ui.isLargeScreen) document.getElementById('shared-split-layout').style.maxWidth = '1600px';
@@ -1536,7 +1607,7 @@
         let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
         logsWithTime.forEach(l => {
             let parts = l.videoTime.split(':'); 
-            let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 8);
+            let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 3);
             let typeStr = l.type === 'serve' ? 'サーブ' : 
                           l.type === 'spike' ? 'スパイク' : 
                           l.type === 'serve_receive' ? 'サーブレシーブ' : 
