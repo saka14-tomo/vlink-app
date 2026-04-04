@@ -716,13 +716,16 @@
     // 6. 動画制御 (Video Manager) & 履歴機能
     // ==========================================
 
+    // ★変更: 既存のボタングループを非表示にし、JavaScriptから「3つ並んだボタン」を生成する
     function initVideoSourceUI() {
         const sourceUi = document.getElementById('video-source-ui');
         if (!sourceUi) return;
 
+        // 既存のHTMLボタングループを隠す
         const originalGroup = document.getElementById('source-btn-group');
         if (originalGroup) originalGroup.style.display = 'none';
 
+        // 新しい「3並列ボタン」グループを作成
         let newGroup = document.getElementById('custom-source-btn-group');
         if (!newGroup) {
             newGroup = document.createElement('div');
@@ -763,6 +766,7 @@
             newGroup.appendChild(btnYt);
             newGroup.appendChild(btnHist);
 
+            // YouTube入力フォームの手前に挿入
             const ytGroup = document.getElementById('youtube-input-group');
             if (ytGroup) {
                 sourceUi.insertBefore(newGroup, ytGroup);
@@ -771,6 +775,7 @@
             }
         }
 
+        // 履歴一覧ドロップダウン枠の生成
         let container = document.getElementById('video-history-dropdown');
         if (!container) {
             container = document.createElement('div');
@@ -788,6 +793,7 @@
         }
         renderVideoHistory();
 
+        // ★変更: URL入力欄の縦並び化＆拡大調整
         const ytGroup = document.getElementById('youtube-input-group');
         if (ytGroup) {
             ytGroup.style.flexDirection = 'column';
@@ -804,11 +810,12 @@
 
     function showYouTubeInput() {
         const customGroup = document.getElementById('custom-source-btn-group');
-        if(customGroup) customGroup.style.display = 'none'; 
+        if(customGroup) customGroup.style.display = 'none'; // 3並列ボタンを隠す
         
         let ytGroup = document.getElementById('youtube-input-group');
         ytGroup.style.display = 'flex';
         
+        // ★追加: 単一/一括 モード切替のラジオボタンを生成
         if(!document.getElementById('yt-mode-toggle')) {
             let toggleDiv = document.createElement('div');
             toggleDiv.id = 'yt-mode-toggle';
@@ -822,6 +829,7 @@
             `;
             ytGroup.insertBefore(toggleDiv, ytGroup.firstChild);
             
+            // 一括取り込み用のチェックボックス表示枠
             let listContainer = document.createElement('div');
             listContainer.id = 'yt-playlist-container';
             listContainer.style.display = 'none';
@@ -840,6 +848,7 @@
         }
     }
     
+    // ★追加: YouTube読み込みモードの切り替え処理
     function toggleYtMode() {
         let modeNode = document.querySelector('input[name="yt-mode"]:checked');
         if(!modeNode) return;
@@ -862,7 +871,7 @@
     
     function hideYouTubeInput() {
         const customGroup = document.getElementById('custom-source-btn-group');
-        if(customGroup) customGroup.style.display = 'flex'; 
+        if(customGroup) customGroup.style.display = 'flex'; // 3並列ボタンを再表示
         
         document.getElementById('youtube-input-group').style.display = 'none';
         document.getElementById('yt-url-input').value = '';
@@ -932,6 +941,7 @@
             document.getElementById('yt-url-input').blur();
             AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
         } else {
+            // ★追加: プレイリスト一括取得処理
             const listRegExp = /[?&]list=([^#\&\?]+)/;
             const match = url.match(listRegExp);
             if (match && match[1]) {
@@ -942,6 +952,7 @@
         }
     }
     
+    // ★追加: プレイリストの情報を取得するための隠しプレイヤー処理
     function fetchPlaylistData(listId) {
         let listContainer = document.getElementById('yt-playlist-container');
         listContainer.style.display = 'flex';
@@ -952,7 +963,7 @@
             hiddenDiv = document.createElement('div');
             hiddenDiv.id = 'hidden-yt-player-wrapper';
             hiddenDiv.style.position = 'absolute';
-            hiddenDiv.style.left = '-9999px'; 
+            hiddenDiv.style.left = '-9999px'; // 画面外に隠す
             hiddenDiv.innerHTML = '<div id="hidden-yt-player"></div>';
             document.body.appendChild(hiddenDiv);
         } else {
@@ -995,10 +1006,12 @@
         }, 10000);
     }
     
+    // ★追加: プレイリストのチェックボックス一覧を生成
     function renderPlaylistSelection(ids) {
         let listContainer = document.getElementById('yt-playlist-container');
         let html = '<div style="font-size:12px; font-weight:bold; margin-bottom:5px;">インポートする動画を選択してください:</div>';
         
+        // IFrame APIの仕様上、再生しないとタイトルが取れないことを説明
         html += '<p style="font-size:10px; color:#dc3545; margin-bottom:10px; line-height:1.2;">※YouTubeのシステム制約上、一括取得時は再生するまで動画のタイトルを取得できません。再生した際に正しいタイトルに自動更新されます。</p>';
 
         html += `<div style="margin-bottom:8px; font-size:12px;">
@@ -1010,6 +1023,7 @@
         
         ids.forEach((id, index) => {
             let existing = (AppState.videoHistory || []).find(h => h.id === 'yt_' + id);
+            // 履歴にタイトルが残っていればそれを使い、なければ「動画n (ID:xxx)」とする
             let name = (existing && existing.name && existing.name !== 'YouTube Video') ? existing.name : `動画 ${index + 1} (ID: ${id})`;
             
             html += `<label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
@@ -1024,16 +1038,8 @@
         listContainer.innerHTML = html;
     }
     
-    // ★修正: 属性(Attribute)とプロパティ(Property)を同時に更新して強制的に表示を切り替える
     window.toggleAllPlaylistItems = function(check) {
-        document.querySelectorAll('.yt-playlist-item-cb').forEach(cb => {
-            cb.checked = check;
-            if (check) {
-                cb.setAttribute('checked', 'checked');
-            } else {
-                cb.removeAttribute('checked');
-            }
-        });
+        document.querySelectorAll('.yt-playlist-item-cb').forEach(cb => cb.checked = check);
     };
     
     window.importSelectedPlaylistItems = function() {
@@ -1050,14 +1056,14 @@
             let name = existing ? existing.name : "YouTube Video";
             let url = "https://www.youtube.com/watch?v=" + id;
             
-            addToHistory('yt_' + id, name, 'youtube', url, true);
+            addToHistory('yt_' + id, name, 'youtube', url, true); // skipRender=true
             importedCount++;
         });
         
         renderVideoHistory();
         alert(`${importedCount}件の動画を履歴に保存しました。\n「🕒過去の履歴から」ボタンを開いて確認してください。`);
         
-        hideYouTubeInput(); 
+        hideYouTubeInput(); // 完了後にYouTube入力欄を閉じて元に戻す
     };
 
     function toggleVideoHistory() {
@@ -1080,6 +1086,7 @@
         }
         
         history.sort((a, b) => b.lastAccessed - a.lastAccessed);
+        // 保存上限を50件に拡張
         if (history.length > 50) history = history.slice(0, 50);
         
         AppState.videoHistory = history;
@@ -1118,6 +1125,7 @@
             return;
         }
         
+        // ★変更: 履歴一覧ヘッダー（一括削除ボタン追加）
         let html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
         html += '<span style="font-size:11px; font-weight:bold; color:#666;">履歴一覧 (最大50件)</span>';
         html += '<button type="button" onclick="clearAllHistory()" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:3px; font-size:10px; cursor:pointer;">すべて削除</button>';
@@ -1133,6 +1141,7 @@
             const typeStr = item.type === 'youtube' ? 'YouTube' : '端末動画';
             const bgColor = item.type === 'youtube' ? '#fff0f0' : '#f0f8ff';
             
+            // ★変更: 削除ボタンの追加
             html += `
                 <div style="display:flex; align-items:center; background:${bgColor}; border:1px solid #ddd; padding:8px 10px; border-radius:4px; cursor:pointer;">
                     <div style="width:24px; text-align:center; margin-right:8px;" onclick="loadFromHistory('${item.id}')">${iconHTML}</div>
@@ -1176,6 +1185,7 @@
         
         if (item.type === 'youtube') {
             showYouTubeInput(); 
+            // 単一動画モードに切り替えてからURLをセット
             let singleModeRadio = document.querySelector('input[name="yt-mode"][value="single"]');
             if (singleModeRadio) {
                 singleModeRadio.checked = true;
@@ -1633,7 +1643,7 @@
         });
 
         initDB(() => {
-            initVideoSourceUI(); 
+            initVideoSourceUI(); // ★初期化時にボタン配置とUIを調整
             renderPlayerGrids(); updateLog(); draw('input-canvas');
             clearStatsDOM(); 
             drawStatsCanvas('serve'); drawStatsCanvas('spike'); 
