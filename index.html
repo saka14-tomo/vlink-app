@@ -31,7 +31,8 @@
     <button id="tab-input" class="tab-btn active" onclick="switchTab('input')">データ入力</button>
     <button id="tab-serve" class="tab-btn" onclick="switchTab('serve')">サーブ統計</button>
     <button id="tab-spike" class="tab-btn" onclick="switchTab('spike')">スパイク統計</button>
-    <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全選手比較</button>
+    <button id="tab-player-stats" class="tab-btn" onclick="switchTab('player-stats')">選手別成績表</button>
+    <button id="tab-compare" class="tab-btn" onclick="switchTab('compare')">全体比較</button>
 </div>
 
 <div id="shared-split-layout" class="split-layout">
@@ -314,6 +315,49 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-player-stats" class="view-content">
+            <div class="main-container" style="flex-direction: column; width: 100%; max-width: 900px; padding: 20px;">
+                <div class="compare-header" style="justify-content: flex-start; margin-bottom: 15px;">
+                    <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">選手別スタッツ一覧</div>
+                    <button id="btn-pstats-all" class="action-btn" style="background:#17a2b8; font-size:10px; padding:6px 8px; margin-left:10px; box-shadow:none;" onclick="toggleAllPlayerStats()">☑️ 一括表示</button>
+                    
+                    <div style="margin-left: auto; display: flex; gap: 4px;">
+                        <button class="action-btn" style="background:#e83e8c; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('pstats-export-area', 'PlayerStatsTable', 'download')">📸 表を保存</button>
+                        <button class="action-btn" style="background:#20c997; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('pstats-export-area', 'PlayerStatsTable', 'copy')">📋 コピー</button>
+                    </div>
+                </div>
+                
+                <div id="player-grid-player-stats" class="compare-player-grid" style="justify-content: flex-start; margin-bottom: 15px;"></div>
+                
+                <div id="pstats-export-area" style="width: 100%; background: #fff; border-radius: 8px; padding: 5px;">
+                    <div style="width: 100%; overflow-x: auto;">
+                        <table class="stat-table" style="min-width: 800px; margin: 0; border: 1px solid #ddd;">
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th rowspan="2" style="width: 100px; border-right: 1px solid #ddd; vertical-align: middle;">選手名</th>
+                                    <th colspan="3" style="border-right: 1px solid #ddd;">サーブ</th>
+                                    <th colspan="3" style="border-right: 1px solid #ddd;">スパイク</th>
+                                    <th colspan="3" style="border-right: 1px solid #ddd;">サーブレシーブ</th>
+                                    <th colspan="3" style="border-right: 1px solid #ddd;">ディグ(レシーブ)</th>
+                                    <th colspan="3">トス</th>
+                                </tr>
+                                <tr style="background: #f8f9fa;">
+                                    <th>打数</th><th>ｴｰｽ</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th>打数</th><th>決定</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th>本数</th><th>成功(※)</th><th>失点</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-stats-tbody">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div style="font-size:11px; color:#666; margin-top:8px; text-align:right;">※トス成功は「レフト・センター・ライト・２アタック・クイック」の合計</div>
                 </div>
             </div>
         </div>

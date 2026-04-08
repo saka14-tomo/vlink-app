@@ -30,6 +30,7 @@ const AppState = {
         selectedPlayerId: null,
         statsPlayers: [],
         comparePlayers: [],
+        pstatsPlayers: [], // 新設: 選手別成績タブ用
         compareType: 'serve',
         isMultiSelect: false,
         isTeamAll: false,
@@ -83,6 +84,7 @@ function switchTab(target) {
     }
     
     if(['serve', 'spike'].includes(target)) drawStatsCanvas(target);
+    
     if(target === 'compare') {
         document.getElementById('cmp-btn-serve').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'serve' ? 'btn-ace' : 'btn-utility'}`;
         document.getElementById('cmp-btn-spike').className = `action-btn cmp-mode-btn ${AppState.ui.compareType === 'spike' ? 'btn-ace' : 'btn-utility'}`;
@@ -97,6 +99,19 @@ function switchTab(target) {
         }
         renderCompareVisual();
     }
+    
+    if(target === 'player-stats') {
+        const btnAll = document.getElementById('btn-pstats-all');
+        if(btnAll) {
+            if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount && AppState.data.activePlayerCount > 0) {
+                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
+            } else {
+                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
+            }
+        }
+        renderPlayerStatsTable();
+    }
+    
     renderPlayerGrids();
 }
 
@@ -135,7 +150,8 @@ function renderPlayerGrids() {
     if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
     else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
 
-    ['input', 'serve', 'spike', 'compare'].forEach(type => {
+    // player-stats 用のグリッド描画も追加
+    ['input', 'serve', 'spike', 'compare', 'player-stats'].forEach(type => {
         const container = document.getElementById(`player-grid-${type}`); if(!container) return;
         container.innerHTML = '';
         for(let i=1; i<=AppState.data.activePlayerCount; i++) {
@@ -143,7 +159,7 @@ function renderPlayerGrids() {
             let currentWrapperHeight = wrapperHeight;
             let currentFontSize = fontSize;
 
-            if (type === 'compare') {
+            if (type === 'compare' || type === 'player-stats') {
                 currentWrapperHeight = '46px';
                 currentFontSize = '12px';
             }
@@ -153,6 +169,7 @@ function renderPlayerGrids() {
 
             if (type === 'input') isActive = (AppState.ui.selectedPlayerId == i);
             else if (type === 'compare') isCompareActive = AppState.ui.comparePlayers.includes(i);
+            else if (type === 'player-stats') isCompareActive = AppState.ui.pstatsPlayers.includes(i);
             else isActive = AppState.ui.statsPlayers.includes(i);
 
             wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
@@ -173,8 +190,8 @@ function renderPlayerGrids() {
         if (AppState.data.activePlayerCount < 12) {
             const addWrapper = document.createElement('div');
             addWrapper.className = 'player-wrapper player-add-btn';
-            let currentWrapperHeight = type === 'compare' ? '46px' : wrapperHeight;
-            let currentFontSize = type === 'compare' ? '12px' : fontSize;
+            let currentWrapperHeight = (type === 'compare' || type === 'player-stats') ? '46px' : wrapperHeight;
+            let currentFontSize = (type === 'compare' || type === 'player-stats') ? '12px' : fontSize;
 
             addWrapper.style.height = currentWrapperHeight;
             addWrapper.onclick = () => {
@@ -189,7 +206,7 @@ function renderPlayerGrids() {
         if (AppState.data.activePlayerCount > 1) {
             const removeWrapper = document.createElement('div');
             removeWrapper.className = 'player-wrapper player-add-btn';
-            let currentWrapperHeight = type === 'compare' ? '46px' : wrapperHeight;
+            let currentWrapperHeight = (type === 'compare' || type === 'player-stats') ? '46px' : wrapperHeight;
 
             removeWrapper.style.height = currentWrapperHeight; 
             removeWrapper.style.borderColor = '#dc3545';
@@ -199,10 +216,12 @@ function renderPlayerGrids() {
                 if(confirm(`No.${AppState.data.activePlayerCount} (${AppState.data.players[AppState.data.activePlayerCount]}) の選手枠を削除しますか？\n※記録済みのデータ自体は残りますが、選択できなくなります。`)) {
                     const removingId = AppState.data.activePlayerCount;
                     AppState.data.activePlayerCount--;
+                    
                     if(AppState.ui.selectedPlayerId === removingId) {
                         AppState.ui.selectedPlayerId = null; resetInput(); draw('input-canvas');
                     }
                     AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
+                    AppState.ui.pstatsPlayers = AppState.ui.pstatsPlayers.filter(p => p !== removingId);
                     AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
                     
                     const btnAll = document.getElementById('btn-compare-all');
@@ -214,8 +233,18 @@ function renderPlayerGrids() {
                         }
                     }
                     
+                    const btnPStatsAll = document.getElementById('btn-pstats-all');
+                    if(btnPStatsAll && AppState.ui.currentTab === 'player-stats') {
+                        if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
+                            btnPStatsAll.innerHTML = '☐ 全解除'; btnPStatsAll.style.background = '#6c757d';
+                        } else {
+                            btnPStatsAll.innerHTML = '☑️ 一括表示'; btnPStatsAll.style.background = '#17a2b8';
+                        }
+                    }
+                    
                     saveToLocal(); renderPlayerGrids();
                     if(AppState.ui.currentTab === 'compare') renderCompareVisual();
+                    if(AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
                 }
             };
             removeWrapper.innerHTML = `<span style="color:#dc3545; font-size:24px; font-weight:bold; pointer-events:none; margin-top:-2px;">－</span>`;
@@ -247,6 +276,23 @@ function selectPlayer(id) {
             }
         }
         renderCompareVisual();
+    }
+    else if (AppState.ui.currentTab === 'player-stats') {
+        if (AppState.ui.pstatsPlayers.includes(id)) {
+            AppState.ui.pstatsPlayers = AppState.ui.pstatsPlayers.filter(p => p !== id); 
+        } else {
+            AppState.ui.pstatsPlayers.push(id);
+        }
+        
+        const btnAll = document.getElementById('btn-pstats-all');
+        if(btnAll) {
+            if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
+                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
+            } else {
+                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
+            }
+        }
+        renderPlayerStatsTable();
     } else {
         if (AppState.ui.isTeamAll) {
             AppState.ui.isTeamAll = false;
@@ -282,6 +328,20 @@ function toggleAllCompare() {
     }
     renderPlayerGrids();
     renderCompareVisual();
+}
+
+// 選手別成績の一括選択トグル
+function toggleAllPlayerStats() {
+    const btnAll = document.getElementById('btn-pstats-all');
+    if (AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
+        AppState.ui.pstatsPlayers = [];
+        if(btnAll) { btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8'; }
+    } else {
+        AppState.ui.pstatsPlayers = Array.from({length: AppState.data.activePlayerCount}, (_, i) => i + 1);
+        if(btnAll) { btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d'; }
+    }
+    renderPlayerGrids();
+    renderPlayerStatsTable();
 }
 
 function toggleAllTeam() {
@@ -553,6 +613,10 @@ function clearStatsDOM() {
     document.getElementById('sp-miss').innerText = '0'; document.getElementById('sp-miss-rate').innerText = '0%'; document.getElementById('sp-ace-chart-val').innerText = '0'; document.getElementById('sp-ace-chart-rate').innerText = '0%';
     document.getElementById('pie-total-val-sp').innerText = '0本'; document.getElementById('pie-labels-sp').innerHTML = ''; document.getElementById('pie-chart-sp').style.backgroundImage = "conic-gradient(#eee 0% 100%)";
     document.getElementById('compare-cards-container').innerHTML = '';
+    
+    // 選手別成績テーブルの初期化
+    const pStatsBody = document.getElementById('player-stats-tbody');
+    if (pStatsBody) pStatsBody.innerHTML = '';
 }
 
 function setCompareType(type) {
@@ -578,6 +642,64 @@ function renderCompareVisual() {
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
         logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+    });
+}
+
+// 選手別成績のテーブル生成
+function renderPlayerStatsTable() {
+    const tbody = document.getElementById('player-stats-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    if (AppState.ui.pstatsPlayers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="16" style="padding: 20px; color: #666; text-align:center;">上のリストから表示する選手を選択、または「一括表示」を押してください</td></tr>';
+        return;
+    }
+
+    AppState.ui.pstatsPlayers.forEach(pid => {
+        const pLogs = AppState.data.logs.filter(l => l.playerId === pid);
+        
+        // Serve
+        const srvLogs = pLogs.filter(l => l.type === 'serve');
+        const srvTot = srvLogs.length;
+        const srvAce = srvLogs.filter(l => l.result === 'エース').length;
+        const srvMiss = srvLogs.filter(l => l.result === 'アウト' || l.result === 'ネット').length;
+        
+        // Spike
+        const spkLogs = pLogs.filter(l => l.type === 'spike');
+        const spkTot = spkLogs.length;
+        const spkDec = spkLogs.filter(l => l.result === '決定').length;
+        const spkMiss = spkLogs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
+        
+        // Serve Receive
+        const srLogs = pLogs.filter(l => l.type === 'serve_receive');
+        const srTot = srLogs.length;
+        const srSuc = srLogs.filter(l => l.result === '成功').length;
+        const srMiss = srLogs.filter(l => l.result === 'ミス').length;
+        
+        // Receive (Dig)
+        const recLogs = pLogs.filter(l => l.type === 'receive');
+        const recTot = recLogs.length;
+        const recSuc = recLogs.filter(l => l.result === '成功').length;
+        const recMiss = recLogs.filter(l => l.result === 'ミス').length;
+        
+        // Toss
+        const tsLogs = pLogs.filter(l => l.type === 'toss');
+        const tsTot = tsLogs.length;
+        const tsSuc = tsLogs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result)).length;
+        const tsMiss = tsLogs.filter(l => l.result === '失点').length;
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f0f0f0';
+        tr.innerHTML = `
+            <td style="font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 10px;">${AppState.data.players[pid]}</td>
+            <td>${srvTot}</td><td style="color:#007BFF; font-weight:bold;">${srvAce}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${srvMiss}</td>
+            <td>${spkTot}</td><td style="color:#007BFF; font-weight:bold;">${spkDec}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${spkMiss}</td>
+            <td>${srTot}</td><td style="color:#007BFF; font-weight:bold;">${srSuc}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${srMiss}</td>
+            <td>${recTot}</td><td style="color:#007BFF; font-weight:bold;">${recSuc}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${recMiss}</td>
+            <td>${tsTot}</td><td style="color:#007BFF; font-weight:bold;">${tsSuc}</td><td style="color:#dc3545;">${tsMiss}</td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 
@@ -709,6 +831,7 @@ function editSingleName(e, id) {
         AppState.data.players[id] = trimmed === "" ? String(id) : trimmed;
         saveToLocal(); renderPlayerGrids(); updateLog();
         if (AppState.ui.currentTab === 'compare') renderCompareVisual();
+        if (AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
     }
 }
 
@@ -1105,7 +1228,34 @@ function updateHistoryDataFlag(id, hasData) {
 }
 
 function saveVideoHistory() {
+    // ローカル保存
     localStorage.setItem('vlink_video_history', JSON.stringify(AppState.videoHistory || []));
+    
+    // クラウド保存対応 (GAS連携時用)
+    if (typeof google !== 'undefined' && google.script) {
+        google.script.run
+            .withFailureHandler(err => console.error("クラウド保存エラー:", err))
+            .saveHistoryToCloud(AppState.videoHistory);
+    }
+}
+
+function loadHistoryFromCloud() {
+    if (typeof google !== 'undefined' && google.script) {
+        google.script.run
+            .withSuccessHandler(function(serverHistoryStr) {
+                if (serverHistoryStr) {
+                    try {
+                        const serverHistory = JSON.parse(serverHistoryStr);
+                        AppState.videoHistory = serverHistory;
+                        localStorage.setItem('vlink_video_history', serverHistoryStr);
+                        renderVideoHistory();
+                    } catch (e) { 
+                        console.error("履歴データの解析エラー", e); 
+                    }
+                }
+            })
+            .getHistoryFromCloud();
+    }
 }
 
 function renderVideoHistory() {
@@ -1413,6 +1563,8 @@ function fallbackLoad() {
     if (localStorage.getItem('vlink_video_history')) AppState.videoHistory = JSON.parse(localStorage.getItem('vlink_video_history'));
     else AppState.videoHistory = [];
     
+    loadHistoryFromCloud();
+
     if (db) saveToDB(); 
 }
 
@@ -1437,7 +1589,7 @@ function saveToLocal() {
 }
 
 function updateAfterDataLoad() {
-    AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; 
+    AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; AppState.ui.pstatsPlayers = []; 
     resetInput(); AppConfig.TYPES.forEach(t => { if(AppState.filters[t]) AppState.filters[t] = 'all'; if(AppState.lockedZones[t]) AppState.lockedZones[t] = []; AppState.hoverZones[t] = null; });
     updateZoneClasses('serve'); updateZoneClasses('spike');
     renderPlayerGrids(); updateLog(); draw('input-canvas'); clearStatsDOM(); switchTab('input'); 
@@ -1516,7 +1668,7 @@ function importData(e) {
 
 function resetAllData(skipConfirm = false) {
     if(skipConfirm || confirm("すべての記録を消去して、新しいデータの入力を始めますか？\n※保存していないデータは失われます。")) {
-        AppState.data.logs = []; AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; 
+        AppState.data.logs = []; AppState.ui.selectedPlayerId = null; AppState.ui.statsPlayers = []; AppState.ui.comparePlayers = []; AppState.ui.pstatsPlayers = []; 
         AppState.data.activePlayerCount = 7; AppState.data.players = { ...AppConfig.DEFAULT_PLAYERS };
         resetInput(); AppState.session.id = "session_" + Date.now(); 
         if(!skipConfirm) resetTimerInternal(); 
@@ -1624,22 +1776,19 @@ async function captureAndExport(elementId, fileNamePrefix, mode = 'download') {
     }
 
     try {
-        // キャプチャ実行 (scale: 2 でSNSや記事に耐えうる高画質化)
         const canvas = await html2canvas(targetEl, {
             scale: 2,
-            backgroundColor: '#f4f7f6', // アプリの背景色に合わせる
+            backgroundColor: '#f4f7f6',
             logging: false,
-            useCORS: true // 外部フォント等がある場合の対策
+            useCORS: true 
         });
 
         if (mode === 'download') {
-            // PNGとしてダウンロード
             const link = document.createElement('a');
             link.download = getSuggestFileName(fileNamePrefix) + '.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         } else if (mode === 'copy') {
-            // クリップボードにコピー
             canvas.toBlob(async (blob) => {
                 try {
                     const item = new ClipboardItem({ 'image/png': blob });
