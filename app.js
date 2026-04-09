@@ -838,61 +838,12 @@ function toggleVideoSource(forceState) {
 }
 
 function initVideoSourceUI() {
-    let container = document.getElementById('video-history-dropdown');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'video-history-dropdown';
-        container.style.display = 'none'; 
-        container.style.marginTop = '10px';
-        container.style.border = '1px solid #ccc';
-        container.style.borderRadius = '4px';
-        container.style.padding = '8px';
-        container.style.background = '#fff';
-        container.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-        container.style.maxHeight = '250px';
-        container.style.overflowY = 'auto';
-        const sourceContent = document.getElementById('video-source-content');
-        if (sourceContent) sourceContent.appendChild(container);
-    }
     renderVideoHistory();
 }
 
 function showYouTubeInput() {
-    const customGroup = document.getElementById('source-btn-group');
-    if(customGroup) customGroup.style.display = 'none'; 
-    
     let ytGroup = document.getElementById('youtube-input-group');
-    ytGroup.style.display = 'flex';
-    
-    if(!document.getElementById('yt-mode-toggle')) {
-        let toggleDiv = document.createElement('div');
-        toggleDiv.id = 'yt-mode-toggle';
-        toggleDiv.style.marginBottom = '5px';
-        toggleDiv.style.width = '100%';
-        toggleDiv.style.display = 'flex';
-        toggleDiv.style.gap = '15px';
-        toggleDiv.innerHTML = `
-            <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="single" checked onchange="toggleYtMode()"> 1つの動画を読み込む</label>
-            <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="playlist" onchange="toggleYtMode()"> 再生リストを一括取り込み</label>
-        `;
-        ytGroup.insertBefore(toggleDiv, ytGroup.firstChild);
-        
-        let listContainer = document.createElement('div');
-        listContainer.id = 'yt-playlist-container';
-        listContainer.style.display = 'none';
-        listContainer.style.flexDirection = 'column';
-        listContainer.style.gap = '5px';
-        listContainer.style.marginTop = '10px';
-        listContainer.style.maxHeight = '200px';
-        listContainer.style.overflowY = 'auto';
-        listContainer.style.border = '1px solid #ccc';
-        listContainer.style.padding = '8px';
-        listContainer.style.background = '#f9f9f9';
-        listContainer.style.borderRadius = '4px';
-        listContainer.style.width = '100%';
-        listContainer.style.boxSizing = 'border-box';
-        ytGroup.appendChild(listContainer);
-    }
+    if (ytGroup) ytGroup.style.display = 'flex';
 }
 
 function toggleYtMode() {
@@ -904,22 +855,20 @@ function toggleYtMode() {
     let inputField = document.getElementById('yt-url-input');
     
     if(mode === 'single') {
-        inputField.placeholder = "YouTubeのURLを貼り付け...";
-        if(btn) btn.innerHTML = "読み込み";
+        inputField.placeholder = "YouTube URLを貼り付け...";
+        if(btn) btn.innerHTML = "読込";
         listContainer.style.display = 'none';
     } else {
         inputField.placeholder = "再生リスト(list=...)のURLを貼り付け...";
-        if(btn) btn.innerHTML = "リストを取得";
+        if(btn) btn.innerHTML = "リスト取得";
         listContainer.style.display = 'none';
         listContainer.innerHTML = '';
     }
 }
 
 function hideYouTubeInput() {
-    const customGroup = document.getElementById('source-btn-group');
-    if(customGroup) customGroup.style.display = 'flex'; 
-    
-    document.getElementById('youtube-input-group').style.display = 'none';
+    let ytGroup = document.getElementById('youtube-input-group');
+    if (ytGroup) ytGroup.style.display = 'none';
     document.getElementById('yt-url-input').value = '';
     if (document.getElementById('yt-playlist-container')) {
         document.getElementById('yt-playlist-container').style.display = 'none';
@@ -1350,7 +1299,7 @@ function seekToLogTime(timeStr) {
     const parts = timeStr.split(':');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        let playSeconds = Math.max(0, targetSeconds - 3); // 3秒前に修正
+        let playSeconds = Math.max(0, targetSeconds - 3); 
         AppState.video.time = playSeconds; updateTimerDisplay();
 
         if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1619,7 +1568,7 @@ function copyForYouTube() {
     let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
     logsWithTime.forEach(l => {
         let parts = l.videoTime.split(':'); 
-        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 3); // 3秒前に修正
+        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 3); 
         let typeStr = l.type === 'serve' ? 'サーブ' : 
                       l.type === 'spike' ? 'スパイク' : 
                       l.type === 'serve_receive' ? 'サーブレシーブ' : 

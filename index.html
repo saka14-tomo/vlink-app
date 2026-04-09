@@ -47,16 +47,27 @@
                 </button>
                 
                 <div id="video-source-content" style="padding: 15px; display: block; border-top: 1px solid #e9ecef; background: white;">
-                    <div id="source-btn-group" style="display: flex; gap: 8px; width: 100%; align-items: center;">
-                        <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px; font-size: 13px;" onclick="document.getElementById('local-video-input').click()">📁 デバイスから動画を選択</button>
+                    <div id="source-btn-group" style="display: flex; gap: 8px; width: 100%; align-items: center; justify-content: center;">
+                        <button class="action-btn" style="background: #007bff; flex: 1; padding: 12px 6px; font-size: 12px; white-space: nowrap;" onclick="document.getElementById('local-video-input').click()">📁 デバイス</button>
                         <input type="file" id="local-video-input" style="display: none;" accept="video/*" onchange="loadLocalVideo(event)">
-                        <button class="action-btn" style="background: #dc3545; flex: 1; padding: 12px; font-size: 13px;" onclick="showYouTubeInput()">📺 Youtubeから動画を選択</button>
+                        <button class="action-btn" style="background: #dc3545; flex: 1; padding: 12px 6px; font-size: 12px; white-space: nowrap;" onclick="showYouTubeInput()">📺 YouTube</button>
+                        <button class="action-btn" style="background: #6c757d; flex: 1; padding: 12px 6px; font-size: 12px; white-space: nowrap;" onclick="toggleVideoHistory()">🕒 過去の履歴</button>
                     </div>
-                    <div id="youtube-input-group" style="display: none; gap: 8px; width: 100%; align-items: center;">
-                        <input type="text" id="yt-url-input" placeholder="YouTube URL (例: https://youtu.be/...)" style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); loadYouTubeVideo(); }">
-                        <button class="action-btn" style="background: #dc3545; padding: 12px 16px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">📺 Youtube読込</button>
-                        <button class="action-btn btn-utility" style="padding: 12px; flex-shrink: 0;" onclick="hideYouTubeInput()">戻る</button>
+                    
+                    <div id="youtube-input-group" style="display: none; flex-direction: column; gap: 10px; width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
+                        <div id="yt-mode-toggle" style="display: flex; gap: 15px; justify-content: center;">
+                            <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="single" checked onchange="toggleYtMode()"> 単一動画読込</label>
+                            <label style="font-size:13px; cursor:pointer;"><input type="radio" name="yt-mode" value="playlist" onchange="toggleYtMode()"> リスト一括読込</label>
+                        </div>
+                        <div style="display: flex; gap: 8px; width: 100%;">
+                            <input type="text" id="yt-url-input" placeholder="YouTube URLを貼り付け..." style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;">
+                            <button class="action-btn" style="background: #dc3545; padding: 12px 20px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">読込</button>
+                            <button class="action-btn btn-utility" style="padding: 12px 15px; flex-shrink: 0;" onclick="hideYouTubeInput()">✖</button>
+                        </div>
+                        <div id="yt-playlist-container" style="display: none; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; background: #f9f9f9; border-radius: 4px;"></div>
                     </div>
+
+                    <div id="video-history-dropdown" style="display: none; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 8px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto;"></div>
                 </div>
             </div>
 
@@ -91,19 +102,19 @@
     </div>
 
     <div class="split-right-wrapper" id="shared-right-area">
-        
         <div class="split-center" id="shared-center-area">
             
             <div id="view-input" class="view-content active">
-                <div class="main-container">
-                    <div class="left-panel">
+                <div class="main-container" style="align-items: stretch; height: 100%;">
+                    
+                    <div class="left-panel" style="display: flex; flex-direction: column;">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <button class="action-btn" style="background:#17a2b8; font-size: 11px; padding: 8px; box-shadow:none;" onclick="openTeamSelectModal()">👥 チーム呼出</button>
                             <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                             <div id="player-grid-input" class="player-grid"></div>
                         </div>
                         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
-                            <button class="action-btn" style="background:#28a745; font-size: 11px; padding: 8px;" onclick="registerCurrentTeam()">💾 現在の選手をチーム登録</button>
+                            <button class="action-btn" style="background:#28a745; font-size: 11px; padding: 8px;" onclick="registerCurrentTeam()">💾 現在の選手を登録</button>
                             <div style="display: flex; gap: 4px; width: 100%;">
                                 <button class="action-btn btn-utility" style="flex: 1.2; background:#4a4a4a; font-size:10px; padding:8px 4px;" onclick="openRenameView()">📝 一括設定</button>
                                 <button class="action-btn" style="flex: 1; background:#ffc107; color:#333; font-size:10px; padding:8px 4px;" onclick="cancelCurrentInput()">◀ 戻る</button>
@@ -164,7 +175,7 @@
                             <button class="action-btn btn-error toss-btn compact-btn" onclick="saveDirectAction('toss', '失点')" disabled>失点</button>
                         </div>
                         
-                        <button class="action-btn btn-utility" style="margin-top: auto; padding: 6px; font-size: 11px;" onclick="cancelCurrentInput()">◀ コート入力をクリア</button>
+                        <button class="action-btn btn-utility" style="margin-top: auto; padding: 12px; font-size: 12px; font-weight: bold; width: 100%; box-sizing: border-box;" onclick="cancelCurrentInput()">◀ コート入力をクリア</button>
                     </div>
                 </div>
             </div>
