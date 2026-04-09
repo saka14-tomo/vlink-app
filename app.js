@@ -127,12 +127,12 @@ function toggleLargeScreen() {
     const btn = document.getElementById('btn-large-screen');
 
     if (AppState.ui.isLargeScreen) {
-        if(sourceUi) sourceUi.style.display = 'none';
+        sourceUi.style.display = 'none';
         splitLayout.style.maxWidth = '100%'; 
         btn.innerText = '🗗 縮小';
         btn.style.background = '#ff9800';
     } else {
-        if(sourceUi) sourceUi.style.display = 'block';
+        sourceUi.style.display = 'block';
         splitLayout.style.maxWidth = '1600px'; 
         btn.innerText = '🔲 大画面';
         btn.style.background = '#17a2b8';
@@ -1699,18 +1699,6 @@ window.onload = () => {
     lp.addEventListener('pause', () => setTimerState(false));
     lp.addEventListener('ended', () => setTimerState(false));
     lp.addEventListener('seeked', () => { AppState.video.time = Math.floor(lp.currentTime); updateTimerDisplay(); });
-
-    // YouTube入力欄のEnterキー検知をイベントリスナーで登録
-    const ytUrlInput = document.getElementById('yt-url-input');
-    if (ytUrlInput) {
-        ytUrlInput.addEventListener('keydown', function(e) {
-            // IME変換中のEnterは無視する
-            if (e.key === 'Enter' && !e.isComposing) {
-                e.preventDefault();
-                loadYouTubeVideo();
-            }
-        });
-    }
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && AppState.ui.isLargeScreen) { e.preventDefault(); toggleLargeScreen(); return; }
