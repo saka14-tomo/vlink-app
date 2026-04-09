@@ -27,8 +27,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
     justify-content: center; align-items: flex-start; transition: max-width 0.3s ease; 
 }
 .split-left { flex: 1 1 500px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
-/* 右側パネルは常に大画面時と同じサイズ(500px)で固定し、拡大縮小の影響を受けないようにする */
-.split-right-wrapper { flex: 0 0 500px; width: 500px; display: flex; flex-direction: column; gap: 20px; transition: all 0.3s ease; }
+/* 右側パネルは常に以前の最適サイズ(680px)で固定し、拡大縮小の影響を受けないようにする */
+.split-right-wrapper { flex: 0 0 680px; width: 680px; display: flex; flex-direction: column; gap: 20px; transition: all 0.3s ease; }
 .split-center, .split-right-log { width: 100%; display: flex; flex-direction: column; }
 .split-layout .main-container { max-width: 100%; margin-bottom: 0; display: flex; }
 
@@ -67,17 +67,9 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .zone-cell:hover { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.9); color: #fff; }
 .zone-cell.locked { background: rgba(0, 123, 255, 0.65) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
 
-/* 右パネル：操作・統計 */
+/* 右パネル：操作・統計（元のレイアウトに復元） */
 .right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
 .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
-
-/* スクロール不要・全表示・最下部揃え版 入力エリア */
-.compact-panel { display: flex; flex-direction: column; height: 100%; justify-content: flex-start; padding-right: 0; overflow: visible; }
-.instruction-banner { padding:4px; text-align:center; font-size:10px; color:#555; background:#f8f9fa; border-radius:4px; border:1px dashed #ced4da; margin-bottom: 4px; flex-shrink: 0; }
-.compact-title { margin: 4px 0 2px 0; font-size: 11px; padding: 3px 6px; }
-.btn-row { display: flex; gap: 4px; flex-shrink: 0; width: 100%; margin-bottom: 4px; }
-/* flex: 1 1 0 によって、文字数に関係なく全てのボタンが完全に同じ幅になります */
-.compact-btn { flex: 1 1 0; padding: 8px 0; font-size: 11px; white-space: nowrap; text-align: center; }
 
 /* ログウィンドウ */
 .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 250px; }
@@ -154,7 +146,7 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .rename-item input { border: none; background: transparent; border-bottom: 2px solid #ced4da; font-size: 15px; font-weight: bold; color: #333; outline: none; transition: 0.2s; padding-bottom: 4px; width: 100%; }
 .rename-item input:focus { border-bottom-color: #007BFF; }
 
-/* スマホ用レスポンシブ */
+/* スマホ用レスポンシブ (縦積みに戻す) */
 @media (max-width: 1100px) {
     .split-layout { flex-direction: column; align-items: center; }
     .split-left, .split-right-wrapper { width: 100%; max-width: 760px; flex: none; }

@@ -127,12 +127,12 @@ function toggleLargeScreen() {
     const btn = document.getElementById('btn-large-screen');
 
     if (AppState.ui.isLargeScreen) {
-        sourceUi.style.display = 'none';
+        if(sourceUi) sourceUi.style.display = 'none';
         splitLayout.style.maxWidth = '100%'; 
         btn.innerText = '🗗 縮小';
         btn.style.background = '#ff9800';
     } else {
-        sourceUi.style.display = 'block';
+        if(sourceUi) sourceUi.style.display = 'block';
         splitLayout.style.maxWidth = '1600px'; 
         btn.innerText = '🔲 大画面';
         btn.style.background = '#17a2b8';
