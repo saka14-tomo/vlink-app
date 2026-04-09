@@ -30,7 +30,7 @@ const AppState = {
         selectedPlayerId: null,
         statsPlayers: [],
         comparePlayers: [],
-        pstatsPlayers: [], // 新設: 選手別成績タブ用
+        pstatsPlayers: [],
         compareType: 'serve',
         isMultiSelect: false,
         isTeamAll: false,
@@ -150,7 +150,6 @@ function renderPlayerGrids() {
     if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
     else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
 
-    // player-stats 用のグリッド描画も追加
     ['input', 'serve', 'spike', 'compare', 'player-stats'].forEach(type => {
         const container = document.getElementById(`player-grid-${type}`); if(!container) return;
         container.innerHTML = '';
@@ -330,7 +329,6 @@ function toggleAllCompare() {
     renderCompareVisual();
 }
 
-// 選手別成績の一括選択トグル
 function toggleAllPlayerStats() {
     const btnAll = document.getElementById('btn-pstats-all');
     if (AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
@@ -614,7 +612,6 @@ function clearStatsDOM() {
     document.getElementById('pie-total-val-sp').innerText = '0本'; document.getElementById('pie-labels-sp').innerHTML = ''; document.getElementById('pie-chart-sp').style.backgroundImage = "conic-gradient(#eee 0% 100%)";
     document.getElementById('compare-cards-container').innerHTML = '';
     
-    // 選手別成績テーブルの初期化
     const pStatsBody = document.getElementById('player-stats-tbody');
     if (pStatsBody) pStatsBody.innerHTML = '';
 }
@@ -645,7 +642,6 @@ function renderCompareVisual() {
     });
 }
 
-// 選手別成績のテーブル生成
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -659,31 +655,26 @@ function renderPlayerStatsTable() {
     AppState.ui.pstatsPlayers.forEach(pid => {
         const pLogs = AppState.data.logs.filter(l => l.playerId === pid);
         
-        // Serve
         const srvLogs = pLogs.filter(l => l.type === 'serve');
         const srvTot = srvLogs.length;
         const srvAce = srvLogs.filter(l => l.result === 'エース').length;
         const srvMiss = srvLogs.filter(l => l.result === 'アウト' || l.result === 'ネット').length;
         
-        // Spike
         const spkLogs = pLogs.filter(l => l.type === 'spike');
         const spkTot = spkLogs.length;
         const spkDec = spkLogs.filter(l => l.result === '決定').length;
         const spkMiss = spkLogs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result)).length;
         
-        // Serve Receive
         const srLogs = pLogs.filter(l => l.type === 'serve_receive');
         const srTot = srLogs.length;
         const srSuc = srLogs.filter(l => l.result === '成功').length;
         const srMiss = srLogs.filter(l => l.result === 'ミス').length;
         
-        // Receive (Dig)
         const recLogs = pLogs.filter(l => l.type === 'receive');
         const recTot = recLogs.length;
         const recSuc = recLogs.filter(l => l.result === '成功').length;
         const recMiss = recLogs.filter(l => l.result === 'ミス').length;
         
-        // Toss
         const tsLogs = pLogs.filter(l => l.type === 'toss');
         const tsTot = tsLogs.length;
         const tsSuc = tsLogs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result)).length;
@@ -796,7 +787,7 @@ function updateLog() {
 
         let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
         let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの7秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの3秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
     }).join('');
 }
 
@@ -1228,10 +1219,8 @@ function updateHistoryDataFlag(id, hasData) {
 }
 
 function saveVideoHistory() {
-    // ローカル保存
     localStorage.setItem('vlink_video_history', JSON.stringify(AppState.videoHistory || []));
     
-    // クラウド保存対応 (GAS連携時用)
     if (typeof google !== 'undefined' && google.script) {
         google.script.run
             .withFailureHandler(err => console.error("クラウド保存エラー:", err))
@@ -1418,7 +1407,7 @@ function seekToLogTime(timeStr) {
     const parts = timeStr.split(':');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        let playSeconds = Math.max(0, targetSeconds - 7);
+        let playSeconds = Math.max(0, targetSeconds - 3); // 3秒前に修正
         AppState.video.time = playSeconds; updateTimerDisplay();
 
         if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1687,7 +1676,7 @@ function copyForYouTube() {
     let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
     logsWithTime.forEach(l => {
         let parts = l.videoTime.split(':'); 
-        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 8);
+        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 3); // 3秒前に修正
         let typeStr = l.type === 'serve' ? 'サーブ' : 
                       l.type === 'spike' ? 'スパイク' : 
                       l.type === 'serve_receive' ? 'サーブレシーブ' : 

@@ -21,17 +21,49 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
     width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
 }
 
-/* アプリ全体の3カラムレスポンシブレイアウト */
-.split-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; justify-content: center; align-items: stretch; transition: max-width 0.3s ease; }
-.split-left { flex: 1 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
-.split-center { flex: 1.2 1 450px; min-width: 320px; display: flex; flex-direction: column; transition: opacity 0.3s ease; }
-.split-right-log { flex: 0 1 220px; min-width: 180px; display: flex; flex-direction: column; transition: all 0.3s ease; min-height: 0; }
+/* アプリ全体の2カラムレスポンシブレイアウト (PC: 左に動画、右に入力とログ) */
+.split-layout { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 20px; 
+    width: 100%; 
+    max-width: 1600px; 
+    justify-content: center; 
+    align-items: flex-start; /* 上揃えにして、コンテンツの高さ崩れを防ぐ */
+    transition: max-width 0.3s ease; 
+}
 
-/* 左右の高さを完全に均一化 */
-.split-layout .main-container { max-width: 100%; margin-bottom: 0; height: 100%; display: flex; }
-.log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 0; }
+/* 左パネル：動画エリア (入力エリアより少し広めに比率をとる = 1.4) */
+.split-left { 
+    flex: 1.4 1 500px; 
+    min-width: 320px; 
+    display: flex; 
+    flex-direction: column; 
+    transition: all 0.3s ease; 
+}
 
-/* 左パネル：選手選択 */
+/* 右パネルラッパー：入力・操作 ＋ ログ */
+.split-right-wrapper {
+    flex: 1 1 380px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+/* 右パネル内の要素 */
+.split-center, .split-right-log {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 左右の高さを均等にするための微調整 */
+.split-layout .main-container { max-width: 100%; margin-bottom: 0; display: flex; }
+.log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 250px; }
+
+/* 左パネル（入力操作側の内側レイアウト） */
 .left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
 .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
@@ -134,13 +166,11 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .compare-layout { flex-direction: column; align-items: stretch; padding: 20px; }
 .compare-header { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
 .compare-player-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; flex: 1; min-width: 180px; }
-/* 比較画面のボタンサイズを指定 (JSの縦幅指定と合わせて他タブと同じ比率にする) */
 .compare-player-grid .player-wrapper { width: 56px; border-radius: 6px; }
 .compare-player-grid .player-btn span { font-size: 12px; }
 .compare-cards-wrapper { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-top: 10px; }
 .compare-card { display: flex; flex-direction: column; align-items: center; flex: 1 1 20%; min-width: 95px; max-width: 160px; background: #fff; padding: 10px 8px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; }
 .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #e9ecef; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); }
-/* 表の文字サイズを12pxに拡大 */
 .compare-table { margin-top: 8px; font-size: 12px; width: 100%; border-collapse: collapse; text-align: center; } 
 .compare-table td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
 .compare-table .row-in { background: #fff; color: #000; }
@@ -151,10 +181,10 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .rename-item input { border: none; background: transparent; border-bottom: 2px solid #ced4da; font-size: 15px; font-weight: bold; color: #333; outline: none; transition: 0.2s; padding-bottom: 4px; width: 100%; }
 .rename-item input:focus { border-bottom-color: #007BFF; }
 
-/* スマホ用レスポンシブ */
+/* スマホ用レスポンシブ (縦積みに戻す) */
 @media (max-width: 1100px) {
     .split-layout { flex-direction: column; align-items: center; }
-    .split-left, .split-center, .split-right-log { width: 100%; max-width: 760px; }
+    .split-left, .split-right-wrapper { width: 100%; max-width: 760px; flex: none; }
     .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; }
     .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
     .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
