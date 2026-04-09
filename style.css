@@ -18,21 +18,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 .main-container { 
     display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
     box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
-    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: wrap; margin-bottom: 15px; transition: all 0.3s;
+    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; margin-bottom: 15px; transition: all 0.3s;
 }
 
 /* アプリ全体の2カラムレスポンシブレイアウト */
+/* 左の動画側だけが伸縮し、右の入力側はサイズ固定にする設定 */
 .split-layout { 
     display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; 
-    justify-content: center; align-items: flex-start; transition: max-width 0.3s ease; 
+    justify-content: center; align-items: stretch; transition: max-width 0.3s ease; 
 }
-.split-left { flex: 1.4 1 500px; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
-.split-right-wrapper { flex: 1 1 380px; min-width: 320px; display: flex; flex-direction: column; gap: 20px; transition: all 0.3s ease; }
+.split-left { flex: 1 1 0; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
+.split-right-wrapper { flex: 0 0 auto; display: flex; flex-direction: column; gap: 20px; transition: all 0.3s ease; }
 .split-center, .split-right-log { width: 100%; display: flex; flex-direction: column; }
 .split-layout .main-container { max-width: 100%; margin-bottom: 0; display: flex; }
 
-/* 左パネル（入力操作側の内側レイアウト） */
-.left-panel { flex: 1; min-width: 160px; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+/* 左パネル（入力操作側の内側レイアウト）- 幅を固定 */
+.left-panel { width: 180px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .player-wrapper { 
     display: flex; flex-direction: column; width: 100%; border-radius: 10px; overflow: hidden; 
@@ -57,7 +58,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 .player-add-btn { background: transparent !important; border: 2px dashed #adb5bd !important; border-bottom: 2px dashed #adb5bd !important; transform: none !important; box-shadow: none !important; cursor: pointer; justify-content: center !important; align-items: center !important; }
 .player-add-btn:hover { background: #f8f9fa !important; border-color: #6c757d !important; transform: translateY(-2px) !important; }
 
-/* 中央：コート */
+/* 中央：コート - 幅を固定 */
 .court-wrapper { width: 220px; display: flex; flex-direction: column; align-items: center; position: relative; flex-shrink: 0; }
 canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); width: 220px; height: 440px; }
 #input-area { width: 220px; height: 440px; position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 10; touch-action: none; }
@@ -66,8 +67,8 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .zone-cell:hover { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.9); color: #fff; }
 .zone-cell.locked { background: rgba(0, 123, 255, 0.65) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
 
-/* 右パネル：操作・統計 */
-.right-panel { flex: 1; min-width: 180px; max-width: 240px; display: flex; flex-direction: column; gap: 8px; } 
+/* 右パネル：操作・統計 - 幅を固定 */
+.right-panel { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; } 
 .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
 
 /* スクロール不要・全表示・最下部揃え版 入力エリア */
@@ -75,7 +76,6 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .instruction-banner { padding:4px; text-align:center; font-size:10px; color:#555; background:#f8f9fa; border-radius:4px; border:1px dashed #ced4da; margin-bottom: 4px; flex-shrink: 0; }
 .compact-title { margin: 4px 0 2px 0; font-size: 11px; padding: 3px 6px; }
 .btn-row { display: flex; gap: 4px; flex-shrink: 0; width: 100%; margin-bottom: 4px; }
-/* flex: 1 1 0 によって、文字数に関係なく全てのボタンが完全に同じ幅になります */
 .compact-btn { flex: 1 1 0; padding: 8px 0; font-size: 11px; white-space: nowrap; text-align: center; }
 
 /* ログウィンドウ */
@@ -157,7 +157,7 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 @media (max-width: 1100px) {
     .split-layout { flex-direction: column; align-items: center; }
     .split-left, .split-right-wrapper { width: 100%; max-width: 760px; flex: none; }
-    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; }
+    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; flex-wrap: wrap; }
     .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
     .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
     .player-wrapper { width: 60px; height: 50px; }
