@@ -1700,6 +1700,18 @@ window.onload = () => {
     lp.addEventListener('ended', () => setTimerState(false));
     lp.addEventListener('seeked', () => { AppState.video.time = Math.floor(lp.currentTime); updateTimerDisplay(); });
 
+    // YouTube入力欄のEnterキー検知をイベントリスナーで登録
+    const ytUrlInput = document.getElementById('yt-url-input');
+    if (ytUrlInput) {
+        ytUrlInput.addEventListener('keydown', function(e) {
+            // IME変換中のEnterは無視する
+            if (e.key === 'Enter' && !e.isComposing) {
+                e.preventDefault();
+                loadYouTubeVideo();
+            }
+        });
+    }
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && AppState.ui.isLargeScreen) { e.preventDefault(); toggleLargeScreen(); return; }
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
