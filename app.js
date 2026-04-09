@@ -698,15 +698,9 @@ function renderPlayerStatsTable() {
 // 5. データ入力管理 (Input Manager)
 // ==========================================
 
-function setRightPanelMode(mode) {
-    document.getElementById('panel-direct').style.display = (mode === 'direct') ? 'flex' : 'none';
-    document.getElementById('panel-court').style.display = (mode === 'court') ? 'flex' : 'none';
-}
-
 function resetInput() { 
     AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
-    setRightPanelMode('direct');
-
+    
     document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
     
     const hasPlayer = AppState.ui.selectedPlayerId !== null;
@@ -721,7 +715,6 @@ function handleCourtClick(e) {
     if (AppState.input.state === 'idle') { 
         AppState.input.start = {x, y}; 
         AppState.input.state = 'waiting'; 
-        setRightPanelMode('court'); 
     } else if (AppState.input.state === 'waiting') { 
         AppState.input.end = {x, y}; 
         AppState.input.state = 'ready'; 
@@ -830,67 +823,27 @@ function editSingleName(e, id) {
 // 6. 動画制御 (Video Manager) & 履歴機能
 // ==========================================
 
-function initVideoSourceUI() {
-    const sourceUi = document.getElementById('video-source-ui');
-    if (!sourceUi) return;
-
-    const originalGroup = document.getElementById('source-btn-group');
-    if (originalGroup) originalGroup.style.display = 'none';
-
-    let newGroup = document.getElementById('custom-source-btn-group');
-    if (!newGroup) {
-        newGroup = document.createElement('div');
-        newGroup.id = 'custom-source-btn-group';
-        newGroup.style.display = 'flex';
-        newGroup.style.gap = '10px';
-        newGroup.style.marginBottom = '15px';
-        newGroup.style.width = '100%';
-
-        let btnLocal = document.createElement('button');
-        btnLocal.className = 'action-btn';
-        btnLocal.style.flex = '1';
-        btnLocal.style.background = '#007bff';
-        btnLocal.style.padding = '10px';
-        btnLocal.style.fontSize = '12px';
-        btnLocal.innerHTML = '📁 デバイスから';
-        btnLocal.onclick = () => document.getElementById('local-video-input').click();
-
-        let btnYt = document.createElement('button');
-        btnYt.className = 'action-btn';
-        btnYt.style.flex = '1';
-        btnYt.style.background = '#dc3545';
-        btnYt.style.padding = '10px';
-        btnYt.style.fontSize = '12px';
-        btnYt.innerHTML = '▶️ YouTubeから';
-        btnYt.onclick = showYouTubeInput;
-
-        let btnHist = document.createElement('button');
-        btnHist.className = 'action-btn';
-        btnHist.style.flex = '1';
-        btnHist.style.background = '#6c757d';
-        btnHist.style.padding = '10px';
-        btnHist.style.fontSize = '12px';
-        btnHist.innerHTML = '🕒 過去の履歴から';
-        btnHist.onclick = toggleVideoHistory;
-
-        newGroup.appendChild(btnLocal);
-        newGroup.appendChild(btnYt);
-        newGroup.appendChild(btnHist);
-
-        const ytGroup = document.getElementById('youtube-input-group');
-        if (ytGroup) {
-            sourceUi.insertBefore(newGroup, ytGroup);
-        } else {
-            sourceUi.appendChild(newGroup);
-        }
+function toggleVideoSource(forceState) {
+    const content = document.getElementById('video-source-content');
+    const icon = document.getElementById('video-source-toggle-icon');
+    if (!content) return;
+    
+    if (forceState === 'hide' || (forceState !== 'show' && content.style.display !== 'none')) {
+        content.style.display = 'none';
+        if(icon) icon.innerText = '◀ (ソース変更)';
+    } else {
+        content.style.display = 'block';
+        if(icon) icon.innerText = '▼';
     }
+}
 
+function initVideoSourceUI() {
     let container = document.getElementById('video-history-dropdown');
     if (!container) {
         container = document.createElement('div');
         container.id = 'video-history-dropdown';
         container.style.display = 'none'; 
-        container.style.marginTop = '5px';
+        container.style.marginTop = '10px';
         container.style.border = '1px solid #ccc';
         container.style.borderRadius = '4px';
         container.style.padding = '8px';
@@ -898,26 +851,14 @@ function initVideoSourceUI() {
         container.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
         container.style.maxHeight = '250px';
         container.style.overflowY = 'auto';
-        sourceUi.appendChild(container);
+        const sourceContent = document.getElementById('video-source-content');
+        if (sourceContent) sourceContent.appendChild(container);
     }
     renderVideoHistory();
-
-    const ytGroup = document.getElementById('youtube-input-group');
-    if (ytGroup) {
-        ytGroup.style.flexDirection = 'column';
-        ytGroup.style.gap = '10px';
-    }
-    const urlInput = document.getElementById('yt-url-input');
-    if (urlInput) {
-        urlInput.style.width = '100%';
-        urlInput.style.padding = '12px';
-        urlInput.style.fontSize = '14px';
-        urlInput.style.boxSizing = 'border-box';
-    }
 }
 
 function showYouTubeInput() {
-    const customGroup = document.getElementById('custom-source-btn-group');
+    const customGroup = document.getElementById('source-btn-group');
     if(customGroup) customGroup.style.display = 'none'; 
     
     let ytGroup = document.getElementById('youtube-input-group');
@@ -975,7 +916,7 @@ function toggleYtMode() {
 }
 
 function hideYouTubeInput() {
-    const customGroup = document.getElementById('custom-source-btn-group');
+    const customGroup = document.getElementById('source-btn-group');
     if(customGroup) customGroup.style.display = 'flex'; 
     
     document.getElementById('youtube-input-group').style.display = 'none';
@@ -989,7 +930,7 @@ function hideYouTubeInput() {
 function showPlayer(type) {
     document.getElementById('video-player-wrapper').style.display = 'block';
     const controls = document.getElementById('video-seek-controls');
-    controls.style.display = 'flex'; controls.style.marginTop = 'auto';
+    controls.style.display = 'flex'; controls.style.marginTop = '10px';
 
     const ytNode = document.getElementById('yt-player'); const localNode = document.getElementById('local-player');
     if (type === 'youtube') { if (ytNode) ytNode.style.display = 'block'; if (localNode) localNode.style.display = 'none'; } 
@@ -1011,6 +952,7 @@ function loadLocalVideo(event) {
     
     AppState.video.time = 0; updateTimerDisplay(); lp.play();
     checkAndLoadVideoData(AppState.video.id);
+    toggleVideoSource('hide'); 
 }
 
 function loadYouTubeVideo() {
@@ -1045,6 +987,7 @@ function loadYouTubeVideo() {
         
         document.getElementById('yt-url-input').blur();
         AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
+        toggleVideoSource('hide');
     } else {
         const listRegExp = /[?&]list=([^#\&\?]+)/;
         const match = url.match(listRegExp);
