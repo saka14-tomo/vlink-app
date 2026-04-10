@@ -452,12 +452,12 @@ function draw(id) {
 
         if (thinLogs.length > 0) {
             ct.globalAlpha = 0.25; 
-            thinLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            thinLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
         }
 
         ct.globalAlpha = 1.0; 
         if (mainLogs.length > 0) {
-            mainLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            mainLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
         }
 
         if (hFilter !== null && hFilter !== sFilter) {
@@ -466,7 +466,7 @@ function draw(id) {
             let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
             
             ct.globalAlpha = 0.25; 
-            previewOnlyLogs.forEach(l => line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)));
+            previewOnlyLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
             ct.globalAlpha = 1.0;
         }
     }
@@ -497,6 +497,8 @@ function getFilteredLogs(type, targetFilter, zones) {
 }
 
 function isLogInZone(log, z) {
+    if (log.startX === null) return false;
+    
     if (log.type === 'serve') {
         let xIndex = Math.floor((Math.max(20, Math.min(log.startX, 199.9)) - 20) / 60);
         return xIndex === z.x;
@@ -643,7 +645,7 @@ function renderCompareVisual() {
         if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-        logs.forEach(l => { line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+        logs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
     });
 }
 
@@ -722,13 +724,11 @@ function renderPlayerStatsTable() {
 function resetInput() { 
     AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
     
-    // 選手が選択されていれば、すべてのボタンを有効にする（簡易入力可能）
     const hasPlayer = AppState.ui.selectedPlayerId !== null;
     document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = !hasPlayer); 
     document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
 }
 
-// ▼ 変更点：コートタップ時にレシーブ/トスボタンを無効化し、サーブ/スパイク専用の座標入力モードとする
 function handleCourtClick(e) {
     if (!AppState.ui.selectedPlayerId) return;
     const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
@@ -747,7 +747,7 @@ function handleCourtClick(e) {
         document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
         document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
         
-        // コートをタップした時点で、サーブレシーブ・レシーブ・トスボタンは無効化する
+        // ▼ コートをタップした時点で、サーブレシーブ・レシーブ・トスボタンは無効化する
         document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = true);
     }
     
@@ -771,17 +771,31 @@ function cancelCurrentInput() {
     }
 }
 
-// ▼ 変更点：2タップ簡易入力の場合のデフォルト座標を、線として描画されるように調整
+// ▼ 変更点：スパイク用モーダル処理変数の追加と、デフォルト座標記録の解除
+let pendingSpikeResult = null;
+
+function showSpikePositionModal(result) {
+    pendingSpikeResult = result;
+    document.getElementById('spike-pos-modal-overlay').style.display = 'flex';
+}
+
+function selectSpikePos(pos) {
+    document.getElementById('spike-pos-modal-overlay').style.display = 'none';
+    finalizeSaveAction('spike', pendingSpikeResult, null, null, null, null, pos);
+    pendingSpikeResult = null;
+}
+
+function cancelSpikePos() {
+    document.getElementById('spike-pos-modal-overlay').style.display = 'none';
+    pendingSpikeResult = null;
+}
+
 function saveAction(type, result) {
     if (!AppState.ui.selectedPlayerId) return;
     
-    let finalX, finalY, endX, endY;
+    let finalX = null, finalY = null, endX = null, endY = null;
 
-    if (!AppState.input.start) {
-        // 2タップ簡易入力の場合のデフォルト座標（線として分かりやすく描画されるように終点をずらす）
-        if (type === 'serve') { finalX = 110; finalY = 420; endX = 110; endY = 240; }
-        else if (type === 'spike') { finalX = 110; finalY = 240; endX = 110; endY = 100; }
-    } else {
+    if (AppState.input.start) {
         finalX = AppState.input.start.x; finalY = AppState.input.start.y;
         endX = AppState.input.end ? AppState.input.end.x : finalX;
         endY = AppState.input.end ? AppState.input.end.y : finalY;
@@ -793,9 +807,33 @@ function saveAction(type, result) {
             finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
             if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
         }
+    } else {
+        // コートタップなし（簡易入力）の場合、デフォルト座標は記録しない（nullのまま）
+        if (type === 'spike') {
+            // スパイクのみ3タップ目の専用モーダルへ遷移
+            showSpikePositionModal(result);
+            return;
+        }
     }
     
-    AppState.data.logs.push({ id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, type: type, result: result, startX: finalX, startY: finalY, endX: endX, endY: endY, time: new Date().toLocaleString(), videoTime: formatTime(AppState.video.time) });
+    finalizeSaveAction(type, result, finalX, finalY, endX, endY, null);
+}
+
+function finalizeSaveAction(type, result, startX, startY, endX, endY, attackPos) {
+    AppState.data.logs.push({ 
+        id: Date.now(), 
+        sessionId: AppState.session.id, 
+        playerId: AppState.ui.selectedPlayerId, 
+        type: type, 
+        result: result, 
+        startX: startX, 
+        startY: startY, 
+        endX: endX, 
+        endY: endY, 
+        attackPos: attackPos, // スパイク位置情報
+        time: new Date().toLocaleString(), 
+        videoTime: formatTime(AppState.video.time) 
+    });
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
 }
 
@@ -1649,7 +1687,7 @@ function copyForYouTube() {
         let parts = l.videoTime.split(':'); 
         let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 6); 
         let typeStr = l.type === 'serve' ? 'サーブ' : 
-                      l.type === 'spike' ? 'スパイク' : 
+                      l.type === 'spike' ? (l.attackPos ? `スパイク(${l.attackPos})` : 'スパイク') : 
                       l.type === 'serve_receive' ? 'サーブレシーブ' : 
                       l.type === 'receive' ? 'レシーブ' : 
                       l.type === 'toss' ? 'トス' : l.type;
