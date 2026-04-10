@@ -117,7 +117,9 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .instruction-banner { padding:4px; text-align:center; font-size:10px; color:#555; background:#f8f9fa; border-radius:4px; border:1px dashed #ced4da; margin-bottom: 4px; flex-shrink: 0; }
 .compact-title { margin: 4px 0 2px 0; font-size: 11px; padding: 3px 6px; }
 .btn-row { display: flex; gap: 4px; flex-shrink: 0; width: 100%; margin-bottom: 4px; }
-.compact-btn { flex: 1 1 0; padding: 8px 0; font-size: 13px; font-weight: bold; white-space: nowrap; text-align: center; }
+
+/* ▼変更点：すべてのcompact-btnの高さを完全に34pxに統一し、文字も中央揃えにする */
+.compact-btn { flex: 1 1 0; padding: 0; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; white-space: nowrap; text-align: center; }
 
 /* ログウィンドウ */
 .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 250px; }
@@ -149,7 +151,7 @@ tr.clickable-stat:hover { transform: none; box-shadow: inset 0 0 8px rgba(0,0,0,
 .active-filter { outline: 2px solid #007bff !important; outline-offset: -1px; border-radius: inherit; background-color: #e7f1ff !important; }
 tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline-offset: -2px; }
 
-/* ▼ 新規追加：スタッツ表用クリッカブルセル */
+/* スタッツ表用クリッカブルセル */
 .clickable-cell { cursor: pointer; transition: background 0.1s; }
 .clickable-cell:hover { background: #e7f1ff !important; box-shadow: inset 0 0 0 1px #007bff; }
 
