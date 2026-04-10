@@ -169,9 +169,9 @@
                             <button class="action-btn btn-in toss-btn compact-btn" onclick="saveDirectAction('toss', 'ライト')" disabled>ライト</button>
                         </div>
                         <div class="btn-row">
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 10px; padding: 8px 1px; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', '２アタック')" disabled>２アタック</button>
-                            <button class="action-btn btn-in toss-btn compact-btn" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
-                            <button class="action-btn btn-error toss-btn compact-btn" onclick="saveDirectAction('toss', 'ミス')" disabled>ミス</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; padding: 8px 1px; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', '２アタック')" disabled>２アタック</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; padding: 8px 1px; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
+                            <button class="action-btn btn-error toss-btn compact-btn" style="font-size: 11px; padding: 8px 1px; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'ミス')" disabled>ミス</button>
                         </div>
                     </div>
                 </div>
@@ -354,13 +354,14 @@
                                         <th>打数</th><th>決定</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
                                         <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
                                         <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
-                                        <th>本数</th><th>成功</th><th>ミス</th> </tr>
+                                        <th>本数</th><th>成功</th><th>ミス</th>
+                                    </tr>
                                 </thead>
                                 <tbody id="player-stats-tbody">
                                 </tbody>
                             </table>
                         </div>
-                        <div style="font-size:11px; color:#666; margin-top:8px; text-align:right;">※表の数字や選手名をクリックすると、該当するプレーの動画を連続再生します</div>
+                        <div style="font-size:11px; color:#666; margin-top:8px; text-align:right;">※トス成功は「レフト・センター・ライト・２アタック・クイック」の合計<br>※表の数字や選手名をクリックすると、該当するプレーの動画を連続再生します</div>
                     </div>
                 </div>
             </div>
@@ -368,21 +369,22 @@
             <div id="view-compare" class="view-content">
                 <div class="main-container compare-layout">
                     <div class="compare-header">
-                        <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
-                            <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">比較</div>
-                            <button id="btn-compare-all" class="action-btn" style="background:#17a2b8; font-size:10px; padding:6px 8px; box-shadow:none;" onclick="toggleAllCompare()">☑️ 一括表示</button>
+                        
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                            <button id="cmp-btn-serve" class="action-btn btn-ace cmp-mode-btn" style="font-size:11px; padding:8px 16px;" onclick="setCompareType('serve')">サーブ</button>
+                            <button id="cmp-btn-spike" class="action-btn btn-utility cmp-mode-btn" style="font-size:11px; padding:8px 16px;" onclick="setCompareType('spike')">スパイク</button>
                         </div>
+                        
                         <div id="player-grid-compare" class="compare-player-grid"></div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <div style="display: flex; gap: 8px;">
-                                <button id="cmp-btn-serve" class="action-btn btn-ace cmp-mode-btn" onclick="setCompareType('serve')">サーブ</button>
-                                <button id="cmp-btn-spike" class="action-btn btn-utility cmp-mode-btn" onclick="setCompareType('spike')">スパイク</button>
-                            </div>
-                            <div style="display: flex; gap: 4px; justify-content: center;">
-                                <button class="action-btn" style="background:#e83e8c; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('compare-cards-container', 'CompareStats', 'download')">📸 保存</button>
-                                <button class="action-btn" style="background:#20c997; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('compare-cards-container', 'CompareStats', 'copy')">📋 コピー</button>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 6px; width: 150px; flex-shrink: 0;">
+                            <button id="btn-compare-all" class="action-btn" style="background:#17a2b8; font-size:11px; padding:8px 0; width:100%; box-shadow:none;" onclick="toggleAllCompare()">☑️ 一括表示</button>
+                            <div style="display: flex; gap: 4px; width: 100%;">
+                                <button class="action-btn" style="flex:1; background:#e83e8c; font-size:11px; padding:8px 0; box-shadow:none; text-align:center;" onclick="captureAndExport('compare-cards-container', 'CompareStats', 'download')">📸 保存</button>
+                                <button class="action-btn" style="flex:1; background:#20c997; font-size:11px; padding:8px 0; box-shadow:none; text-align:center;" onclick="captureAndExport('compare-cards-container', 'CompareStats', 'copy')">📋 コピー</button>
                             </div>
                         </div>
+                        
                     </div>
                     <div id="compare-cards-container" class="compare-cards-wrapper"></div>
                 </div>
