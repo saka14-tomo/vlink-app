@@ -647,7 +647,6 @@ function renderCompareVisual() {
     });
 }
 
-// ▼ 変更点：表のセルにクリックイベント (.clickable-cell) を付与し再生機能と連動
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -723,9 +722,9 @@ function renderPlayerStatsTable() {
 function resetInput() { 
     AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
     
-    document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = true); 
-    
+    // ▼ 変更：選手が選択されていれば、すべてのボタンを有効にする
     const hasPlayer = AppState.ui.selectedPlayerId !== null;
+    document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = !hasPlayer); 
     document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
 }
 
@@ -768,15 +767,29 @@ function cancelCurrentInput() {
 }
 
 function saveAction(type, result) {
-    let finalX = AppState.input.start.x, finalY = AppState.input.start.y;
-    if (type === 'serve') {
-        let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
-    } else if (type === 'spike') {
-        let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60), yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
-        finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
-        if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
+    if (!AppState.ui.selectedPlayerId) return;
+    
+    let finalX, finalY, endX, endY;
+
+    // ▼ 変更：コート未タップ（2タップ簡易入力）の場合、デフォルトの座標を設定
+    if (!AppState.input.start) {
+        if (type === 'serve') { finalX = 110; finalY = 420; endX = 110; endY = 420; }
+        else if (type === 'spike') { finalX = 110; finalY = 240; endX = 110; endY = 240; }
+    } else {
+        finalX = AppState.input.start.x; finalY = AppState.input.start.y;
+        endX = AppState.input.end ? AppState.input.end.x : finalX;
+        endY = AppState.input.end ? AppState.input.end.y : finalY;
+        
+        if (type === 'serve') {
+            let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
+        } else if (type === 'spike') {
+            let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60), yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
+            finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
+            if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
+        }
     }
-    AppState.data.logs.push({ id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, type: type, result: result, startX: finalX, startY: finalY, endX: AppState.input.end.x, endY: AppState.input.end.y, time: new Date().toLocaleString(), videoTime: formatTime(AppState.video.time) });
+    
+    AppState.data.logs.push({ id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, type: type, result: result, startX: finalX, startY: finalY, endX: endX, endY: endY, time: new Date().toLocaleString(), videoTime: formatTime(AppState.video.time) });
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
 }
 
@@ -801,7 +814,6 @@ function updateLog() {
         else if (l.result.includes('ミス') || l.result === 'アウト' || l.result === 'ネット' || l.result === 'ブロックシャット' || l.result === '失点') resClass = 'res-err';
 
         let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
-        // ▼ 変更点：表示テキストを6秒前に変更
         let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
         return `<div class="log-row" ${clickAction} title="クリックでこのシーンの6秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
     }).join('');
@@ -1317,7 +1329,6 @@ function editTimer() {
     }
 }
 
-// ▼ 変更点：巻き戻し秒数を「6秒前」に変更
 function seekToLogTime(timeStr) {
     if (!timeStr || !AppState.video.type) return;
     const parts = timeStr.split(':');
@@ -1386,7 +1397,6 @@ function getPlaylistLogs(type) {
     return logs;
 }
 
-// ▼ 新規追加：スタッツ表用カスタムプレイリスト実行
 window.playFilteredLogs = function(playerId, type, resultCat) {
     let logs = AppState.data.logs.filter(l => l.playerId === playerId && l.type === type);
     if (resultCat === 'serve_miss') logs = logs.filter(l => ['アウト', 'ネット'].includes(l.result));
@@ -1620,7 +1630,6 @@ function resetAllData(skipConfirm = false) {
     }
 }
 
-// ▼ 変更点：巻き戻し秒数を「6秒前」に変更
 function copyForYouTube() {
     if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
     const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {
