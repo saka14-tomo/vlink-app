@@ -18,19 +18,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 .main-container { 
     display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
     box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
-    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; margin-bottom: 15px; transition: all 0.3s;
+    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; transition: all 0.3s;
 }
 
-/* アプリ全体の2カラムレスポンシブレイアウト */
-/* 左の動画側だけが伸縮し、右の入力側はサイズ固定にする設定 */
+/* アプリ全体の2カラムレスポンシブレイアウト (Gridレイアウトで高さを同期) */
 .split-layout { 
-    display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1600px; 
-    justify-content: center; align-items: stretch; transition: max-width 0.3s ease; 
+    display: grid; 
+    grid-template-columns: 1fr auto; 
+    grid-template-rows: auto auto; 
+    gap: 15px 20px; 
+    width: 100%; max-width: 1600px; 
+    justify-content: center; 
+    align-items: stretch; 
+    transition: max-width 0.3s ease; 
 }
-.split-left { flex: 1 1 0; min-width: 320px; display: flex; flex-direction: column; transition: all 0.3s ease; }
-.split-right-wrapper { flex: 0 0 auto; display: flex; flex-direction: column; gap: 20px; transition: all 0.3s ease; }
-.split-center, .split-right-log { width: 100%; display: flex; flex-direction: column; }
-.split-layout .main-container { max-width: 100%; margin-bottom: 0; display: flex; }
+.split-layout .main-container {
+    max-width: 100%; margin-bottom: 0; display: flex; 
+}
+.split-left { 
+    grid-column: 1 / 2; 
+    grid-row: 1 / 2; /* 入力画面(Center)と行を同期し、高さも完全に一致させる */
+    display: flex; flex-direction: column; min-width: 320px; transition: all 0.3s ease; 
+}
+.split-right-wrapper { 
+    display: contents; /* 内部要素を直接Gridに配置する魔法の設定 */
+}
+.split-center { 
+    grid-column: 2 / 3; 
+    grid-row: 1 / 2; 
+    display: flex; flex-direction: column; width: auto; 
+}
+.split-right-log { 
+    grid-column: 2 / 3; 
+    grid-row: 2 / 3; /* ログは入力画面の下に配置 */
+    display: flex; flex-direction: column; width: 100%; 
+}
 
 /* 左パネル（入力操作側の内側レイアウト）- 幅を固定 */
 .left-panel { width: 180px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -76,7 +98,8 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .instruction-banner { padding:4px; text-align:center; font-size:10px; color:#555; background:#f8f9fa; border-radius:4px; border:1px dashed #ced4da; margin-bottom: 4px; flex-shrink: 0; }
 .compact-title { margin: 4px 0 2px 0; font-size: 11px; padding: 3px 6px; }
 .btn-row { display: flex; gap: 4px; flex-shrink: 0; width: 100%; margin-bottom: 4px; }
-.compact-btn { flex: 1 1 0; padding: 8px 0; font-size: 11px; white-space: nowrap; text-align: center; }
+/* ▼変更点：フォントサイズを13pxに変更、太字を追加 */
+.compact-btn { flex: 1 1 0; padding: 8px 0; font-size: 13px; font-weight: bold; white-space: nowrap; text-align: center; }
 
 /* ログウィンドウ */
 .log-panel-container { flex-direction: column; padding: 15px; height: 100%; width: 100%; box-sizing: border-box; display: flex; min-height: 250px; }
@@ -153,11 +176,12 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .rename-item input { border: none; background: transparent; border-bottom: 2px solid #ced4da; font-size: 15px; font-weight: bold; color: #333; outline: none; transition: 0.2s; padding-bottom: 4px; width: 100%; }
 .rename-item input:focus { border-bottom-color: #007BFF; }
 
-/* スマホ用レスポンシブ */
+/* スマホ用レスポンシブ (スマホでは縦積みにしてGridを解除) */
 @media (max-width: 1100px) {
-    .split-layout { flex-direction: column; align-items: center; }
-    .split-left, .split-right-wrapper { width: 100%; max-width: 760px; flex: none; }
-    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; flex-wrap: wrap; }
+    .split-layout { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .split-right-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 760px; gap: 15px; }
+    .split-left { width: 100%; max-width: 760px; flex: none; }
+    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; flex-wrap: wrap; margin-bottom: 0 !important; }
     .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
     .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
     .player-wrapper { width: 60px; height: 50px; }
