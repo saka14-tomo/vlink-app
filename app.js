@@ -722,12 +722,13 @@ function renderPlayerStatsTable() {
 function resetInput() { 
     AppState.input.state = 'idle'; AppState.input.start = null; AppState.input.end = null; 
     
-    // ▼ 変更：選手が選択されていれば、すべてのボタンを有効にする
+    // 選手が選択されていれば、すべてのボタンを有効にする（簡易入力可能）
     const hasPlayer = AppState.ui.selectedPlayerId !== null;
     document.querySelectorAll('.serve-action-btn, .spike-action-btn').forEach(b => b.disabled = !hasPlayer); 
     document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
 }
 
+// ▼ 変更点：コートタップ時にレシーブ/トスボタンを無効化し、サーブ/スパイク専用の座標入力モードとする
 function handleCourtClick(e) {
     if (!AppState.ui.selectedPlayerId) return;
     const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
@@ -745,6 +746,9 @@ function handleCourtClick(e) {
         const isServe = AppState.input.start.y >= 400;
         document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
         document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
+        
+        // コートをタップした時点で、サーブレシーブ・レシーブ・トスボタンは無効化する
+        document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = true);
     }
     
     draw('input-canvas');
@@ -757,6 +761,7 @@ function cancelCurrentInput() {
             const isServe = AppState.input.start.y >= 400;
             document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
             document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
+            document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = true);
         }
         draw('input-canvas');
     } else if (AppState.input.state === 'waiting') {
@@ -766,15 +771,16 @@ function cancelCurrentInput() {
     }
 }
 
+// ▼ 変更点：2タップ簡易入力の場合のデフォルト座標を、線として描画されるように調整
 function saveAction(type, result) {
     if (!AppState.ui.selectedPlayerId) return;
     
     let finalX, finalY, endX, endY;
 
-    // ▼ 変更：コート未タップ（2タップ簡易入力）の場合、デフォルトの座標を設定
     if (!AppState.input.start) {
-        if (type === 'serve') { finalX = 110; finalY = 420; endX = 110; endY = 420; }
-        else if (type === 'spike') { finalX = 110; finalY = 240; endX = 110; endY = 240; }
+        // 2タップ簡易入力の場合のデフォルト座標（線として分かりやすく描画されるように終点をずらす）
+        if (type === 'serve') { finalX = 110; finalY = 420; endX = 110; endY = 240; }
+        else if (type === 'spike') { finalX = 110; finalY = 240; endX = 110; endY = 100; }
     } else {
         finalX = AppState.input.start.x; finalY = AppState.input.start.y;
         endX = AppState.input.end ? AppState.input.end.x : finalX;
