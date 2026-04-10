@@ -1710,6 +1710,18 @@ window.onload = () => {
         }
     });
 
+    // ▼ 今回の追加部分：YouTube URL入力欄でのEnterキー対応
+    const ytUrlInput = document.getElementById('yt-url-input');
+    if (ytUrlInput) {
+        ytUrlInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadYouTubeVideo();
+            }
+        });
+    }
+    // ▲ 追加部分ここまで
+
     initDB(() => {
         initVideoSourceUI(); 
         renderPlayerGrids(); updateLog(); draw('input-canvas');

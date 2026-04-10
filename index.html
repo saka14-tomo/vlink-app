@@ -38,7 +38,7 @@
 <div id="shared-split-layout" class="split-layout">
     
     <div class="split-left" id="shared-video-area">
-        <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px;">
+        <div id="video-container-card" class="main-container" style="flex-direction: column; padding: 15px; flex: 1; margin-bottom: 0;">
             
             <div id="video-source-ui" style="width: 100%; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
                 <button onclick="toggleVideoSource()" style="width: 100%; padding: 10px 15px; background: transparent; border: none; text-align: left; font-size: 13px; font-weight: bold; color: #555; cursor: pointer; display: flex; justify-content: space-between; align-items: center; outline: none;">
@@ -71,12 +71,12 @@
                 </div>
             </div>
 
-            <div id="video-player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; display: none; background: #000; border-radius: 8px; overflow: hidden; margin-top: 0; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
+            <div id="video-player-wrapper" style="position: relative; width: 100%; flex: 1; min-height: 200px; display: none; background: #000; border-radius: 8px; overflow: hidden; margin-top: 0; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
                 <div id="yt-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"></div>
                 <video id="local-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;" controls playsinline></video>
             </div>
 
-            <div id="video-seek-controls" style="display: none; gap: 8px; width: 100%; align-items: center; margin-top: auto; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap; box-sizing: border-box;">
+            <div id="video-seek-controls" style="display: none; gap: 8px; width: 100%; align-items: center; margin-top: 10px; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap; box-sizing: border-box;">
                 <div style="display: flex; gap: 6px;">
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
@@ -177,8 +177,7 @@
                             <button class="action-btn btn-in toss-btn compact-btn" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
                             <button class="action-btn btn-error toss-btn compact-btn" onclick="saveDirectAction('toss', '失点')" disabled>失点</button>
                         </div>
-                        
-                        </div>
+                    </div>
                 </div>
             </div>
 
