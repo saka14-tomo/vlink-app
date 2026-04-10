@@ -647,6 +647,7 @@ function renderCompareVisual() {
     });
 }
 
+// ▼ 変更点：表のセルにクリックイベント (.clickable-cell) を付与し再生機能と連動
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -687,13 +688,29 @@ function renderPlayerStatsTable() {
 
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #f0f0f0';
+        const tdCls = 'clickable-cell';
+        
         tr.innerHTML = `
             <td style="font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 10px;">${AppState.data.players[pid]}</td>
-            <td>${srvTot}</td><td style="color:#007BFF; font-weight:bold;">${srvAce}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${srvMiss}</td>
-            <td>${spkTot}</td><td style="color:#007BFF; font-weight:bold;">${spkDec}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${spkMiss}</td>
-            <td>${srTot}</td><td style="color:#007BFF; font-weight:bold;">${srSuc}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${srMiss}</td>
-            <td>${recTot}</td><td style="color:#007BFF; font-weight:bold;">${recSuc}</td><td style="color:#dc3545; border-right: 1px solid #ddd;">${recMiss}</td>
-            <td>${tsTot}</td><td style="color:#007BFF; font-weight:bold;">${tsSuc}</td><td style="color:#dc3545;">${tsMiss}</td>
+            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'serve', 'all')" title="クリックで再生">${srvTot}</td>
+            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve', 'エース')" title="クリックで再生">${srvAce}</td>
+            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve', 'serve_miss')" title="クリックで再生">${srvMiss}</td>
+            
+            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'spike', 'all')" title="クリックで再生">${spkTot}</td>
+            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'spike', '決定')" title="クリックで再生">${spkDec}</td>
+            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'spike', 'spike_miss')" title="クリックで再生">${spkMiss}</td>
+            
+            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'serve_receive', 'all')" title="クリックで再生">${srTot}</td>
+            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve_receive', '成功')" title="クリックで再生">${srSuc}</td>
+            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve_receive', 'ミス')" title="クリックで再生">${srMiss}</td>
+            
+            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'receive', 'all')" title="クリックで再生">${recTot}</td>
+            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'receive', '成功')" title="クリックで再生">${recSuc}</td>
+            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'receive', 'ミス')" title="クリックで再生">${recMiss}</td>
+            
+            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'toss', 'all')" title="クリックで再生">${tsTot}</td>
+            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_suc')" title="クリックで再生">${tsSuc}</td>
+            <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs(${pid}, 'toss', '失点')" title="クリックで再生">${tsMiss}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -784,8 +801,9 @@ function updateLog() {
         else if (l.result.includes('ミス') || l.result === 'アウト' || l.result === 'ネット' || l.result === 'ブロックシャット' || l.result === '失点') resClass = 'res-err';
 
         let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
+        // ▼ 変更点：表示テキストを6秒前に変更
         let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの3秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの6秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
     }).join('');
 }
 
@@ -1299,12 +1317,13 @@ function editTimer() {
     }
 }
 
+// ▼ 変更点：巻き戻し秒数を「6秒前」に変更
 function seekToLogTime(timeStr) {
     if (!timeStr || !AppState.video.type) return;
     const parts = timeStr.split(':');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        let playSeconds = Math.max(0, targetSeconds - 3); 
+        let playSeconds = Math.max(0, targetSeconds - 6); 
         AppState.video.time = playSeconds; updateTimerDisplay();
 
         if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1367,6 +1386,39 @@ function getPlaylistLogs(type) {
     return logs;
 }
 
+// ▼ 新規追加：スタッツ表用カスタムプレイリスト実行
+window.playFilteredLogs = function(playerId, type, resultCat) {
+    let logs = AppState.data.logs.filter(l => l.playerId === playerId && l.type === type);
+    if (resultCat === 'serve_miss') logs = logs.filter(l => ['アウト', 'ネット'].includes(l.result));
+    else if (resultCat === 'spike_miss') logs = logs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result));
+    else if (resultCat === 'toss_suc') logs = logs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result));
+    else if (resultCat !== 'all') logs = logs.filter(l => l.result === resultCat);
+    
+    window.playCustomPlaylist(logs);
+};
+
+window.playCustomPlaylist = function(logs) {
+    if (!AppState.video.type) { alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。"); return; }
+    let validLogs = logs.filter(l => l.videoTime).sort((a, b) => {
+        let ta = a.videoTime.split(':'); let sa = parseInt(ta[0])*60 + parseInt(ta[1]);
+        let tb = b.videoTime.split(':'); let sb = parseInt(tb[0])*60 + parseInt(tb[1]);
+        return sa - sb;
+    });
+    if (validLogs.length === 0) { alert("再生できる動画データがありません。\n（動画の時間が記録されているログのみ再生可能です）"); return; }
+
+    AppState.playlist.active = true; AppState.playlist.type = 'custom'; 
+    AppState.playlist.queue = validLogs; AppState.playlist.index = 0;
+    
+    document.getElementById('shared-split-layout').classList.remove('single-view');
+    document.getElementById('shared-video-area').style.display = 'flex'; 
+    document.getElementById('shared-split-layout').style.maxWidth = '100%';
+    document.getElementById('video-source-ui').style.display = 'none'; 
+    document.getElementById('video-seek-controls').style.display = 'none';
+    document.getElementById('playlist-controls').style.display = 'flex';
+    
+    playCurrentQueueItem();
+};
+
 function startPlaylist(type) {
     if (!AppState.video.type) { alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。"); return; }
     let logs = getPlaylistLogs(type);
@@ -1374,7 +1426,6 @@ function startPlaylist(type) {
 
     AppState.playlist.active = true; AppState.playlist.type = type; AppState.playlist.queue = logs; AppState.playlist.index = 0;
     
-    // ▼ 今回の追加：プレイリスト開始時に2画面表示へ切り替え
     document.getElementById('shared-split-layout').classList.remove('single-view');
     
     document.getElementById('shared-video-area').style.display = 'flex'; document.getElementById('shared-split-layout').style.maxWidth = '100%';
@@ -1402,7 +1453,7 @@ function skipNextPlayback() { if (AppState.playlist.index < AppState.playlist.qu
 function skipPrevPlayback() { if (AppState.playlist.index > 0) { AppState.playlist.index--; playCurrentQueueItem(); } }
 
 function updateDynamicPlaylist() {
-    if (!AppState.playlist.active || AppState.ui.currentTab !== AppState.playlist.type) return;
+    if (!AppState.playlist.active || AppState.playlist.type === 'custom' || AppState.ui.currentTab !== AppState.playlist.type) return;
     let newLogs = getPlaylistLogs(AppState.playlist.type); AppState.playlist.queue = newLogs;
     if (newLogs.length === 0) {
         document.getElementById('playback-status-text').innerText = "⏹ 該当する動画データがありません";
@@ -1412,7 +1463,6 @@ function updateDynamicPlaylist() {
 
 function closePlaybackModal() {
     resetPlaylistUI();
-    // ▼ 今回の追加：プレイリスト終了時に元の画面（1画面）へ戻す処理
     if (AppState.ui.currentTab !== 'input') {
         document.getElementById('shared-video-area').style.display = 'none';
         document.getElementById('shared-split-layout').classList.add('single-view');
@@ -1570,6 +1620,7 @@ function resetAllData(skipConfirm = false) {
     }
 }
 
+// ▼ 変更点：巻き戻し秒数を「6秒前」に変更
 function copyForYouTube() {
     if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
     const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {
@@ -1581,7 +1632,7 @@ function copyForYouTube() {
     let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
     logsWithTime.forEach(l => {
         let parts = l.videoTime.split(':'); 
-        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 3); 
+        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 6); 
         let typeStr = l.type === 'serve' ? 'サーブ' : 
                       l.type === 'spike' ? 'スパイク' : 
                       l.type === 'serve_receive' ? 'サーブレシーブ' : 
