@@ -106,14 +106,6 @@ function switchTab(target) {
     }
     
     if(target === 'player-stats') {
-        const btnAll = document.getElementById('btn-pstats-all');
-        if(btnAll) {
-            if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount && AppState.data.activePlayerCount > 0) {
-                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-            } else {
-                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-            }
-        }
         renderPlayerStatsTable();
     }
     
@@ -155,7 +147,8 @@ function renderPlayerGrids() {
     if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
     else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
 
-    ['input', 'serve', 'spike', 'compare', 'player-stats'].forEach(type => {
+    // ▼ player-stats は一括表示するためグリッド描画対象から除外
+    ['input', 'serve', 'spike', 'compare'].forEach(type => {
         const container = document.getElementById(`player-grid-${type}`); if(!container) return;
         container.innerHTML = '';
         for(let i=1; i<=AppState.data.activePlayerCount; i++) {
@@ -163,7 +156,7 @@ function renderPlayerGrids() {
             let currentWrapperHeight = wrapperHeight;
             let currentFontSize = fontSize;
 
-            if (type === 'compare' || type === 'player-stats') {
+            if (type === 'compare') {
                 currentWrapperHeight = '46px';
                 currentFontSize = '12px';
             }
@@ -173,7 +166,6 @@ function renderPlayerGrids() {
 
             if (type === 'input') isActive = (AppState.ui.selectedPlayerId == i);
             else if (type === 'compare') isCompareActive = AppState.ui.comparePlayers.includes(i);
-            else if (type === 'player-stats') isCompareActive = AppState.ui.pstatsPlayers.includes(i);
             else isActive = AppState.ui.statsPlayers.includes(i);
 
             wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
@@ -194,8 +186,8 @@ function renderPlayerGrids() {
         if (AppState.data.activePlayerCount < 12) {
             const addWrapper = document.createElement('div');
             addWrapper.className = 'player-wrapper player-add-btn';
-            let currentWrapperHeight = (type === 'compare' || type === 'player-stats') ? '46px' : wrapperHeight;
-            let currentFontSize = (type === 'compare' || type === 'player-stats') ? '12px' : fontSize;
+            let currentWrapperHeight = (type === 'compare') ? '46px' : wrapperHeight;
+            let currentFontSize = (type === 'compare') ? '12px' : fontSize;
 
             addWrapper.style.height = currentWrapperHeight;
             addWrapper.onclick = () => {
@@ -210,7 +202,7 @@ function renderPlayerGrids() {
         if (AppState.data.activePlayerCount > 1) {
             const removeWrapper = document.createElement('div');
             removeWrapper.className = 'player-wrapper player-add-btn';
-            let currentWrapperHeight = (type === 'compare' || type === 'player-stats') ? '46px' : wrapperHeight;
+            let currentWrapperHeight = (type === 'compare') ? '46px' : wrapperHeight;
 
             removeWrapper.style.height = currentWrapperHeight; 
             removeWrapper.style.borderColor = '#dc3545';
@@ -234,15 +226,6 @@ function renderPlayerGrids() {
                             btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
                         } else {
                             btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-                        }
-                    }
-                    
-                    const btnPStatsAll = document.getElementById('btn-pstats-all');
-                    if(btnPStatsAll && AppState.ui.currentTab === 'player-stats') {
-                        if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
-                            btnPStatsAll.innerHTML = '☐ 全解除'; btnPStatsAll.style.background = '#6c757d';
-                        } else {
-                            btnPStatsAll.innerHTML = '☑️ 一括表示'; btnPStatsAll.style.background = '#17a2b8';
                         }
                     }
                     
@@ -280,23 +263,6 @@ function selectPlayer(id) {
             }
         }
         renderCompareVisual();
-    }
-    else if (AppState.ui.currentTab === 'player-stats') {
-        if (AppState.ui.pstatsPlayers.includes(id)) {
-            AppState.ui.pstatsPlayers = AppState.ui.pstatsPlayers.filter(p => p !== id); 
-        } else {
-            AppState.ui.pstatsPlayers.push(id);
-        }
-        
-        const btnAll = document.getElementById('btn-pstats-all');
-        if(btnAll) {
-            if(AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
-                btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-            } else {
-                btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-            }
-        }
-        renderPlayerStatsTable();
     } else {
         if (AppState.ui.isTeamAll) {
             AppState.ui.isTeamAll = false;
@@ -332,19 +298,6 @@ function toggleAllCompare() {
     }
     renderPlayerGrids();
     renderCompareVisual();
-}
-
-function toggleAllPlayerStats() {
-    const btnAll = document.getElementById('btn-pstats-all');
-    if (AppState.ui.pstatsPlayers.length === AppState.data.activePlayerCount) {
-        AppState.ui.pstatsPlayers = [];
-        if(btnAll) { btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8'; }
-    } else {
-        AppState.ui.pstatsPlayers = Array.from({length: AppState.data.activePlayerCount}, (_, i) => i + 1);
-        if(btnAll) { btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d'; }
-    }
-    renderPlayerGrids();
-    renderPlayerStatsTable();
 }
 
 function toggleAllTeam() {
@@ -649,13 +602,17 @@ function renderCompareVisual() {
     });
 }
 
+// ▼ 変更点：プレー記録がある全選手を表示し、最後に「チーム」行を追加
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    if (AppState.ui.pstatsPlayers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="16" style="padding: 20px; color: #666; text-align:center;">上のリストから表示する選手を選択、または「一括表示」を押してください</td></tr>';
+    let activePlayerIds = [...new Set(AppState.data.logs.map(l => l.playerId))];
+    activePlayerIds.sort((a, b) => parseInt(a) - parseInt(b));
+
+    if (activePlayerIds.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="16" style="padding: 20px; color: #666; text-align:center;">記録されたデータがありません</td></tr>';
         return;
     }
 
@@ -665,8 +622,8 @@ function renderPlayerStatsTable() {
     let tRecTot = 0, tRecSuc = 0, tRecMiss = 0;
     let tTsTot = 0, tTsSuc = 0, tTsMiss = 0;
 
-    AppState.ui.pstatsPlayers.forEach(pid => {
-        const pLogs = AppState.data.logs.filter(l => l.playerId === pid);
+    activePlayerIds.forEach(pid => {
+        const pLogs = AppState.data.logs.filter(l => l.playerId == pid);
         
         const srvLogs = pLogs.filter(l => l.type === 'serve');
         const srvTot = srvLogs.length;
@@ -691,7 +648,7 @@ function renderPlayerStatsTable() {
         const tsLogs = pLogs.filter(l => l.type === 'toss');
         const tsTot = tsLogs.length;
         const tsSuc = tsLogs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result)).length;
-        const tsMiss = tsLogs.filter(l => l.result === '失点').length;
+        const tsMiss = tsLogs.filter(l => l.result === 'ミス' || l.result === '失点').length; // 過去ログ互換のため失点も含む
 
         tSrvTot += srvTot; tSrvAce += srvAce; tSrvMiss += srvMiss;
         tSpkTot += spkTot; tSpkDec += spkDec; tSpkMiss += spkMiss;
@@ -703,8 +660,10 @@ function renderPlayerStatsTable() {
         tr.style.borderBottom = '1px solid #f0f0f0';
         const tdCls = 'clickable-cell';
         
+        const pName = AppState.data.players[pid] || pid;
+
         tr.innerHTML = `
-            <td class="${tdCls}" style="font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 10px;" onclick="playFilteredLogs(${pid}, 'all', 'all')" title="クリックでこの選手の全プレーを再生">${AppState.data.players[pid]}</td>
+            <td class="${tdCls}" style="font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 10px;" onclick="playFilteredLogs(${pid}, 'all', 'all')" title="クリックでこの選手の全プレーを再生">${pName}</td>
             <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'serve', 'all')" title="クリックで再生">${srvTot}</td>
             <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve', 'エース')" title="クリックで再生">${srvAce}</td>
             <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve', 'serve_miss')" title="クリックで再生">${srvMiss}</td>
@@ -723,13 +682,13 @@ function renderPlayerStatsTable() {
             
             <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'toss', 'all')" title="クリックで再生">${tsTot}</td>
             <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_suc')" title="クリックで再生">${tsSuc}</td>
-            <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs(${pid}, 'toss', '失点')" title="クリックで再生">${tsMiss}</td>
+            <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_miss')" title="クリックで再生">${tsMiss}</td>
         `;
         tbody.appendChild(tr);
     });
 
     const teamTr = document.createElement('tr');
-    teamTr.style.background = '#e9ecef';
+    teamTr.style.background = '#e9ecef'; // ヘッダーと同じグレー
     teamTr.style.borderTop = '2px solid #ccc';
     const tdCls = 'clickable-cell';
     
@@ -753,7 +712,7 @@ function renderPlayerStatsTable() {
         
         <td class="${tdCls}" onclick="playFilteredLogs('all', 'toss', 'all')" title="クリックで再生">${tTsTot}</td>
         <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'toss', 'toss_suc')" title="クリックで再生">${tTsSuc}</td>
-        <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs('all', 'toss', '失点')" title="クリックで再生">${tTsMiss}</td>
+        <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs('all', 'toss', 'toss_miss')" title="クリックで再生">${tTsMiss}</td>
     `;
     tbody.appendChild(teamTr);
 }
@@ -833,6 +792,7 @@ function saveAction(type, result) {
     if (!AppState.ui.selectedPlayerId) return;
     
     let finalX = null, finalY = null, endX = null, endY = null;
+    let attackPos = null;
 
     if (AppState.input.start) {
         finalX = AppState.input.start.x; finalY = AppState.input.start.y;
@@ -842,9 +802,17 @@ function saveAction(type, result) {
         if (type === 'serve') {
             let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
         } else if (type === 'spike') {
-            let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60), yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
+            let xIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60);
+            let yIndex = Math.floor((Math.max(240, Math.min(finalY, 419.9)) - 240) / 60); 
             finalX = 20 + (xIndex * 60) + 30; finalY = 240 + (yIndex * 60) + 30 - 10;
-            if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
+            if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; 
+            if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
+
+            // ▼ 追加：座標からスパイク位置を自動判定
+            if (yIndex > 0) attackPos = "バックアタック";
+            else if (xIndex === 0) attackPos = "レフト";
+            else if (xIndex === 1) attackPos = "センター";
+            else if (xIndex === 2) attackPos = "ライト";
         }
     } else {
         if (type === 'spike') {
@@ -853,7 +821,7 @@ function saveAction(type, result) {
         }
     }
     
-    finalizeSaveAction(type, result, finalX, finalY, endX, endY, null);
+    finalizeSaveAction(type, result, finalX, finalY, endX, endY, attackPos);
 }
 
 function finalizeSaveAction(type, result, startX, startY, endX, endY, attackPos) {
@@ -886,6 +854,7 @@ function saveDirectAction(type, result) {
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
 }
 
+// ▼ 変更点：ログ表示に攻撃位置情報を追加
 function updateLog() { 
     const container = document.getElementById('log-container');
     const displayLogs = [...AppState.data.logs].reverse();
@@ -896,7 +865,8 @@ function updateLog() {
 
         let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
         let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
-        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの6秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}</span></div>`;
+        let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
+        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの6秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}${posText}</span></div>`;
     }).join('');
 }
 
@@ -1478,13 +1448,12 @@ function getPlaylistLogs(type) {
     return logs;
 }
 
+// ▼ 変更点：トスミスの判定を「ミス」「失点」の両方に対応
 window.playFilteredLogs = function(playerId, type, resultCat) {
     let logs = AppState.data.logs;
     
     if (playerId !== 'all') {
-        logs = logs.filter(l => l.playerId === playerId);
-    } else {
-        logs = logs.filter(l => AppState.ui.pstatsPlayers.includes(l.playerId));
+        logs = logs.filter(l => l.playerId == playerId);
     }
 
     if (type !== 'all') {
@@ -1494,6 +1463,7 @@ window.playFilteredLogs = function(playerId, type, resultCat) {
     if (resultCat === 'serve_miss') logs = logs.filter(l => ['アウト', 'ネット'].includes(l.result));
     else if (resultCat === 'spike_miss') logs = logs.filter(l => ['アウト', 'ネット', 'ブロックシャット'].includes(l.result));
     else if (resultCat === 'toss_suc') logs = logs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result));
+    else if (resultCat === 'toss_miss') logs = logs.filter(l => ['ミス', '失点'].includes(l.result));
     else if (resultCat !== 'all') logs = logs.filter(l => l.result === resultCat);
     
     window.playCustomPlaylist(logs);
@@ -1536,12 +1506,17 @@ function startPlaylist(type) {
     playCurrentQueueItem();
 }
 
+// ▼ 変更点：再生中ステータスにスパイク位置情報(attackPos)を表示
 function playCurrentQueueItem() {
     if (AppState.playlist.index >= AppState.playlist.queue.length || AppState.playlist.index < 0) {
         document.getElementById('playback-status-text').innerText = "⏹ 再生終了"; clearTimeout(AppState.playlist.timeout); return;
     }
     let log = AppState.playlist.queue[AppState.playlist.index];
-    document.getElementById('playback-status-text').innerText = `[${AppState.playlist.index + 1}/${AppState.playlist.queue.length}] ${AppState.data.players[log.playerId]} : ${log.result}`;
+    
+    let posText = (log.type === 'spike' && log.attackPos) ? `(${log.attackPos})` : '';
+    let typeStr = log.type === 'serve' ? 'サーブ' : log.type === 'spike' ? 'スパイク' : log.type === 'serve_receive' ? 'サーブレシーブ' : log.type === 'receive' ? 'レシーブ' : log.type === 'toss' ? 'トス' : log.type;
+    
+    document.getElementById('playback-status-text').innerText = `[${AppState.playlist.index + 1}/${AppState.playlist.queue.length}] ${AppState.data.players[log.playerId]} : ${typeStr}${posText} - ${log.result}`;
     seekToLogTime(log.videoTime); 
     
     clearTimeout(AppState.playlist.timeout);
@@ -1734,8 +1709,10 @@ function copyForYouTube() {
     logsWithTime.forEach(l => {
         let parts = l.videoTime.split(':'); 
         let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 6); 
+        
+        let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
         let typeStr = l.type === 'serve' ? 'サーブ' : 
-                      l.type === 'spike' ? (l.attackPos ? `スパイク(${l.attackPos})` : 'スパイク') : 
+                      l.type === 'spike' ? `スパイク${posText}` : 
                       l.type === 'serve_receive' ? 'サーブレシーブ' : 
                       l.type === 'receive' ? 'レシーブ' : 
                       l.type === 'toss' ? 'トス' : l.type;
