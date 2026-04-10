@@ -63,22 +63,27 @@ function switchTab(target) {
 
     const videoArea = document.getElementById('shared-video-area');
     const logArea = document.getElementById('shared-log-area');
+    const splitLayout = document.getElementById('shared-split-layout');
 
     logArea.style.display = (target === 'input') ? 'flex' : 'none';
     
     if (target === 'input') {
         videoArea.style.display = 'flex';
+        splitLayout.classList.remove('single-view');
         if (AppState.playlist.active) resetPlaylistUI(); 
     } else if (AppConfig.TYPES.includes(target)) {
         if (AppState.playlist.active && AppState.playlist.type === target) {
             videoArea.style.display = 'flex'; 
+            splitLayout.classList.remove('single-view');
         } else {
             videoArea.style.display = 'none';
+            splitLayout.classList.add('single-view');
             if (AppState.playlist.active) resetPlaylistUI();
             else pauseManualVideo();
         }
     } else {
         videoArea.style.display = 'none';
+        splitLayout.classList.add('single-view');
         if (AppState.playlist.active) resetPlaylistUI();
         else pauseManualVideo();
     }
@@ -1368,6 +1373,10 @@ function startPlaylist(type) {
     if (logs.length === 0) { alert("再生できる動画データがありません。\n（動画の時間が記録されているログのみ再生可能です）"); return; }
 
     AppState.playlist.active = true; AppState.playlist.type = type; AppState.playlist.queue = logs; AppState.playlist.index = 0;
+    
+    // ▼ 今回の追加：プレイリスト開始時に2画面表示へ切り替え
+    document.getElementById('shared-split-layout').classList.remove('single-view');
+    
     document.getElementById('shared-video-area').style.display = 'flex'; document.getElementById('shared-split-layout').style.maxWidth = '100%';
     document.getElementById('video-source-ui').style.display = 'none'; document.getElementById('video-seek-controls').style.display = 'none';
     document.getElementById('playlist-controls').style.display = 'flex';
@@ -1403,7 +1412,11 @@ function updateDynamicPlaylist() {
 
 function closePlaybackModal() {
     resetPlaylistUI();
-    if (AppState.ui.currentTab !== 'input') document.getElementById('shared-video-area').style.display = 'none';
+    // ▼ 今回の追加：プレイリスト終了時に元の画面（1画面）へ戻す処理
+    if (AppState.ui.currentTab !== 'input') {
+        document.getElementById('shared-video-area').style.display = 'none';
+        document.getElementById('shared-split-layout').classList.add('single-view');
+    }
 }
 
 // ==========================================
@@ -1710,7 +1723,6 @@ window.onload = () => {
         }
     });
 
-    // ▼ 今回の追加部分：YouTube URL入力欄でのEnterキー対応
     const ytUrlInput = document.getElementById('yt-url-input');
     if (ytUrlInput) {
         ytUrlInput.addEventListener('keydown', function(e) {
@@ -1720,7 +1732,6 @@ window.onload = () => {
             }
         });
     }
-    // ▲ 追加部分ここまで
 
     initDB(() => {
         initVideoSourceUI(); 
