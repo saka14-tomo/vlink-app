@@ -387,14 +387,14 @@ function getColorForLog(result) {
     return '#000000'; 
 }
 
-// ▼ 変更点：描画時に自コート・相手コートを色分け表示
+// ▼ 変更点：描画時に自コート・相手コートを色分け表示（相手コート黒色ベース）
 function draw(id) {
     const ct = getCanvasContext(id); 
     if (!ct) return;
     ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); 
     
-    // 相手コート（基本カラー）
-    ct.fillStyle = '#d28f52'; 
+    // 相手コート（黒色ベース）
+    ct.fillStyle = '#222222'; 
     ct.fillRect(20,60,180,360); 
 
     // 自コートの描画（入力画面のみ上下切替、統計タブは常に下側）
@@ -645,7 +645,7 @@ function renderCompareVisual() {
         if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
         
-        ct.fillStyle = '#d28f52'; ct.fillRect(20,60,180,360); 
+        ct.fillStyle = '#222222'; ct.fillRect(20,60,180,360); 
         ct.fillStyle = '#e8a365'; ct.fillRect(20, 240, 180, 180); // 比較用は常に下が自コート
         
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
