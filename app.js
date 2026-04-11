@@ -387,26 +387,24 @@ function getColorForLog(result) {
     return '#000000'; 
 }
 
-// ▼ 変更点：描画時に自コート・相手コートを色分け表示（相手コート黒色ベース）
+// ▼ 変更点：入力画面の相手コートを70%程度の黒(#5c5c5c)に変更、他はすべて自チーム色で統一
 function draw(id) {
     const ct = getCanvasContext(id); 
     if (!ct) return;
     ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); 
     
-    // 相手コート（黒色ベース）
-    ct.fillStyle = '#222222'; 
+    // ベースコート（すべて自チーム色）
+    ct.fillStyle = '#e8a365'; 
     ct.fillRect(20,60,180,360); 
 
-    // 自コートの描画（入力画面のみ上下切替、統計タブは常に下側）
-    ct.fillStyle = '#e8a365';
+    // データ入力画面のみ、相手コートを70%の黒色（#5c5c5c）に変更
     if (id === 'input-canvas') {
+        ct.fillStyle = '#5c5c5c';
         if (AppState.ui.ownCourt === 'bottom') {
-            ct.fillRect(20, 240, 180, 180);
+            ct.fillRect(20, 60, 180, 180); // 上が相手コート
         } else {
-            ct.fillRect(20, 60, 180, 180);
+            ct.fillRect(20, 240, 180, 180); // 下が相手コート
         }
-    } else {
-        ct.fillRect(20, 240, 180, 180);
     }
 
     ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
@@ -645,8 +643,8 @@ function renderCompareVisual() {
         if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
         
-        ct.fillStyle = '#222222'; ct.fillRect(20,60,180,360); 
-        ct.fillStyle = '#e8a365'; ct.fillRect(20, 240, 180, 180); // 比較用は常に下が自コート
+        // ▼ 変更点：比較用も全面を自チーム色で統一
+        ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); 
         
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
         logs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
@@ -779,7 +777,6 @@ function resetInput() {
     document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
 }
 
-// ▼ 変更点：コート上下に応じてサーブ判定を動的変更
 function handleCourtClick(e) {
     if (!AppState.ui.selectedPlayerId) return;
     const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
@@ -845,10 +842,8 @@ function cancelSpikePos() {
     pendingSpikeResult = null;
 }
 
-// ▼ 変更点：入力座標の双方向正規化処理
 function normalizePt(pt) {
     if (!pt) return null;
-    // 自コートが上側の場合、座標を180度回転させて常に「下から上」のデータとして保存
     if (AppState.ui.ownCourt === 'top') {
         return { x: 220 - pt.x, y: 480 - pt.y };
     }
@@ -922,7 +917,6 @@ function saveDirectAction(type, result) {
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
 }
 
-// ▼ 変更点：ログの動的秒数表記化
 function updateLog() { 
     const container = document.getElementById('log-container');
     const displayLogs = [...AppState.data.logs].reverse();
@@ -977,11 +971,10 @@ function editSingleName(e, id) {
 // 6. 動画制御 (Video Manager) & 履歴機能
 // ==========================================
 
-// ▼ UI連動：設定の反映
 window.updatePlaybackSettings = function() {
     AppState.settings.preRoll = parseInt(document.getElementById('preroll-time-select').value, 10);
     AppState.settings.playDuration = parseInt(document.getElementById('playduration-time-select').value, 10);
-    updateLog(); // ツールチップの秒数表記を更新
+    updateLog(); 
 };
 
 function toggleVideoSource(forceState) {
@@ -1455,7 +1448,6 @@ function editTimer() {
     }
 }
 
-// ▼ 変更点：UI設定値に連動して再生開始位置を調整
 function seekToLogTime(timeStr) {
     if (!timeStr || !AppState.video.type) return;
     const parts = timeStr.split(':');
@@ -1581,7 +1573,6 @@ function startPlaylist(type) {
     playCurrentQueueItem();
 }
 
-// ▼ 変更点：UI設定値に連動して再生間隔を調整
 function playCurrentQueueItem() {
     if (AppState.playlist.index >= AppState.playlist.queue.length || AppState.playlist.index < 0) {
         document.getElementById('playback-status-text').innerText = "⏹ 再生終了"; clearTimeout(AppState.playlist.timeout); return;
@@ -1772,7 +1763,6 @@ function resetAllData(skipConfirm = false) {
     }
 }
 
-// ▼ 変更点：UI設定値に連動してタイムスタンプのコピー時も秒数を調整
 function copyForYouTube() {
     if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
     const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {

@@ -96,7 +96,7 @@
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
-                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手手修正">00:00</div>
+                    <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
                     <button id="btn-timer-toggle" class="action-btn" style="background: #28a745; padding: 8px 12px; font-size: 13px; font-weight: bold; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" onclick="toggleTimer()">▶ 再生</button>
                     <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 13px; height: 34px;" onclick="resetTimer()" title="リセット">↺</button>
                 </div>
@@ -138,8 +138,8 @@
                         <canvas id="input-canvas"></canvas>
                         <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
                         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-                            <button id="btn-court-toggle" class="action-btn" style="background:#6f42c1; font-size: 12px; padding: 12px; font-weight: bold; width: 100%; box-shadow:none;" onclick="toggleCourt()">🔄 自コート: 下側</button>
-                            <button class="action-btn btn-utility" style="padding: 12px; font-size: 12px; font-weight: bold; width: 100%; box-sizing: border-box;" onclick="cancelCurrentInput()">🔙 一つ戻る</button>
+                            <button id="btn-court-toggle" class="action-btn" style="background:#6f42c1; font-size: 11px; padding: 8px; font-weight: bold; width: 100%; box-shadow:none;" onclick="toggleCourt()">🔄 自コート: 下側</button>
+                            <button class="action-btn btn-utility" style="padding: 8px; font-size: 11px; font-weight: bold; width: 100%; box-sizing: border-box;" onclick="cancelCurrentInput()">🔙 一つ戻る</button>
                         </div>
                     </div>
 
