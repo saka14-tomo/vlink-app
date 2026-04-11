@@ -446,12 +446,12 @@ function draw(id) {
 
         if (thinLogs.length > 0) {
             ct.globalAlpha = 0.25; 
-            thinLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+            thinLogs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
         }
 
         ct.globalAlpha = 1.0; 
         if (mainLogs.length > 0) {
-            mainLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+            mainLogs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
         }
 
         if (hFilter !== null && hFilter !== sFilter) {
@@ -460,7 +460,7 @@ function draw(id) {
             let previewOnlyLogs = filterPreviewLogs.filter(pl => !mainLogs.some(ml => ml.id === pl.id));
             
             ct.globalAlpha = 0.25; 
-            previewOnlyLogs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+            previewOnlyLogs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
             ct.globalAlpha = 1.0;
         }
     }
@@ -491,7 +491,7 @@ function getFilteredLogs(type, targetFilter, zones) {
 }
 
 function isLogInZone(log, z) {
-    if (log.startX === null) return false;
+    if (log.startX == null) return false;
     
     if (log.type === 'serve') {
         let xIndex = Math.floor((Math.max(20, Math.min(log.startX, 199.9)) - 20) / 60);
@@ -642,7 +642,7 @@ function renderCompareVisual() {
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); 
         
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-        logs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
+        logs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
     });
 }
 
@@ -1601,7 +1601,7 @@ function updateDynamicPlaylist() {
 
 function closePlaybackModal() {
     if (AppState.ui.isLargeScreen) {
-        toggleLargeScreen(); // 大画面を解除して元に戻す
+        toggleLargeScreen(); 
     }
     resetPlaylistUI();
     if (AppState.ui.currentTab !== 'input') {
