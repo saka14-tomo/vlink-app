@@ -92,8 +92,8 @@
 
             <div id="video-seek-controls" style="display: none; gap: 8px; width: 100%; align-items: center; margin-top: 10px; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap; box-sizing: border-box;">
                 <div style="display: flex; gap: 6px;">
-                    <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 戻る</button>
-                    <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">進む ⏩</button>
+                    <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(-1)" title="左矢印キーでも操作可能">⏪ 巻き戻し</button>
+                    <button class="action-btn" style="background: #6c757d; padding: 8px 12px; font-size: 12px;" onclick="seekVideo(1)" title="右矢印キーでも操作可能">早送り ⏩</button>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: center; min-width: 150px;">
                     <div id="match-timer-display" style="font-size: 16px; font-weight: bold; background: #222; color: #0f0; padding: 0 8px; border-radius: 6px; font-family: monospace; width: 60px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 34px;" onclick="editTimer()" title="クリックで時間を手動修正">00:00</div>
@@ -106,17 +106,21 @@
                 </div>
             </div>
 
-            <div id="playlist-controls" style="display: none; flex-direction: row; width: 100%; margin-top: auto; gap: 8px; background: #222; padding: 8px 12px; border-radius: 8px; align-items: center; box-sizing: border-box;">
+            <div id="playlist-controls" style="display: none; flex-direction: row; width: 100%; margin-top: auto; gap: 8px; background: #222; padding: 8px 12px; border-radius: 8px; align-items: center; box-sizing: border-box; flex-wrap: wrap;">
                 <button class="action-btn" style="background:#555; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="skipPrevPlayback()">⏮ 前へ</button>
-                <div id="playback-status-text" style="font-weight: bold; font-size: 14px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                <div id="playback-status-text" style="font-weight: bold; font-size: 14px; color: #fff; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 120px;"></div>
                 <button class="action-btn" style="background:#555; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="skipNextPlayback()">次へ ⏭</button>
-                <button class="action-btn" style="background: #dc3545; padding: 8px 16px; font-size: 12px; flex-shrink: 0; margin-left: 4px; box-shadow: none;" onclick="closePlaybackModal()">✖ 閉じる</button>
+                
+                <button id="btn-playlist-large-screen" class="action-btn" style="background: #17a2b8; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="toggleLargeScreen()">🔲 大画面</button>
+                <button class="action-btn" style="background: #495057; padding: 8px 12px; font-size: 12px; flex-shrink: 0; box-shadow: none;" onclick="openSettings()">⚙️ 設定</button>
+
+                <button class="action-btn" style="background: #dc3545; padding: 8px 12px; font-size: 12px; flex-shrink: 0; margin-left: auto; box-shadow: none;" onclick="closePlaybackModal()">✖ 閉じる</button>
             </div>
         </div>
     </div>
 
-    <div class="split-right-wrapper" id="shared-right-area">
-        <div class="split-center" id="shared-center-area">
+    <div class="split-right-wrapper" id="shared-right-area" style="min-width: 0;">
+        <div class="split-center" id="shared-center-area" style="min-width: 0;">
             
             <div id="view-input" class="view-content active">
                 <div class="main-container" style="align-items: stretch; height: 100%;">
@@ -344,7 +348,7 @@
             </div>
 
             <div id="view-player-stats" class="view-content">
-                <div class="main-container" style="flex-direction: column; width: 100%; max-width: 900px; padding: 20px;">
+                <div class="main-container" style="flex-direction: column; width: 100%; max-width: 100%; padding: 20px; overflow: hidden; box-sizing: border-box;">
                     <div class="compare-header" style="justify-content: flex-start; margin-bottom: 15px;">
                         <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">選手別スタッツ一覧</div>
                         
@@ -354,8 +358,8 @@
                         </div>
                     </div>
                     
-                    <div id="pstats-export-area" style="width: 100%; background: #fff; border-radius: 8px; padding: 5px;">
-                        <div style="width: 100%; overflow-x: auto;">
+                    <div id="pstats-export-area" style="width: 100%; background: #fff; border-radius: 8px; padding: 5px; overflow-x: auto;">
+                        <div style="width: 100%;">
                             <table class="stat-table" style="width: 100%; min-width: 800px; margin: 0; border: 1px solid #ddd; table-layout: fixed;">
                                 <thead>
                                     <tr style="background: #e9ecef;">

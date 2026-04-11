@@ -127,22 +127,22 @@ function toggleLargeScreen() {
     const sourceUi = document.getElementById('video-source-ui');
     const splitLayout = document.getElementById('shared-split-layout');
     const btn = document.getElementById('btn-large-screen');
+    const btnPlaylist = document.getElementById('btn-playlist-large-screen');
 
     if (AppState.ui.isLargeScreen) {
-        sourceUi.style.display = 'none';
+        if(sourceUi) sourceUi.style.display = 'none';
         splitLayout.style.maxWidth = '100%'; 
-        btn.innerText = '🗗 縮小';
-        btn.style.background = '#ff9800';
+        if(btn) { btn.innerText = '🗗 縮小'; btn.style.background = '#ff9800'; }
+        if(btnPlaylist) { btnPlaylist.innerText = '🗗 縮小'; btnPlaylist.style.background = '#ff9800'; }
     } else {
-        sourceUi.style.display = 'block';
+        if(sourceUi && !AppState.playlist.active) sourceUi.style.display = 'block';
         splitLayout.style.maxWidth = '1600px'; 
-        btn.innerText = '🔲 大画面';
-        btn.style.background = '#17a2b8';
+        if(btn) { btn.innerText = '🔲 大画面'; btn.style.background = '#17a2b8'; }
+        if(btnPlaylist) { btnPlaylist.innerText = '🔲 大画面'; btnPlaylist.style.background = '#17a2b8'; }
     }
 }
 
-// ▼ 追加：コート上下自動入れ替え機能
-window.toggleCourt = function() {
+function toggleCourt() {
     AppState.ui.ownCourt = AppState.ui.ownCourt === 'bottom' ? 'top' : 'bottom';
     const btn = document.getElementById('btn-court-toggle');
     if(btn) {
@@ -150,7 +150,7 @@ window.toggleCourt = function() {
     }
     resetInput();
     draw('input-canvas');
-};
+}
 
 function renderPlayerGrids() {
     let wrapperHeight = '66px'; let fontSize = '20px';     
@@ -387,23 +387,20 @@ function getColorForLog(result) {
     return '#000000'; 
 }
 
-// ▼ 変更点：入力画面の相手コートを70%程度の黒(#5c5c5c)に変更、他はすべて自チーム色で統一
 function draw(id) {
     const ct = getCanvasContext(id); 
     if (!ct) return;
     ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); 
     
-    // ベースコート（すべて自チーム色）
     ct.fillStyle = '#e8a365'; 
     ct.fillRect(20,60,180,360); 
 
-    // データ入力画面のみ、相手コートを70%の黒色（#5c5c5c）に変更
     if (id === 'input-canvas') {
         ct.fillStyle = '#5c5c5c';
         if (AppState.ui.ownCourt === 'bottom') {
-            ct.fillRect(20, 60, 180, 180); // 上が相手コート
+            ct.fillRect(20, 60, 180, 180); 
         } else {
-            ct.fillRect(20, 240, 180, 180); // 下が相手コート
+            ct.fillRect(20, 240, 180, 180); 
         }
     }
 
@@ -411,7 +408,6 @@ function draw(id) {
     ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
     ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
     
-    // 入力画面のみ、わかりやすくテキストをオーバーレイ
     if (id === 'input-canvas') {
         ct.fillStyle = 'rgba(255,255,255,0.7)';
         ct.font = 'bold 18px sans-serif';
@@ -643,7 +639,6 @@ function renderCompareVisual() {
         if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
         
-        // ▼ 変更点：比較用も全面を自チーム色で統一
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); 
         
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
@@ -1605,6 +1600,9 @@ function updateDynamicPlaylist() {
 }
 
 function closePlaybackModal() {
+    if (AppState.ui.isLargeScreen) {
+        toggleLargeScreen(); // 大画面を解除して元に戻す
+    }
     resetPlaylistUI();
     if (AppState.ui.currentTab !== 'input') {
         document.getElementById('shared-video-area').style.display = 'none';
