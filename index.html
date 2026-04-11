@@ -348,7 +348,7 @@
             </div>
 
             <div id="view-player-stats" class="view-content">
-                <div class="main-container" style="flex-direction: column; width: 100%; max-width: 760px; padding: 20px; overflow: hidden; box-sizing: border-box;">
+                <div id="player-stats-container" class="main-container" style="flex-direction: column; width: 100%; max-width: 1000px; padding: 20px; box-sizing: border-box;">
                     <div class="compare-header" style="justify-content: flex-start; margin-bottom: 15px;">
                         <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">選手別スタッツ一覧</div>
                         
@@ -358,31 +358,29 @@
                         </div>
                     </div>
                     
-                    <div id="pstats-export-area" style="width: 100%; background: #fff; border-radius: 8px; padding: 5px; overflow-x: auto;">
-                        <div style="width: 100%;">
-                            <table class="stat-table" style="width: 100%; min-width: 800px; margin: 0; border: 1px solid #ddd; table-layout: fixed;">
-                                <thead>
-                                    <tr style="background: #e9ecef;">
-                                        <th rowspan="2" style="width: 10%; border-right: 1px solid #ddd; vertical-align: middle;">選手名</th>
-                                        <th colspan="3" style="width: 18%; border-right: 1px solid #ddd;">サーブ</th>
-                                        <th colspan="3" style="width: 18%; border-right: 1px solid #ddd;">スパイク</th>
-                                        <th colspan="3" style="width: 18%; border-right: 1px solid #ddd;">サーブレシーブ</th>
-                                        <th colspan="3" style="width: 18%; border-right: 1px solid #ddd;">ディグ(レシーブ)</th>
-                                        <th colspan="3" style="width: 18%;">トス</th>
-                                    </tr>
-                                    <tr style="background: #f8f9fa;">
-                                        <th>打数</th><th>ｴｰｽ</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
-                                        <th>打数</th><th>決定</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
-                                        <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
-                                        <th>受数</th><th>成功</th><th style="border-right: 1px solid #ddd;">ﾐｽ</th>
-                                        <th>本数</th><th>成功</th><th>ミス</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="player-stats-tbody">
-                                </tbody>
-                            </table>
-                        </div>
-                        <div style="font-size:11px; color:#666; margin-top:8px; text-align:right;">※トス成功は「レフト・センター・ライト・２アタック・クイック」の合計<br>※表の数字や選手名をクリックすると、該当するプレーの動画を連続再生します</div>
+                    <div id="pstats-export-area" style="width: 100%; background: #fff; border-radius: 8px; padding: 5px;">
+                        <table class="stat-table" style="width: 100%; margin: 0; border: 1px solid #ddd; table-layout: fixed;">
+                            <thead>
+                                <tr style="background: #e9ecef; font-size: 10px;">
+                                    <th rowspan="2" style="width: 14%; border-right: 1px solid #ddd; vertical-align: middle;">選手名</th>
+                                    <th colspan="3" style="width: 17%; border-right: 1px solid #ddd;">サーブ</th>
+                                    <th colspan="3" style="width: 17%; border-right: 1px solid #ddd;">スパイク</th>
+                                    <th colspan="3" style="width: 17%; border-right: 1px solid #ddd;">サブレシ</th>
+                                    <th colspan="3" style="width: 17%; border-right: 1px solid #ddd;">ディグ</th>
+                                    <th colspan="3" style="width: 18%;">トス</th>
+                                </tr>
+                                <tr style="background: #f8f9fa; font-size: 9px;">
+                                    <th style="padding:4px 1px;">打数</th><th style="padding:4px 1px;">ｴｰｽ</th><th style="padding:4px 1px; border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th style="padding:4px 1px;">打数</th><th style="padding:4px 1px;">決定</th><th style="padding:4px 1px; border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th style="padding:4px 1px;">受数</th><th style="padding:4px 1px;">成功</th><th style="padding:4px 1px; border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th style="padding:4px 1px;">受数</th><th style="padding:4px 1px;">成功</th><th style="padding:4px 1px; border-right: 1px solid #ddd;">ﾐｽ</th>
+                                    <th style="padding:4px 1px;">本数</th><th style="padding:4px 1px;">成功</th><th style="padding:4px 1px;">ミス</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-stats-tbody">
+                            </tbody>
+                        </table>
+                        <div style="font-size:10px; color:#666; margin-top:8px; text-align:right;">※トス成功は「レフト・センター・ライト・２アタック・クイック」の合計<br>※表の数字や選手名をクリックすると、該当するプレーの動画を連続再生します</div>
                     </div>
                 </div>
             </div>

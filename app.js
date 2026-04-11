@@ -111,6 +111,9 @@ function switchTab(target) {
     }
     
     if(target === 'player-stats') {
+        // ▼ 変更点：プレイヤー統計タブを開いた時のコンテナ幅を適切に切り替え
+        const pContainer = document.getElementById('player-stats-container');
+        if(pContainer) pContainer.style.maxWidth = AppState.playlist.active ? '760px' : '1000px';
         renderPlayerStatsTable();
     }
     
@@ -444,6 +447,7 @@ function draw(id) {
             }
         }
 
+        // ▼ 変更点：勝手なディレクション表示を防ぐための null 判定強化
         if (thinLogs.length > 0) {
             ct.globalAlpha = 0.25; 
             thinLogs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
@@ -490,6 +494,7 @@ function getFilteredLogs(type, targetFilter, zones) {
     return logs;
 }
 
+// ▼ 変更点：勝手なディレクション表示を防ぐための null 判定強化
 function isLogInZone(log, z) {
     if (log.startX == null) return false;
     
@@ -642,10 +647,13 @@ function renderCompareVisual() {
         ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); 
         
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+        
+        // ▼ 変更点：勝手なディレクション表示を防ぐための null 判定強化
         logs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
     });
 }
 
+// ▼ 変更点：パディングと文字サイズを調整し、スクロールさせずに表全体を見せる
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -702,30 +710,32 @@ function renderPlayerStatsTable() {
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #f0f0f0';
         const tdCls = 'clickable-cell';
+        const tdStyle = "padding: 6px 2px; font-size: 11px; white-space: nowrap; text-align: center;";
+        const nameStyle = "font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 6px 2px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;";
         
         const pName = AppState.data.players[pid] || pid;
 
         tr.innerHTML = `
-            <td class="${tdCls}" style="font-weight:bold; background:#f8f9fa; border-right: 1px solid #ddd; padding: 10px;" onclick="playFilteredLogs(${pid}, 'all', 'all')" title="クリックでこの選手の全プレーを再生">${pName}</td>
-            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'serve', 'all')" title="クリックで再生">${srvTot}</td>
-            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve', 'エース')" title="クリックで再生">${srvAce}</td>
-            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve', 'serve_miss')" title="クリックで再生">${srvMiss}</td>
+            <td class="${tdCls}" style="${nameStyle}" onclick="playFilteredLogs(${pid}, 'all', 'all')" title="クリックでこの選手の全プレーを再生">${pName}</td>
+            <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs(${pid}, 'serve', 'all')" title="クリックで再生">${srvTot}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve', 'エース')" title="クリックで再生">${srvAce}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve', 'serve_miss')" title="クリックで再生">${srvMiss}</td>
             
-            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'spike', 'all')" title="クリックで再生">${spkTot}</td>
-            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'spike', '決定')" title="クリックで再生">${spkDec}</td>
-            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'spike', 'spike_miss')" title="クリックで再生">${spkMiss}</td>
+            <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs(${pid}, 'spike', 'all')" title="クリックで再生">${spkTot}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'spike', '決定')" title="クリックで再生">${spkDec}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'spike', 'spike_miss')" title="クリックで再生">${spkMiss}</td>
             
-            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'serve_receive', 'all')" title="クリックで再生">${srTot}</td>
-            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve_receive', '成功')" title="クリックで再生">${srSuc}</td>
-            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve_receive', 'ミス')" title="クリックで再生">${srMiss}</td>
+            <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs(${pid}, 'serve_receive', 'all')" title="クリックで再生">${srTot}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'serve_receive', '成功')" title="クリックで再生">${srSuc}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'serve_receive', 'ミス')" title="クリックで再生">${srMiss}</td>
             
-            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'receive', 'all')" title="クリックで再生">${recTot}</td>
-            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'receive', '成功')" title="クリックで再生">${recSuc}</td>
-            <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'receive', 'ミス')" title="クリックで再生">${recMiss}</td>
+            <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs(${pid}, 'receive', 'all')" title="クリックで再生">${recTot}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'receive', '成功')" title="クリックで再生">${recSuc}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs(${pid}, 'receive', 'ミス')" title="クリックで再生">${recMiss}</td>
             
-            <td class="${tdCls}" onclick="playFilteredLogs(${pid}, 'toss', 'all')" title="クリックで再生">${tsTot}</td>
-            <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_suc')" title="クリックで再生">${tsSuc}</td>
-            <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_miss')" title="クリックで再生">${tsMiss}</td>
+            <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs(${pid}, 'toss', 'all')" title="クリックで再生">${tsTot}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_suc')" title="クリックで再生">${tsSuc}</td>
+            <td class="${tdCls}" style="${tdStyle} color:#dc3545;" onclick="playFilteredLogs(${pid}, 'toss', 'toss_miss')" title="クリックで再生">${tsMiss}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -734,28 +744,30 @@ function renderPlayerStatsTable() {
     teamTr.style.background = '#e9ecef';
     teamTr.style.borderTop = '2px solid #ccc';
     const tdCls = 'clickable-cell';
+    const tdStyle = "padding: 6px 2px; font-size: 11px; white-space: nowrap; text-align: center;";
+    const nameStyle = "font-weight:bold; border-right: 1px solid #ddd; padding: 6px 2px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;";
     
     teamTr.innerHTML = `
-        <td class="${tdCls}" style="font-weight:bold; border-right: 1px solid #ddd; padding: 10px;" onclick="playFilteredLogs('all', 'all', 'all')" title="クリックでチーム全体の全プレーを再生">チーム</td>
-        <td class="${tdCls}" onclick="playFilteredLogs('all', 'serve', 'all')" title="クリックで再生">${tSrvTot}</td>
-        <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'serve', 'エース')" title="クリックで再生">${tSrvAce}</td>
-        <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'serve', 'serve_miss')" title="クリックで再生">${tSrvMiss}</td>
+        <td class="${tdCls}" style="${nameStyle}" onclick="playFilteredLogs('all', 'all', 'all')" title="クリックでチーム全体の全プレーを再生">チーム</td>
+        <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs('all', 'serve', 'all')" title="クリックで再生">${tSrvTot}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'serve', 'エース')" title="クリックで再生">${tSrvAce}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'serve', 'serve_miss')" title="クリックで再生">${tSrvMiss}</td>
         
-        <td class="${tdCls}" onclick="playFilteredLogs('all', 'spike', 'all')" title="クリックで再生">${tSpkTot}</td>
-        <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'spike', '決定')" title="クリックで再生">${tSpkDec}</td>
-        <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'spike', 'spike_miss')" title="クリックで再生">${tSpkMiss}</td>
+        <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs('all', 'spike', 'all')" title="クリックで再生">${tSpkTot}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'spike', '決定')" title="クリックで再生">${tSpkDec}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'spike', 'spike_miss')" title="クリックで再生">${tSpkMiss}</td>
         
-        <td class="${tdCls}" onclick="playFilteredLogs('all', 'serve_receive', 'all')" title="クリックで再生">${tSrTot}</td>
-        <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'serve_receive', '成功')" title="クリックで再生">${tSrSuc}</td>
-        <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'serve_receive', 'ミス')" title="クリックで再生">${tSrMiss}</td>
+        <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs('all', 'serve_receive', 'all')" title="クリックで再生">${tSrTot}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'serve_receive', '成功')" title="クリックで再生">${tSrSuc}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'serve_receive', 'ミス')" title="クリックで再生">${tSrMiss}</td>
         
-        <td class="${tdCls}" onclick="playFilteredLogs('all', 'receive', 'all')" title="クリックで再生">${tRecTot}</td>
-        <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'receive', '成功')" title="クリックで再生">${tRecSuc}</td>
-        <td class="${tdCls}" style="color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'receive', 'ミス')" title="クリックで再生">${tRecMiss}</td>
+        <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs('all', 'receive', 'all')" title="クリックで再生">${tRecTot}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'receive', '成功')" title="クリックで再生">${tRecSuc}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#dc3545; border-right: 1px solid #ddd;" onclick="playFilteredLogs('all', 'receive', 'ミス')" title="クリックで再生">${tRecMiss}</td>
         
-        <td class="${tdCls}" onclick="playFilteredLogs('all', 'toss', 'all')" title="クリックで再生">${tTsTot}</td>
-        <td class="${tdCls}" style="color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'toss', 'toss_suc')" title="クリックで再生">${tTsSuc}</td>
-        <td class="${tdCls}" style="color:#dc3545;" onclick="playFilteredLogs('all', 'toss', 'toss_miss')" title="クリックで再生">${tTsMiss}</td>
+        <td class="${tdCls}" style="${tdStyle}" onclick="playFilteredLogs('all', 'toss', 'all')" title="クリックで再生">${tTsTot}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#007BFF; font-weight:bold;" onclick="playFilteredLogs('all', 'toss', 'toss_suc')" title="クリックで再生">${tTsSuc}</td>
+        <td class="${tdCls}" style="${tdStyle} color:#dc3545;" onclick="playFilteredLogs('all', 'toss', 'toss_miss')" title="クリックで再生">${tTsMiss}</td>
     `;
     tbody.appendChild(teamTr);
 }
@@ -902,11 +914,11 @@ function finalizeSaveAction(type, result, startX, startY, endX, endY, attackPos)
 
 function saveDirectAction(type, result) {
     if (!AppState.ui.selectedPlayerId) return;
-    let finalX = 110, finalY = 240; 
     
+    // ▼ 変更点：簡易入力の場合は startX, startY を null にして勝手なディレクション描画を防ぐ
     AppState.data.logs.push({ 
         id: Date.now(), sessionId: AppState.session.id, playerId: AppState.ui.selectedPlayerId, 
-        type: type, result: result, startX: finalX, startY: finalY, endX: finalX, endY: finalY, 
+        type: type, result: result, startX: null, startY: null, endX: null, endY: null, 
         time: new Date().toLocaleString(), videoTime: formatTime(AppState.video.time) 
     });
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
@@ -1498,6 +1510,10 @@ function resetPlaylistUI() {
     document.getElementById('video-seek-controls').style.display = 'flex';
     document.getElementById('playlist-controls').style.display = 'none';
     if (!AppState.ui.isLargeScreen) document.getElementById('shared-split-layout').style.maxWidth = '1600px';
+    
+    // ▼ 追加：動画非表示時はスタッツ表を大きく（最大1000px）し中央配置に戻す
+    const pStatsContainer = document.getElementById('player-stats-container');
+    if (pStatsContainer) pStatsContainer.style.maxWidth = '1000px';
 }
 
 function getPlaylistLogs(type) {
@@ -1531,6 +1547,7 @@ window.playFilteredLogs = function(playerId, type, resultCat) {
     window.playCustomPlaylist(logs);
 };
 
+// ▼ 変更点：スタッツタブでの動画再生時、コンテナ幅を他のタブと同じ760pxに制限して動画サイズを固定化
 window.playCustomPlaylist = function(logs) {
     if (!AppState.video.type) { alert("動画が読み込まれていません。\nまずは「データ入力」タブで動画を設定してください。"); return; }
     let validLogs = logs.filter(l => l.videoTime).sort((a, b) => {
@@ -1549,6 +1566,9 @@ window.playCustomPlaylist = function(logs) {
     document.getElementById('video-source-ui').style.display = 'none'; 
     document.getElementById('video-seek-controls').style.display = 'none';
     document.getElementById('playlist-controls').style.display = 'flex';
+    
+    const pStatsContainer = document.getElementById('player-stats-container');
+    if (pStatsContainer) pStatsContainer.style.maxWidth = '760px';
     
     playCurrentQueueItem();
 };
