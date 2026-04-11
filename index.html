@@ -20,6 +20,20 @@
                 <option value="10">10秒</option>
                 <option value="30">30秒</option>
             </select>
+
+            <label style="font-size:13px; font-weight:bold; color:#333; margin-top:10px;">再生開始位置 (プレーの何秒前):</label>
+            <select id="preroll-time-select" style="padding:10px; border-radius:6px; border:1px solid #ccc; font-size:14px; outline:none; background:#f8f9fa;" onchange="updatePlaybackSettings()">
+                <option value="3">3秒前</option>
+                <option value="6" selected>6秒前</option>
+                <option value="10">10秒前</option>
+            </select>
+
+            <label style="font-size:13px; font-weight:bold; color:#333; margin-top:10px;">連続再生の再生時間:</label>
+            <select id="playduration-time-select" style="padding:10px; border-radius:6px; border:1px solid #ccc; font-size:14px; outline:none; background:#f8f9fa;" onchange="updatePlaybackSettings()">
+                <option value="8">8秒間</option>
+                <option value="11" selected>11秒間</option>
+                <option value="15">15秒間</option>
+            </select>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:15px;">
             <button class="action-btn" style="background:#6c757d; width:90px;" onclick="closeSettings()">閉じる</button>
@@ -110,6 +124,8 @@
                     <div class="left-panel" style="display: flex; flex-direction: column;">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <button class="action-btn" style="background:#17a2b8; font-size: 11px; padding: 8px; box-shadow:none;" onclick="openTeamSelectModal()">👥 チーム呼出</button>
+                            <button id="btn-court-toggle" class="action-btn" style="background:#ff9800; font-size: 11px; padding: 8px; font-weight: bold; box-shadow:none;" onclick="toggleCourt()">🔄 自コート: 下側</button>
+                            
                             <div class="category-title" style="width: 100%; box-sizing: border-box;">選手選択</div>
                             <div id="player-grid-input" class="player-grid"></div>
                         </div>

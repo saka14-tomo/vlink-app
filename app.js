@@ -34,7 +34,12 @@ const AppState = {
         compareType: 'serve',
         isMultiSelect: false,
         isTeamAll: false,
-        isLargeScreen: false
+        isLargeScreen: false,
+        ownCourt: 'bottom' // 'bottom' または 'top' (コートの入れ替え管理)
+    },
+    settings: {
+        preRoll: 6,         // 再生開始前秒数
+        playDuration: 11    // 連続再生の間隔
     },
     input: { state: 'idle', start: null, end: null },
     filters: { serve: 'all', spike: 'all' },
@@ -136,8 +141,19 @@ function toggleLargeScreen() {
     }
 }
 
+// ▼ 追加：コート上下自動入れ替え機能
+window.toggleCourt = function() {
+    AppState.ui.ownCourt = AppState.ui.ownCourt === 'bottom' ? 'top' : 'bottom';
+    const btn = document.getElementById('btn-court-toggle');
+    if(btn) {
+        btn.innerHTML = AppState.ui.ownCourt === 'bottom' ? '🔄 自コート: 下側' : '🔄 自コート: 上側';
+    }
+    resetInput();
+    draw('input-canvas');
+};
+
 function renderPlayerGrids() {
-    let wrapperHeight = '66px'; let fontSize = '20px';      
+    let wrapperHeight = '66px'; let fontSize = '20px';     
     let editHeight = '20px'; let editFontSize = '10px';
 
     let totalButtons = AppState.data.activePlayerCount;
@@ -147,7 +163,6 @@ function renderPlayerGrids() {
     if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
     else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
 
-    // ▼ player-stats は一括表示するためグリッド描画対象から除外
     ['input', 'serve', 'spike', 'compare'].forEach(type => {
         const container = document.getElementById(`player-grid-${type}`); if(!container) return;
         container.innerHTML = '';
@@ -372,13 +387,45 @@ function getColorForLog(result) {
     return '#000000'; 
 }
 
+// ▼ 変更点：描画時に自コート・相手コートを色分け表示
 function draw(id) {
     const ct = getCanvasContext(id); 
     if (!ct) return;
     ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height); 
-    ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
+    
+    // 相手コート（基本カラー）
+    ct.fillStyle = '#d28f52'; 
+    ct.fillRect(20,60,180,360); 
+
+    // 自コートの描画（入力画面のみ上下切替、統計タブは常に下側）
+    ct.fillStyle = '#e8a365';
+    if (id === 'input-canvas') {
+        if (AppState.ui.ownCourt === 'bottom') {
+            ct.fillRect(20, 240, 180, 180);
+        } else {
+            ct.fillRect(20, 60, 180, 180);
+        }
+    } else {
+        ct.fillRect(20, 240, 180, 180);
+    }
+
+    ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
     ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
     ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+    
+    // 入力画面のみ、わかりやすくテキストをオーバーレイ
+    if (id === 'input-canvas') {
+        ct.fillStyle = 'rgba(255,255,255,0.7)';
+        ct.font = 'bold 18px sans-serif';
+        ct.textAlign = 'center';
+        if (AppState.ui.ownCourt === 'bottom') {
+            ct.fillText('自コート', 110, 340);
+            ct.fillText('相手コート', 110, 160);
+        } else {
+            ct.fillText('自コート', 110, 160);
+            ct.fillText('相手コート', 110, 340);
+        }
+    }
     
     if (id === 'input-canvas') {
         if (AppState.input.start) dot(ct, AppState.input.start.x, AppState.input.start.y, 3.5, AppConfig.COLORS['temp']); 
@@ -597,12 +644,15 @@ function renderCompareVisual() {
         const ct = getCanvasContext(`cmp-canvas-${pid}`);
         if (!ct) return;
         ct.clearRect(0,0,AppConfig.CANVAS.width, AppConfig.CANVAS.height);
-        ct.fillStyle = '#e8a365'; ct.fillRect(20,60,180,360); ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+        
+        ct.fillStyle = '#d28f52'; ct.fillRect(20,60,180,360); 
+        ct.fillStyle = '#e8a365'; ct.fillRect(20, 240, 180, 180); // 比較用は常に下が自コート
+        
+        ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360); ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke(); ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
         logs.forEach(l => { if (l.startX !== null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
     });
 }
 
-// ▼ 変更点：プレー記録がある全選手を表示し、最後に「チーム」行を追加
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -648,7 +698,7 @@ function renderPlayerStatsTable() {
         const tsLogs = pLogs.filter(l => l.type === 'toss');
         const tsTot = tsLogs.length;
         const tsSuc = tsLogs.filter(l => ['レフト', 'センター', 'ライト', '２アタック', 'クイック'].includes(l.result)).length;
-        const tsMiss = tsLogs.filter(l => l.result === 'ミス' || l.result === '失点').length; // 過去ログ互換のため失点も含む
+        const tsMiss = tsLogs.filter(l => l.result === 'ミス' || l.result === '失点').length; 
 
         tSrvTot += srvTot; tSrvAce += srvAce; tSrvMiss += srvMiss;
         tSpkTot += spkTot; tSpkDec += spkDec; tSpkMiss += spkMiss;
@@ -688,7 +738,7 @@ function renderPlayerStatsTable() {
     });
 
     const teamTr = document.createElement('tr');
-    teamTr.style.background = '#e9ecef'; // ヘッダーと同じグレー
+    teamTr.style.background = '#e9ecef';
     teamTr.style.borderTop = '2px solid #ccc';
     const tdCls = 'clickable-cell';
     
@@ -729,6 +779,7 @@ function resetInput() {
     document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = !hasPlayer);
 }
 
+// ▼ 変更点：コート上下に応じてサーブ判定を動的変更
 function handleCourtClick(e) {
     if (!AppState.ui.selectedPlayerId) return;
     const cv = document.getElementById('input-canvas'); const r = cv.getBoundingClientRect();
@@ -743,7 +794,10 @@ function handleCourtClick(e) {
     }
     
     if (AppState.input.start) {
-        const isServe = AppState.input.start.y >= 400;
+        let isServe = false;
+        if (AppState.ui.ownCourt === 'bottom') isServe = AppState.input.start.y >= 400;
+        else isServe = AppState.input.start.y <= 80;
+
         document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
         document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
         
@@ -757,7 +811,10 @@ function cancelCurrentInput() {
     if (AppState.input.state === 'ready') {
         AppState.input.end = null; AppState.input.state = 'waiting';
         if (AppState.input.start) {
-            const isServe = AppState.input.start.y >= 400;
+            let isServe = false;
+            if (AppState.ui.ownCourt === 'bottom') isServe = AppState.input.start.y >= 400;
+            else isServe = AppState.input.start.y <= 80;
+
             document.querySelectorAll('.serve-action-btn').forEach(b => b.disabled = !isServe);
             document.querySelectorAll('.spike-action-btn').forEach(b => b.disabled = isServe);
             document.querySelectorAll('.direct-btn, .toss-btn').forEach(b => b.disabled = true);
@@ -788,6 +845,16 @@ function cancelSpikePos() {
     pendingSpikeResult = null;
 }
 
+// ▼ 変更点：入力座標の双方向正規化処理
+function normalizePt(pt) {
+    if (!pt) return null;
+    // 自コートが上側の場合、座標を180度回転させて常に「下から上」のデータとして保存
+    if (AppState.ui.ownCourt === 'top') {
+        return { x: 220 - pt.x, y: 480 - pt.y };
+    }
+    return pt;
+}
+
 function saveAction(type, result) {
     if (!AppState.ui.selectedPlayerId) return;
     
@@ -795,9 +862,11 @@ function saveAction(type, result) {
     let attackPos = null;
 
     if (AppState.input.start) {
-        finalX = AppState.input.start.x; finalY = AppState.input.start.y;
-        endX = AppState.input.end ? AppState.input.end.x : finalX;
-        endY = AppState.input.end ? AppState.input.end.y : finalY;
+        let normStart = normalizePt(AppState.input.start);
+        let normEnd = AppState.input.end ? normalizePt(AppState.input.end) : normStart;
+
+        finalX = normStart.x; finalY = normStart.y;
+        endX = normEnd.x; endY = normEnd.y;
         
         if (type === 'serve') {
             let zoneIndex = Math.floor((Math.max(20, Math.min(finalX, 199.9)) - 20) / 60); finalX = 20 + (zoneIndex * 60) + 30; finalY = 420; 
@@ -808,7 +877,6 @@ function saveAction(type, result) {
             if (xIndex === 0 && (yIndex === 0 || yIndex === 1)) finalX -= 10; 
             if (xIndex === 2 && (yIndex === 0 || yIndex === 1)) finalX += 10; 
 
-            // ▼ 追加：座標からスパイク位置を自動判定
             if (yIndex > 0) attackPos = "バックアタック";
             else if (xIndex === 0) attackPos = "レフト";
             else if (xIndex === 1) attackPos = "センター";
@@ -854,7 +922,7 @@ function saveDirectAction(type, result) {
     resetInput(); saveToLocal(); updateLog(); draw('input-canvas');
 }
 
-// ▼ 変更点：ログ表示に攻撃位置情報を追加
+// ▼ 変更点：ログの動的秒数表記化
 function updateLog() { 
     const container = document.getElementById('log-container');
     const displayLogs = [...AppState.data.logs].reverse();
@@ -866,7 +934,7 @@ function updateLog() {
         let timeStr = l.videoTime ? `<span class="log-time">[${l.videoTime}]</span>` : '';
         let clickAction = l.videoTime ? `onclick="seekToLogTime('${l.videoTime}')"` : '';
         let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
-        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの6秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}${posText}</span></div>`;
+        return `<div class="log-row" ${clickAction} title="クリックでこのシーンの${AppState.settings.preRoll}秒前から再生">${timeStr}<span class="log-name">${AppState.data.players[l.playerId]}</span><span class="log-res ${resClass}">${l.result}${posText}</span></div>`;
     }).join('');
 }
 
@@ -908,6 +976,13 @@ function editSingleName(e, id) {
 // ==========================================
 // 6. 動画制御 (Video Manager) & 履歴機能
 // ==========================================
+
+// ▼ UI連動：設定の反映
+window.updatePlaybackSettings = function() {
+    AppState.settings.preRoll = parseInt(document.getElementById('preroll-time-select').value, 10);
+    AppState.settings.playDuration = parseInt(document.getElementById('playduration-time-select').value, 10);
+    updateLog(); // ツールチップの秒数表記を更新
+};
 
 function toggleVideoSource(forceState) {
     const content = document.getElementById('video-source-content');
@@ -1380,12 +1455,13 @@ function editTimer() {
     }
 }
 
+// ▼ 変更点：UI設定値に連動して再生開始位置を調整
 function seekToLogTime(timeStr) {
     if (!timeStr || !AppState.video.type) return;
     const parts = timeStr.split(':');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         let targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        let playSeconds = Math.max(0, targetSeconds - 6); 
+        let playSeconds = Math.max(0, targetSeconds - AppState.settings.preRoll); 
         AppState.video.time = playSeconds; updateTimerDisplay();
 
         if (AppState.video.type === 'youtube' && AppState.video.ytPlayer && typeof AppState.video.ytPlayer.seekTo === 'function') {
@@ -1448,7 +1524,6 @@ function getPlaylistLogs(type) {
     return logs;
 }
 
-// ▼ 変更点：トスミスの判定を「ミス」「失点」の両方に対応
 window.playFilteredLogs = function(playerId, type, resultCat) {
     let logs = AppState.data.logs;
     
@@ -1506,7 +1581,7 @@ function startPlaylist(type) {
     playCurrentQueueItem();
 }
 
-// ▼ 変更点：再生中ステータスにスパイク位置情報(attackPos)を表示
+// ▼ 変更点：UI設定値に連動して再生間隔を調整
 function playCurrentQueueItem() {
     if (AppState.playlist.index >= AppState.playlist.queue.length || AppState.playlist.index < 0) {
         document.getElementById('playback-status-text').innerText = "⏹ 再生終了"; clearTimeout(AppState.playlist.timeout); return;
@@ -1523,7 +1598,7 @@ function playCurrentQueueItem() {
     AppState.playlist.timeout = setTimeout(() => {
         if (AppState.playlist.index < AppState.playlist.queue.length - 1) { AppState.playlist.index++; playCurrentQueueItem(); } 
         else document.getElementById('playback-status-text').innerText = "⏹ すべての再生が終了しました";
-    }, 11000);
+    }, AppState.settings.playDuration * 1000);
 }
 
 function skipNextPlayback() { if (AppState.playlist.index < AppState.playlist.queue.length - 1) { AppState.playlist.index++; playCurrentQueueItem(); } }
@@ -1697,6 +1772,7 @@ function resetAllData(skipConfirm = false) {
     }
 }
 
+// ▼ 変更点：UI設定値に連動してタイムスタンプのコピー時も秒数を調整
 function copyForYouTube() {
     if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
     const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {
@@ -1708,7 +1784,7 @@ function copyForYouTube() {
     let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
     logsWithTime.forEach(l => {
         let parts = l.videoTime.split(':'); 
-        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - 6); 
+        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - AppState.settings.preRoll); 
         
         let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
         let typeStr = l.type === 'serve' ? 'サーブ' : 
@@ -1864,6 +1940,7 @@ window.onload = () => {
 
     initDB(() => {
         initVideoSourceUI(); 
+        updatePlaybackSettings(); // DOMに設定されている初期値をAppStateに同期
         renderPlayerGrids(); updateLog(); draw('input-canvas');
         clearStatsDOM(); 
         drawStatsCanvas('serve'); drawStatsCanvas('spike'); 
