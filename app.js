@@ -35,11 +35,11 @@ const AppState = {
         isMultiSelect: false,
         isTeamAll: false,
         isLargeScreen: false,
-        ownCourt: 'bottom' // 'bottom' または 'top' (コートの入れ替え管理)
+        ownCourt: 'bottom'
     },
     settings: {
-        preRoll: 6,         // 再生開始前秒数
-        playDuration: 11    // 連続再生の間隔
+        preRoll: 6,         
+        playDuration: 11    
     },
     input: { state: 'idle', start: null, end: null },
     filters: { serve: 'all', spike: 'all' },
@@ -112,7 +112,6 @@ function switchTab(target) {
     
     if(target === 'player-stats') {
         const pContainer = document.getElementById('player-stats-container');
-        // ▼ 変更点：1画面表示時は1200pxに、2画面(動画)時は他のタブと同じ760pxに制限
         if(pContainer) pContainer.style.maxWidth = AppState.playlist.active ? '760px' : '1200px';
         renderPlayerStatsTable();
     }
@@ -650,7 +649,6 @@ function renderCompareVisual() {
     });
 }
 
-// ▼ 変更点：フォントを大きくし、パディングを広げて表を拡大
 function renderPlayerStatsTable() {
     const tbody = document.getElementById('player-stats-tbody');
     if (!tbody) return;
@@ -1775,31 +1773,6 @@ function resetAllData(skipConfirm = false) {
     }
 }
 
-function copyForYouTube() {
-    if (AppState.data.logs.length === 0) { alert("コピーするデータがありません。"); return; }
-    const logsWithTime = AppState.data.logs.filter(l => l.videoTime).sort((a, b) => {
-        let ta = a.videoTime.split(':'), tb = b.videoTime.split(':');
-        return (parseInt(ta[0])*60 + parseInt(ta[1])) - (parseInt(tb[0])*60 + parseInt(tb[1]));
-    });
-    if (logsWithTime.length === 0) { alert("動画の時間が記録されたデータがありません。"); return; }
-
-    let copyText = "タイムスタンプ : 選手名 - プレー項目 - プレー結果\n";
-    logsWithTime.forEach(l => {
-        let parts = l.videoTime.split(':'); 
-        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - AppState.settings.preRoll); 
-        
-        let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
-        let typeStr = l.type === 'serve' ? 'サーブ' : 
-                      l.type === 'spike' ? `スパイク${posText}` : 
-                      l.type === 'serve_receive' ? 'サーブレシーブ' : 
-                      l.type === 'receive' ? 'レシーブ' : 
-                      l.type === 'toss' ? 'トス' : l.type;
-        copyText += `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${typeStr} - ${l.result}\n`;
-    });
-    navigator.clipboard.writeText(copyText).then(() => alert("クリップボードにコピーしました！\nYouTubeの動画説明欄にそのまま貼り付け(Ctrl+V)できます。"))
-    .catch(err => alert("コピーに失敗しました。お使いのブラウザの権限を確認してください。"));
-}
-
 // ==========================================
 // 8. チーム管理機能 (Team Manager)
 // ==========================================
@@ -1905,6 +1878,242 @@ async function captureAndExport(elementId, fileNamePrefix, mode = 'download') {
         console.error("キャプチャエラー:", err);
         alert("画像の生成に失敗しました。");
     }
+}
+
+// ==========================================
+// YouTube書き出しウィザード機能
+// ==========================================
+let ytWizState = {
+    step: 1, history: [], scope: null, format: null, playMode: null,
+    selectedPlayers: [],
+    customPlays: [
+        { id: 'serve', name: 'サーブ', selected: true },
+        { id: 'spike', name: 'スパイク', selected: true },
+        { id: 'serve_receive', name: 'サーブレシーブ', selected: true },
+        { id: 'receive', name: 'レシーブ', selected: true },
+        { id: 'toss', name: 'トス', selected: true }
+    ]
+};
+
+function openYtExportWizard() {
+    let logsWithTime = AppState.data.logs.filter(l => l.videoTime);
+    if (logsWithTime.length === 0) {
+        alert("動画の時間が記録されたデータがありません。\n動画を読み込み、再生しながらデータを入力してください。");
+        return;
+    }
+    
+    // 状態リセット
+    ytWizState = { 
+        step: 1, history: [], scope: null, format: null, playMode: null, selectedPlayers: [],
+        customPlays: [
+            { id: 'serve', name: 'サーブ', selected: true },
+            { id: 'spike', name: 'スパイク', selected: true },
+            { id: 'serve_receive', name: 'サーブレシーブ', selected: true },
+            { id: 'receive', name: 'レシーブ', selected: true },
+            { id: 'toss', name: 'トス', selected: true }
+        ]
+    };
+    
+    showYtStep(1);
+    document.getElementById('yt-wizard-overlay').style.display = 'flex';
+}
+
+function closeYtWizard() {
+    document.getElementById('yt-wizard-overlay').style.display = 'none';
+}
+
+function showYtStep(stepNum) {
+    document.querySelectorAll('.yt-wizard-step').forEach(el => el.style.display = 'none');
+    document.getElementById('yt-step-' + stepNum).style.display = 'block';
+    ytWizState.step = stepNum;
+    document.getElementById('yt-wiz-back-btn').style.display = (ytWizState.history.length > 0) ? 'block' : 'none';
+}
+
+function ytWizGoTo(stepNum) {
+    ytWizState.history.push(ytWizState.step);
+    showYtStep(stepNum);
+}
+
+function ytWizBack() {
+    if (ytWizState.history.length > 0) {
+        let prevStep = ytWizState.history.pop();
+        showYtStep(prevStep);
+    }
+}
+
+// Step 1: 範囲選択
+function ytWizSelectScope(scope) {
+    ytWizState.scope = scope;
+    if (scope === 'all') {
+        ytWizGoTo('2'); // 全員なら並び順へ
+    } else {
+        renderYtPlayerList();
+        ytWizGoTo('1-5'); // 特定の選手なら選択画面へ
+    }
+}
+
+// Step 1.5: 選手選択レンダリング
+function renderYtPlayerList() {
+    const container = document.getElementById('yt-wiz-player-list');
+    container.innerHTML = '';
+    
+    // ログを持つ選手IDを抽出
+    let validPlayerIds = [...new Set(AppState.data.logs.filter(l => l.videoTime).map(l => l.playerId))];
+    
+    validPlayerIds.forEach(pid => {
+        let btn = document.createElement('div');
+        let isSelected = ytWizState.selectedPlayers.includes(pid);
+        btn.className = `yt-player-btn ${isSelected ? 'selected' : ''}`;
+        btn.innerText = AppState.data.players[pid] || pid;
+        btn.onclick = () => {
+            if (ytWizState.selectedPlayers.includes(pid)) {
+                ytWizState.selectedPlayers = ytWizState.selectedPlayers.filter(p => p !== pid);
+                btn.classList.remove('selected');
+            } else {
+                ytWizState.selectedPlayers.push(pid);
+                btn.classList.add('selected');
+            }
+        };
+        container.appendChild(btn);
+    });
+}
+
+function ytWizGoToOrder() {
+    if (ytWizState.selectedPlayers.length === 0) {
+        alert("少なくとも1人の選手を選択してください。");
+        return;
+    }
+    ytWizGoTo('2');
+}
+
+// Step 2: 形式選択
+function ytWizSelectFormat(format) {
+    ytWizState.format = format;
+    if (format === 'chrono') {
+        executeYtExport(); // 時系列順なら即座に書き出し実行
+    } else {
+        ytWizGoTo('3'); // 項目別なら項目選択へ
+    }
+}
+
+// Step 3: プレー項目モード選択
+function ytWizSelectPlayTypes(mode) {
+    ytWizState.playMode = mode;
+    if (mode === 'all') {
+        // すべてのプレー（標準順）なら即座に実行
+        ytWizState.customPlays.forEach(p => p.selected = true);
+        executeYtExport();
+    } else {
+        renderYtPlayList();
+        ytWizGoTo('4'); // 並び替え画面へ
+    }
+}
+
+// Step 4: プレー項目の並び替えレンダリング
+function renderYtPlayList() {
+    const container = document.getElementById('yt-wiz-play-list');
+    container.innerHTML = '';
+    
+    ytWizState.customPlays.forEach((play, index) => {
+        let item = document.createElement('div');
+        item.className = `yt-play-item ${play.selected ? 'selected' : ''}`;
+        
+        item.innerHTML = `
+            <label>
+                <input type="checkbox" ${play.selected ? 'checked' : ''} onchange="toggleYtPlaySelection(${index}, this.checked)">
+                ${play.name}
+            </label>
+            <div class="yt-order-btns">
+                <button class="yt-order-btn" ${index === 0 ? 'disabled' : ''} onclick="moveYtPlay(${index}, -1)">▲</button>
+                <button class="yt-order-btn" ${index === ytWizState.customPlays.length - 1 ? 'disabled' : ''} onclick="moveYtPlay(${index}, 1)">▼</button>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.toggleYtPlaySelection = function(index, isChecked) {
+    ytWizState.customPlays[index].selected = isChecked;
+    renderYtPlayList();
+};
+
+window.moveYtPlay = function(index, direction) {
+    let arr = ytWizState.customPlays;
+    let temp = arr[index];
+    arr[index] = arr[index + direction];
+    arr[index + direction] = temp;
+    renderYtPlayList();
+};
+
+// ==========================================
+// テキスト生成＆クリップボード書き出し処理
+// ==========================================
+function executeYtExport() {
+    // 1. ベースとなるログ（時間があるもの）
+    let baseLogs = AppState.data.logs.filter(l => l.videoTime);
+    
+    // 2. 選手フィルタリング
+    if (ytWizState.scope === 'specific') {
+        baseLogs = baseLogs.filter(l => ytWizState.selectedPlayers.includes(l.playerId));
+    }
+
+    if (baseLogs.length === 0) {
+        alert("条件に一致するデータがありません。");
+        return;
+    }
+
+    let copyText = "";
+
+    // ログ1行を文字列にするヘルパー関数
+    const formatLogLine = (l) => {
+        let parts = l.videoTime.split(':'); 
+        let playSeconds = Math.max(0, (parseInt(parts[0]) * 60 + parseInt(parts[1])) - AppState.settings.preRoll); 
+        let posText = (l.type === 'spike' && l.attackPos) ? `(${l.attackPos})` : '';
+        let typeStr = l.type === 'serve' ? 'サーブ' : 
+                      l.type === 'spike' ? `スパイク${posText}` : 
+                      l.type === 'serve_receive' ? 'サーブレシーブ' : 
+                      l.type === 'receive' ? 'レシーブ' : 
+                      l.type === 'toss' ? 'トス' : l.type;
+        return `${formatTime(playSeconds)} ${AppState.data.players[l.playerId]} : ${typeStr} - ${l.result}\n`;
+    };
+
+    // 時間順にソートするヘルパー関数
+    const sortByTime = (logs) => {
+        return logs.sort((a, b) => {
+            let ta = a.videoTime.split(':'), tb = b.videoTime.split(':');
+            return (parseInt(ta[0])*60 + parseInt(ta[1])) - (parseInt(tb[0])*60 + parseInt(tb[1]));
+        });
+    };
+
+    // 3. 形式に応じたテキスト生成
+    if (ytWizState.format === 'chrono') {
+        copyText += "【 タイムスタンプ 】\n";
+        sortByTime(baseLogs).forEach(l => { copyText += formatLogLine(l); });
+    } else {
+        // 項目別（プレー項目ごとの処理）
+        let selectedOrder = ytWizState.customPlays.filter(p => p.selected);
+        if (selectedOrder.length === 0) {
+            alert("最低でも1つのプレー項目を選択してください。");
+            return;
+        }
+
+        selectedOrder.forEach(playObj => {
+            let typeLogs = baseLogs.filter(l => l.type === playObj.id);
+            if (typeLogs.length > 0) {
+                copyText += `\n【 ${playObj.name} 】\n`;
+                sortByTime(typeLogs).forEach(l => { copyText += formatLogLine(l); });
+            }
+        });
+        copyText = copyText.trimStart(); // 最初の不要な改行を消す
+    }
+
+    // 4. クリップボードへコピー
+    navigator.clipboard.writeText(copyText).then(() => {
+        alert("クリップボードにコピーしました！\nYouTubeの動画説明欄にそのまま貼り付け(Ctrl+V)できます。");
+        closeYtWizard();
+    }).catch(err => {
+        alert("コピーに失敗しました。お使いのブラウザの権限を確認してください。");
+    });
 }
 
 // ==========================================

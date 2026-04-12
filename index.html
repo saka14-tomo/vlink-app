@@ -353,6 +353,7 @@
                         <div class="category-title" style="margin:0; border:none; padding:0; background:transparent;">選手別スタッツ一覧</div>
                         
                         <div style="margin-left: auto; display: flex; gap: 4px;">
+                            <button class="action-btn" style="background:#6f42c1; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="openYtExportWizard()">📋 YouTube用書き出し</button>
                             <button class="action-btn" style="background:#e83e8c; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('pstats-export-area', 'PlayerStatsTable', 'download')">📸 表を保存</button>
                             <button class="action-btn" style="background:#20c997; font-size:10px; padding:4px 8px; box-shadow:none;" onclick="captureAndExport('pstats-export-area', 'PlayerStatsTable', 'copy')">📋 コピー</button>
                         </div>
@@ -425,7 +426,7 @@
                     <h3 style="margin-top:0; border-bottom: 3px solid #ff9800; padding-bottom: 12px; width: 100%; color: #333;">データ入力終了・管理</h3>
                     <p style="font-size: 14px; color: #555; margin-bottom: 25px;">記録したデータを保存するか、新しく記録を始めるか選択してください。</p>
                     <div style="display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px;">
-                        <button class="action-btn" style="background:#6f42c1; font-size: 14px; padding: 14px;" onclick="copyForYouTube()">📋 YouTube説明欄用にログをコピー</button>
+                        <button class="action-btn" style="background:#6f42c1; font-size: 14px; padding: 14px;" onclick="openYtExportWizard()">📋 YouTube説明欄用に詳細書き出し</button>
                         <hr style="width: 100%; border: 0; border-top: 1px dashed #ccc; margin: 5px 0;">
                         <button class="action-btn" style="background:#28a745; font-size: 14px; padding: 14px;" onclick="exportData()">💾 V-Link復元用データを保存 (JSON)</button>
                         <button class="action-btn" style="background:#17a2b8; font-size: 14px; padding: 14px;" onclick="exportCSV()">📊 表計算ソフト用データを保存 (CSV)</button>
@@ -481,6 +482,53 @@
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:10px;">
             <button class="action-btn" style="background:#6c757d; width:90px; padding:10px; font-size:12px;" onclick="cancelSpikePos()">キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<div id="yt-wizard-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:white; padding:20px; border-radius:12px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3); max-height:80vh; overflow-y:auto;">
+        <h3 id="yt-wizard-title" style="margin:0; border-bottom:2px solid #6f42c1; padding-bottom:8px; font-size:16px; color:#333;">YouTube用書き出し</h3>
+        
+        <div id="yt-step-1" class="yt-wizard-step">
+            <p class="yt-wizard-q">誰のデータを書き出しますか？</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectScope('all')">① チーム全員</button>
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectScope('specific')">② 特定の選手</button>
+            </div>
+        </div>
+
+        <div id="yt-step-1-5" class="yt-wizard-step" style="display:none;">
+            <p class="yt-wizard-q">どの選手のデータを書き出しますか？<br><span style="font-size:11px; color:#666;">（※ログがある選手のみ表示・複数選択可）</span></p>
+            <div id="yt-wiz-player-list" style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;"></div>
+            <button class="action-btn" style="background:#007bff; width:100%; padding:12px;" onclick="ytWizGoToOrder()">次へ ➡</button>
+        </div>
+
+        <div id="yt-step-2" class="yt-wizard-step" style="display:none;">
+            <p class="yt-wizard-q">書き出しの形式を選んでください</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectFormat('chrono')">時系列順に書き出す</button>
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectFormat('grouped')">プレー項目ごとに書き出す</button>
+            </div>
+        </div>
+
+        <div id="yt-step-3" class="yt-wizard-step" style="display:none;">
+            <p class="yt-wizard-q">対象のプレーを選んでください</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectPlayTypes('all')">すべてのプレー (標準順)</button>
+                <button class="action-btn btn-utility" style="font-size:14px; padding:12px;" onclick="ytWizSelectPlayTypes('specific')">特定のプレーを選択・並び替え</button>
+            </div>
+        </div>
+
+        <div id="yt-step-4" class="yt-wizard-step" style="display:none;">
+            <p class="yt-wizard-q">出力するプレーを選び、順序を調整してください<br><span style="font-size:11px; color:#666;">（チェックを入れた項目が上から順に書き出されます）</span></p>
+            <div id="yt-wiz-play-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:15px;"></div>
+            <button class="action-btn" style="background:#28a745; width:100%; padding:12px; font-size:14px;" onclick="executeYtExport()">📋 データを書き出す (コピー)</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+            <button id="yt-wiz-back-btn" class="action-btn" style="background:#6c757d; font-size:12px; display:none;" onclick="ytWizBack()">🔙 戻る</button>
+            <button class="action-btn" style="background:#dc3545; font-size:12px; margin-left:auto;" onclick="closeYtWizard()">✖ キャンセル</button>
         </div>
     </div>
 </div>
