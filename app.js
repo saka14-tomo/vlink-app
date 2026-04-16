@@ -1039,6 +1039,11 @@ function showPlayer(type) {
     const ytNode = document.getElementById('yt-player'); const localNode = document.getElementById('local-player');
     if (type === 'youtube') { if (ytNode) ytNode.style.display = 'block'; if (localNode) localNode.style.display = 'none'; } 
     else if (type === 'local') { if (ytNode) ytNode.style.display = 'none'; if (localNode) localNode.style.display = 'block'; }
+
+    // ★ 以下の3行を追記：動画表示時に、まだ大画面でなければ大画面モードにする
+    if (!AppState.ui.isLargeScreen) {
+        toggleLargeScreen();
+    }
 }
 
 function loadLocalVideo(event) {
