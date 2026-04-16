@@ -409,9 +409,8 @@ function draw(id) {
     ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
     ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
 
-    // ★ センターライン（白の太線を引いてから黒線を重ねて上下のみ縁取る）
-    ct.strokeStyle = 'white'; ct.lineWidth = 6; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-    ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+    // ★ センターライン（白の実線のみ）
+    ct.strokeStyle = 'white'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
     
     if (id === 'input-canvas') {
         ct.fillStyle = 'rgba(255,255,255,0.7)';
@@ -649,9 +648,8 @@ function renderCompareVisual() {
         ct.strokeStyle = 'white'; ct.lineWidth = 2; ct.strokeRect(20,60,180,360);
         ct.beginPath(); ct.moveTo(20,180); ct.lineTo(200,180); ct.moveTo(20,300); ct.lineTo(200,300); ct.stroke();
 
-        // ★ 比較画面のセンターライン
-        ct.strokeStyle = 'white'; ct.lineWidth = 6; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
-        ct.strokeStyle = '#333'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
+        // ★ 比較画面のセンターライン（白の実線のみ）
+        ct.strokeStyle = 'white'; ct.lineWidth = 4; ct.beginPath(); ct.moveTo(20,240); ct.lineTo(200,240); ct.stroke();
         
         logs.forEach(l => { if (l.startX != null && l.startY != null) line(ct, {x:l.startX, y:l.startY}, {x:l.endX, y:l.endY}, getColorForLog(l.result)); });
     });
