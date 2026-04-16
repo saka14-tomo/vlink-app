@@ -112,7 +112,7 @@ function switchTab(target) {
     
     if(target === 'player-stats') {
         const pContainer = document.getElementById('player-stats-container');
-        if(pContainer) pContainer.style.maxWidth = AppState.playlist.active ? '760px' : '1200px';
+        if(pContainer) pContainer.style.maxWidth = '1200px';
         renderPlayerStatsTable();
     }
     
@@ -1505,8 +1505,8 @@ function resetPlaylistUI() {
     document.getElementById('playlist-controls').style.display = 'none';
     if (!AppState.ui.isLargeScreen) document.getElementById('shared-split-layout').style.maxWidth = '1600px';
     
-    const pStatsContainer = document.getElementById('player-stats-container');
-    if (pStatsContainer) pStatsContainer.style.maxWidth = '1200px';
+    // const pStatsContainer = document.getElementById('player-stats-container');
+    // if (pStatsContainer) pStatsContainer.style.maxWidth = '1200px';
 }
 
 function getPlaylistLogs(type) {
@@ -1559,8 +1559,8 @@ window.playCustomPlaylist = function(logs) {
     document.getElementById('video-seek-controls').style.display = 'none';
     document.getElementById('playlist-controls').style.display = 'flex';
     
-    const pStatsContainer = document.getElementById('player-stats-container');
-    if (pStatsContainer) pStatsContainer.style.maxWidth = '760px';
+    // const pStatsContainer = document.getElementById('player-stats-container');
+    // if (pStatsContainer) pStatsContainer.style.maxWidth = '760px';
     
     playCurrentQueueItem();
 };
