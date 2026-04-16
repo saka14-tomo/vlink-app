@@ -236,3 +236,16 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     height: auto !important;
     min-height: 360px !important;
 }
+
+/* 動画再生時（2カラム時）の選手別スタッツ表の自動コンパクト化（スクロール防止） */
+.split-layout:not(.single-view) #player-stats-container .stat-table th,
+.split-layout:not(.single-view) #player-stats-container .stat-table td {
+    font-size: 11px !important;
+    padding: 4px 1px !important;
+    white-space: normal !important;
+    word-break: break-all;
+}
+.split-layout:not(.single-view) #player-stats-container .stat-table td:first-child {
+    font-size: 12px !important; /* 選手名だけは少し大きめをキープ */
+    white-space: nowrap !important;
+}
