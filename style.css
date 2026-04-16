@@ -38,7 +38,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
     gap: 15px 20px; 
     width: 100%; max-width: 1600px; 
     justify-content: center; 
-    align-items: start; 
+    align-items: stretch; 
     transition: max-width 0.3s ease; 
 }
 .split-layout .main-container {
@@ -230,11 +230,19 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .yt-player-btn { background:#f8f9fa; border:1px solid #ced4da; padding:10px; border-radius:6px; font-size:12px; font-weight:bold; color:#495057; cursor:pointer; transition:0.2s; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .yt-player-btn.selected { background:#007bff; color:white; border-color:#0056b3; box-shadow:inset 0 2px 4px rgba(0,0,0,0.2); }
 
-/* 動画ラッパー：16:9を強制 */
+/* 左側の白い箱全体：高さを100%にし、ボタンを一番下に押し下げる */
+#video-container-card {
+    height: 100% !important;
+    justify-content: space-between !important;
+}
+
+/* 動画エリア：縦伸びを防ぎ、余った空間の上下中央に配置する */
 #video-player-wrapper {
     aspect-ratio: 16 / 9;
     height: auto !important;
-    min-height: 360px !important;
+    max-height: 100%;
+    flex: none !important; /* インラインの flex: 1 を打ち消す */
+    margin: auto 0 !important; /* 上下の余白を自動調整して中央配置 */
 }
 
 /* 動画再生時（2カラム時）の選手別スタッツ表の自動コンパクト化（スクロール防止） */
