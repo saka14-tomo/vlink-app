@@ -257,3 +257,13 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     font-size: 12px !important; /* 選手名だけは少し大きめをキープ */
     white-space: nowrap !important;
 }
+
+/* YouTube書き出しウィザード ドラッグ＆ドロップ用 */
+.drag-handle:active {
+    cursor: grabbing !important;
+}
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #f0f0f0;
+    border: 1px dashed #007bff;
+}

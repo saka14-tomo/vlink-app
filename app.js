@@ -2020,40 +2020,50 @@ function ytWizSelectPlayTypes(mode) {
     }
 }
 
-// Step 4: プレー項目の並び替えレンダリング
+// Step 4: プレー項目の並び替えレンダリング（ドラッグ対応版）
 function renderYtPlayList() {
     const container = document.getElementById('yt-wiz-play-list');
     container.innerHTML = '';
-    
-    ytWizState.customPlays.forEach((play, index) => {
+
+    ytWizState.customPlays.forEach((play) => {
         let item = document.createElement('div');
         item.className = `yt-play-item ${play.selected ? 'selected' : ''}`;
-        
+
+        // 矢印ボタンの代わりに、ドラッグ可能なハンドル（≡）を左に配置
         item.innerHTML = `
-            <label>
-                <input type="checkbox" ${play.selected ? 'checked' : ''} onchange="toggleYtPlaySelection(${index}, this.checked)">
+            <div class="drag-handle" style="cursor: grab; padding: 0 10px 0 0; color: #aaa; font-size: 20px; display: flex; align-items: center;">≡</div>
+            <label style="flex:1; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" ${play.selected ? 'checked' : ''} onchange="toggleYtPlaySelection('${play.id}', this.checked)">
                 ${play.name}
             </label>
-            <div class="yt-order-btns">
-                <button class="yt-order-btn" ${index === 0 ? 'disabled' : ''} onclick="moveYtPlay(${index}, -1)">▲</button>
-                <button class="yt-order-btn" ${index === ytWizState.customPlays.length - 1 ? 'disabled' : ''} onclick="moveYtPlay(${index}, 1)">▼</button>
-            </div>
         `;
         container.appendChild(item);
     });
+
+    // SortableJSを適用してドラッグ＆ドロップを有効化
+    if (window.ytSortableInstance) {
+        window.ytSortableInstance.destroy(); // 既存のものがあればリセット
+    }
+
+    window.ytSortableInstance = new Sortable(container, {
+        animation: 150, // 並び替え時のアニメーション速度(ms)
+        handle: '.drag-handle', // 「≡」の部分を掴んだ時だけドラッグ可能にする
+        ghostClass: 'sortable-ghost', // ドラッグ中の見た目クラス
+        onEnd: function (evt) {
+            // ドラッグ終了時に内部の配列データを並び替える
+            const movedItem = ytWizState.customPlays.splice(evt.oldIndex, 1)[0];
+            ytWizState.customPlays.splice(evt.newIndex, 0, movedItem);
+        }
+    });
 }
 
-window.toggleYtPlaySelection = function(index, isChecked) {
-    ytWizState.customPlays[index].selected = isChecked;
-    renderYtPlayList();
-};
-
-window.moveYtPlay = function(index, direction) {
-    let arr = ytWizState.customPlays;
-    let temp = arr[index];
-    arr[index] = arr[index + direction];
-    arr[index + direction] = temp;
-    renderYtPlayList();
+// 選択切り替え関数の修正 (IndexではなくIDで検索するように変更)
+window.toggleYtPlaySelection = function (id, isChecked) {
+    let play = ytWizState.customPlays.find(p => p.id === id);
+    if (play) {
+        play.selected = isChecked;
+    }
+    renderYtPlayList(); // 背景色(.selected)を反映するために再描画
 };
 
 // ==========================================
