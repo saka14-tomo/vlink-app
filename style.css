@@ -2,19 +2,19 @@
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 0 10px 15px 10px; margin: 0; touch-action: manipulation; }
 
 /* タブメニュー（上部固定・スモークガラス効果・1列並列表示） */
-.tab-menu { 
-    position: sticky; top: 0; z-index: 1000; background: rgba(244, 247, 246, 0.95); backdrop-filter: blur(5px);
-    width: 100%; max-width: 1600px; display: flex; gap: 6px; padding: 15px 10px 10px 10px; margin-bottom: 5px; 
-    flex-wrap: nowrap; justify-content: space-between; overflow-x: auto; box-sizing: border-box;
+.tab-menu { 
+    position: sticky; top: 0; z-index: 1000; background: rgba(244, 247, 246, 0.95); backdrop-filter: blur(5px);
+    width: 100%; max-width: 1600px; display: flex; gap: 6px; padding: 15px 10px 10px 10px; margin-bottom: 5px; 
+    flex-wrap: nowrap; justify-content: space-between; overflow-x: auto; box-sizing: border-box;
 }
 .tab-menu::-webkit-scrollbar { display: none; } /* スクロールバー非表示 */
-.tab-btn { 
-    flex: 1 1 0; min-width: 0; padding: 12px 4px; border: none; border-radius: 8px; cursor: pointer; 
-    background: #e9ecef; color: #495057; font-weight: bold; font-size: 12px; transition: all 0.2s ease; 
-    text-align: center; white-space: nowrap; 
+.tab-btn { 
+    flex: 1 1 0; min-width: 0; padding: 12px 4px; border: none; border-radius: 8px; cursor: pointer; 
+    background: #e9ecef; color: #495057; font-weight: bold; font-size: 12px; transition: all 0.2s ease; 
+    text-align: center; white-space: nowrap; 
 }
 @media (min-width: 768px) {
-    .tab-btn { font-size: 13px; padding: 14px 8px; }
+    .tab-btn { font-size: 13px; padding: 14px 8px; }
 }
 .tab-btn:hover { background: #dee2e6; color: #212529; }
 .tab-btn.active { background: #007bff; color: white; box-shadow: 0 4px 12px rgba(0,123,255,0.3); transform: translateY(-1px); }
@@ -24,71 +24,71 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 .view-content.active { display: flex; }
 
 /* メインパネル */
-.main-container { 
-    display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
-    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; transition: all 0.3s;
+.main-container { 
+    display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
+    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; transition: all 0.3s;
 }
 
 /* アプリ全体の2カラムレスポンシブレイアウト (Gridレイアウトで高さを同期) */
-.split-layout { 
-    display: grid; 
-    grid-template-columns: 1fr auto; 
-    grid-template-rows: auto auto; 
-    gap: 15px 20px; 
-    width: 100%; max-width: 1600px; 
-    justify-content: center; 
-    align-items: stretch; 
-    transition: max-width 0.3s ease; 
+.split-layout { 
+    display: grid; 
+    grid-template-columns: 1fr auto; 
+    grid-template-rows: auto auto; 
+    gap: 15px 20px; 
+    width: 100%; max-width: 1600px; 
+    justify-content: center; 
+    align-items: stretch; 
+    transition: max-width 0.3s ease; 
 }
 .split-layout .main-container {
-    max-width: 100%; margin-bottom: 0; display: flex; 
+    max-width: 100%; margin-bottom: 0; display: flex; 
 }
-.split-left { 
-    grid-column: 1 / 2; 
-    grid-row: 1 / 2; 
-    display: flex; flex-direction: column; min-width: 320px; transition: all 0.3s ease; 
+.split-left { 
+    grid-column: 1 / 2; 
+    grid-row: 1 / 2; 
+    display: flex; flex-direction: column; min-width: 320px; transition: all 0.3s ease; 
 }
-.split-right-wrapper { 
-    display: contents; 
+.split-right-wrapper { 
+    display: contents; 
 }
-.split-center { 
-    grid-column: 2 / 3; 
-    grid-row: 1 / 2; 
-    display: flex; flex-direction: column; width: auto; 
+.split-center { 
+    grid-column: 2 / 3; 
+    grid-row: 1 / 2; 
+    display: flex; flex-direction: column; width: auto; 
 }
-.split-right-log { 
-    grid-column: 2 / 3; 
-    grid-row: 2 / 3; 
-    display: flex; flex-direction: column; width: 100%; 
+.split-right-log { 
+    grid-column: 2 / 3; 
+    grid-row: 2 / 3; 
+    display: flex; flex-direction: column; width: 100%; 
 }
 
 /* 1画面（動画非表示）時の中央配置設定 */
 .split-layout.single-view {
-    grid-template-columns: auto;
-    justify-content: center;
+    grid-template-columns: auto;
+    justify-content: center;
 }
 .split-layout.single-view .split-center,
 .split-layout.single-view .split-right-log {
-    grid-column: 1 / 2;
+    grid-column: 1 / 2;
 }
 
 /* 左パネル（入力操作側の内側レイアウト）- 幅を固定 */
 .left-panel { width: 180px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.player-wrapper { 
-    display: flex; flex-direction: column; width: 100%; border-radius: 10px; overflow: hidden; 
-    background: linear-gradient(135deg, #ffffff, #e6e9ec); border: 1px solid #d0d0d0; border-bottom: 4px solid #b0b5ba; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+.player-wrapper { 
+    display: flex; flex-direction: column; width: 100%; border-radius: 10px; overflow: hidden; 
+    background: linear-gradient(135deg, #ffffff, #e6e9ec); border: 1px solid #d0d0d0; border-bottom: 4px solid #b0b5ba; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .player-wrapper:hover { transform: translateY(-2px); border-bottom: 6px solid #b0b5ba; box-shadow: 0 8px 12px rgba(0,0,0,0.1); }
-.player-wrapper.active { 
-    background: linear-gradient(135deg, #007bff, #0056b3); border: 1px solid #004085; border-bottom: 1px solid #004085; 
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); transform: translateY(3px); 
+.player-wrapper.active { 
+    background: linear-gradient(135deg, #007bff, #0056b3); border: 1px solid #004085; border-bottom: 1px solid #004085; 
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); transform: translateY(3px); 
 }
-.player-wrapper.compare-active { 
-    background: linear-gradient(135deg, #6f42c1, #512da8); border: 1px solid #4a148c; border-bottom: 1px solid #4a148c; 
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); transform: translateY(3px); 
+.player-wrapper.compare-active { 
+    background: linear-gradient(135deg, #6f42c1, #512da8); border: 1px solid #4a148c; border-bottom: 1px solid #4a148c; 
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); transform: translateY(3px); 
 }
 .player-btn { flex: 1; border: none; background: transparent; cursor: pointer; padding: 0 4px; outline: none; display: flex; align-items: center; justify-content: center; }
 .player-btn span { font-weight: 800; color: #333; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px; }
@@ -109,7 +109,7 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .zone-cell.locked { background: rgba(0, 123, 255, 0.65) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
 
 /* 右パネル：操作・統計 - 幅を固定 */
-.right-panel { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; } 
+.right-panel { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; } 
 .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
 
 /* スクロール不要・全表示・最下部揃え版 入力エリア */
@@ -173,9 +173,9 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 
 /* ボタン */
 .action-btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.action-btn:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); transform: translateY(-2px); filter: brightness(1.05); } 
+.action-btn:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); transform: translateY(-2px); filter: brightness(1.05); } 
 .action-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.1); opacity: 0.9; }
-.action-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(40%); box-shadow: none; transform: none; } 
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(40%); box-shadow: none; transform: none; } 
 .btn-ace { background: #007BFF; } .btn-in { background: #212529; } .btn-error { background: #dc3545; }
 .btn-utility { background: #6c757d; font-size: 11px; padding: 8px; }
 
@@ -188,7 +188,7 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .compare-cards-wrapper { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-top: 10px; }
 .compare-card { display: flex; flex-direction: column; align-items: center; flex: 1 1 20%; min-width: 95px; max-width: 160px; background: #fff; padding: 10px 8px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; }
 .compare-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2; background: #e9ecef; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.05); }
-.compare-table { margin-top: 8px; font-size: 12px; width: 100%; border-collapse: collapse; text-align: center; } 
+.compare-table { margin-top: 8px; font-size: 12px; width: 100%; border-collapse: collapse; text-align: center; } 
 .compare-table td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
 .compare-table .row-in { background: #fff; color: #000; }
 .compare-table .row-miss { background: #fff5f5; color: #d32f2f; }
@@ -200,20 +200,20 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 
 /* スマホ用レスポンシブ (スマホでは縦積みにしてGridを解除) */
 @media (max-width: 1100px) {
-    .split-layout { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-    .split-right-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 760px; gap: 15px; }
-    .split-left { width: 100%; max-width: 760px; flex: none; }
-    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; flex-wrap: wrap; margin-bottom: 0 !important; }
-    .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
-    .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
-    .player-wrapper { width: 60px; height: 50px; }
-    .log-panel-container { height: auto; }
-    #video-seek-controls { justify-content: center; }
-    .log-scroll-wrapper { flex: none; height: 250px; }
+    .split-layout { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .split-right-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 760px; gap: 15px; }
+    .split-left { width: 100%; max-width: 760px; flex: none; }
+    .main-container { flex-direction: column; align-items: center; padding: 15px; gap: 15px; flex-wrap: wrap; margin-bottom: 0 !important; }
+    .left-panel, .right-panel { max-width: 100%; width: 100%; flex: none; }
+    .player-grid { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
+    .player-wrapper { width: 60px; height: 50px; }
+    .log-panel-container { height: auto; }
+    #video-seek-controls { justify-content: center; }
+    .log-scroll-wrapper { flex: none; height: 250px; }
 }
 
 .tab-btn, .player-btn, .action-btn, .edit-single-btn, .zone-cell, .clickable-stat {
-    -webkit-user-select: none; user-select: none; touch-action: manipulation;
+    -webkit-user-select: none; user-select: none; touch-action: manipulation;
 }
 
 /* YouTube書き出しウィザード用 */
@@ -232,28 +232,28 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 
 /* 左側の白い箱全体：高さを100%にし、ボタンを一番下に押し下げる */
 #video-container-card {
-    height: 100% !important;
-    justify-content: space-between !important;
+    height: 100% !important;
+    justify-content: space-between !important;
 }
 
 /* 動画エリア：縦伸びを防ぎ、余った空間の上下中央に配置する */
 #video-player-wrapper {
-    aspect-ratio: 16 / 9;
-    height: auto !important;
-    max-height: 100%;
-    flex: none !important; /* インラインの flex: 1 を打ち消す */
-    margin: auto 0 !important; /* 上下の余白を自動調整して中央配置 */
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    max-height: 100%;
+    flex: none !important; /* インラインの flex: 1 を打ち消す */
+    margin: auto 0 !important; /* 上下の余白を自動調整して中央配置 */
 }
 
 /* 動画再生時（2カラム時）の選手別スタッツ表の自動コンパクト化（スクロール防止） */
 .split-layout:not(.single-view) #player-stats-container .stat-table th,
 .split-layout:not(.single-view) #player-stats-container .stat-table td {
-    font-size: 11px !important;
-    padding: 4px 1px !important;
-    white-space: normal !important;
-    word-break: break-all;
+    font-size: 11px !important;
+    padding: 4px 1px !important;
+    white-space: normal !important;
+    word-break: break-all;
 }
 .split-layout:not(.single-view) #player-stats-container .stat-table td:first-child {
-    font-size: 12px !important; /* 選手名だけは少し大きめをキープ */
-    white-space: nowrap !important;
+    font-size: 12px !important; /* 選手名だけは少し大きめをキープ */
+    white-space: nowrap !important;
 }

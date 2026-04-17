@@ -1046,7 +1046,6 @@ function showPlayer(type) {
     if (type === 'youtube') { if (ytNode) ytNode.style.display = 'block'; if (localNode) localNode.style.display = 'none'; } 
     else if (type === 'local') { if (ytNode) ytNode.style.display = 'none'; if (localNode) localNode.style.display = 'block'; }
 
-    // ★ 以下の3行を追記：動画表示時に、まだ大画面でなければ大画面モードにする
     if (!AppState.ui.isLargeScreen) {
         toggleLargeScreen();
     }
@@ -1588,6 +1587,10 @@ function startPlaylist(type) {
     document.getElementById('shared-video-area').style.display = 'flex'; document.getElementById('shared-split-layout').style.maxWidth = '100%';
     document.getElementById('video-source-ui').style.display = 'none'; document.getElementById('video-seek-controls').style.display = 'none';
     document.getElementById('playlist-controls').style.display = 'flex';
+
+    const pStatsContainer = document.getElementById('player-stats-container');
+    if (pStatsContainer) pStatsContainer.style.maxWidth = '650px';
+
     playCurrentQueueItem();
 }
 
