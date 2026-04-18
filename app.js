@@ -1,9 +1,9 @@
 // ==========================================
 // 0. Supabase 設定
 // ==========================================
-const SUPABASE_URL = 'ここにSupabaseのURLを貼り付けます';
-const SUPABASE_ANON_KEY = 'ここにSupabaseのanon publicキーを貼り付けます';
-let supabaseClient; // ← 名前を supabaseClient に変更！
+const SUPABASE_URL = 'https://bewqvxdwlyqjwklkqinm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJld3F2eGR3bHlxandrbGtxaW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjY1ODksImV4cCI6MjA5MTk0MjU4OX0.IGZntAhJy_NVxhQQp-R8YUvrLyLN8rcUmBxnHqE3MMc';
+let supabaseClient; // 必ず supabaseClient という名前にします
 if (typeof window.supabase !== 'undefined') {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
