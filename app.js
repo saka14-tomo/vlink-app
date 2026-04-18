@@ -1,4 +1,14 @@
 // ==========================================
+// 0. Supabase 設定
+// ==========================================
+const SUPABASE_URL = 'ここにSupabaseのURLを貼り付けます';
+const SUPABASE_ANON_KEY = 'ここにSupabaseのanon publicキーを貼り付けます';
+let supabase;
+if (typeof window.supabase !== 'undefined') {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// ==========================================
 // 1. 設定・定数 (Config)
 // ==========================================
 const AppConfig = {
@@ -1278,30 +1288,40 @@ function updateHistoryDataFlag(id, hasData) {
 
 function saveVideoHistory() {
     localStorage.setItem('vlink_video_history', JSON.stringify(AppState.videoHistory || []));
-    
-    if (typeof google !== 'undefined' && google.script) {
-        google.script.run
-            .withFailureHandler(err => console.error("クラウド保存エラー:", err))
-            .saveHistoryToCloud(AppState.videoHistory);
+
+    // Supabaseへのクラウド保存
+    if (supabase) {
+        supabase.from('vlink_cloud_data').upsert([
+            { id: 'shared_user', history: AppState.videoHistory }
+        ]).then(({ error }) => {
+            if (error) console.error("Supabase保存エラー:", error);
+        });
     }
 }
 
 function loadHistoryFromCloud() {
-    if (typeof google !== 'undefined' && google.script) {
-        google.script.run
-            .withSuccessHandler(function(serverHistoryStr) {
-                if (serverHistoryStr) {
+    // Supabaseからのクラウド読み込み
+    if (supabase) {
+        supabase.from('vlink_cloud_data')
+            .select('history')
+            .eq('id', 'shared_user')
+            .single()
+            .then(({ data, error }) => {
+                if (data && data.history) {
                     try {
-                        const serverHistory = JSON.parse(serverHistoryStr);
+                        // SupabaseはJSONを自動でオブジェクト化して返すため、文字列の場合はパースする安全設計
+                        const serverHistory = typeof data.history === 'string' ? JSON.parse(data.history) : data.history;
                         AppState.videoHistory = serverHistory;
-                        localStorage.setItem('vlink_video_history', serverHistoryStr);
+                        localStorage.setItem('vlink_video_history', JSON.stringify(serverHistory));
                         renderVideoHistory();
-                    } catch (e) { 
-                        console.error("履歴データの解析エラー", e); 
+                    } catch (e) {
+                        console.error("履歴データの解析エラー", e);
                     }
+                } else if (error && error.code !== 'PGRST116') {
+                    // PGRST116(データなし)以外のエラーをログに出力
+                    console.error("Supabase読込エラー:", error);
                 }
-            })
-            .getHistoryFromCloud();
+            });
     }
 }
 
