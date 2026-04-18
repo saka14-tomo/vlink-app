@@ -3,9 +3,9 @@
 // ==========================================
 const SUPABASE_URL = 'ここにSupabaseのURLを貼り付けます';
 const SUPABASE_ANON_KEY = 'ここにSupabaseのanon publicキーを貼り付けます';
-let supabase;
+let supabaseClient; // ← 名前を supabaseClient に変更！
 if (typeof window.supabase !== 'undefined') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 // ==========================================
@@ -1290,8 +1290,8 @@ function saveVideoHistory() {
     localStorage.setItem('vlink_video_history', JSON.stringify(AppState.videoHistory || []));
 
     // Supabaseへのクラウド保存
-    if (supabase) {
-        supabase.from('vlink_cloud_data').upsert([
+    if (supabaseClient) {
+        supabaseClient.from('vlink_cloud_data').upsert([
             { id: 'shared_user', history: AppState.videoHistory }
         ]).then(({ error }) => {
             if (error) console.error("Supabase保存エラー:", error);
@@ -1301,15 +1301,14 @@ function saveVideoHistory() {
 
 function loadHistoryFromCloud() {
     // Supabaseからのクラウド読み込み
-    if (supabase) {
-        supabase.from('vlink_cloud_data')
+    if (supabaseClient) {
+        supabaseClient.from('vlink_cloud_data')
             .select('history')
             .eq('id', 'shared_user')
             .single()
             .then(({ data, error }) => {
                 if (data && data.history) {
                     try {
-                        // SupabaseはJSONを自動でオブジェクト化して返すため、文字列の場合はパースする安全設計
                         const serverHistory = typeof data.history === 'string' ? JSON.parse(data.history) : data.history;
                         AppState.videoHistory = serverHistory;
                         localStorage.setItem('vlink_video_history', JSON.stringify(serverHistory));
@@ -1318,7 +1317,6 @@ function loadHistoryFromCloud() {
                         console.error("履歴データの解析エラー", e);
                     }
                 } else if (error && error.code !== 'PGRST116') {
-                    // PGRST116(データなし)以外のエラーをログに出力
                     console.error("Supabase読込エラー:", error);
                 }
             });
