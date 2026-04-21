@@ -267,3 +267,29 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     background-color: #f0f0f0;
     border: 1px dashed #007bff;
 }
+
+/* ====================================================
+   iPad・タブレット（横向き）用の画面バランス最適化
+   ==================================================== */
+@media (max-width: 1366px) and (min-width: 1101px) {
+    /* 右側の入力エリア全体のすき間と余白を詰める */
+    .main-container { gap: 10px !important; padding: 15px !important; }
+
+    /* 選手選択(左)とボタン(右)の幅をスリム化 */
+    /* ※コート(中央)はタッチ座標ズレを防ぐため220pxを維持します */
+    .left-panel { width: 140px !important; }
+    .right-panel { width: 180px !important; }
+
+    /* 選手ボタンの文字サイズと高さを微調整 */
+    .player-wrapper { height: 46px !important; border-bottom: 3px solid #b0b5ba !important; }
+    .player-btn span { font-size: 14px !important; }
+    .edit-single-btn { height: 16px !important; font-size: 9px !important; }
+
+    /* 右側の入力ボタンの文字サイズと高さを微調整 */
+    .compact-btn { height: 32px !important; font-size: 11px !important; padding: 0 !important; }
+    .category-title { font-size: 11px !important; padding: 4px !important; margin: 4px 0 2px 0 !important; }
+    .instruction-banner { font-size: 9px !important; margin-bottom: 2px !important; }
+
+    /* 全体的なボタンの余白と文字サイズ調整 */
+    .action-btn { font-size: 11px !important; }
+}
