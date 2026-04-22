@@ -497,30 +497,40 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 
 /* ▼ パソコン用（画面幅1367px以上）：ボタンの完全均等化 ▼ */
 @media (min-width: 1367px) {
-    /* どんなに文字が長くてもボタンの枠を押し広げず、確実に均等サイズにする魔法のコード */
+    /* 文字数によるボタンの拡張を完全に無効化し、強制的に均等割りにする絶対ルール */
+    .btn-row {
+        display: grid !important;
+        grid-auto-flow: column !important;
+        grid-auto-columns: 1fr !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+
     .btn-row .compact-btn {
-        flex: 1 1 0 !important;
-        min-width: 0 !important; 
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow: hidden !important;
+        white-space: nowrap !important;
     }
     
-    /* ブロックシャットの文字調整（均等になった枠内に収める） */
+    /* ブロックシャットの文字調整（均等になった枠内に1行で収める） */
     .btn-block-shut {
-        font-size: 8.5px !important;
+        font-size: 8px !important;
         letter-spacing: -0.5px !important;
-        white-space: nowrap !important;
-        padding: 0 !important;
     }
     .btn-block-shut span {
         display: inline !important;
     }
 
-    /* ２アタックの文字調整（均等になった枠内に収める） */
+    /* ２アタックの文字調整（均等になった枠内に1行で収める） */
     .toss-btn[onclick*="２アタック"] {
         font-size: 9px !important;
         letter-spacing: -0.5px !important;
-        white-space: nowrap !important;
-        padding: 0 !important;
+    }
+    .toss-btn[onclick*="２アタック"] span {
+        display: inline !important;
     }
 }
 
