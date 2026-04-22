@@ -165,16 +165,16 @@ function toggleCourt() {
 }
 
 function renderPlayerGrids() {
-    let wrapperHeight = '66px'; let fontSize = '20px';
+    let wrapperHeight = '66px'; let fontSize = '20px';     
 
     let totalButtons = AppState.data.activePlayerCount;
-    if (AppState.data.activePlayerCount < 12) totalButtons++;
-    if (AppState.data.activePlayerCount > 1) totalButtons++;
+    if (AppState.data.activePlayerCount < 12) totalButtons++; 
+    if (AppState.data.activePlayerCount > 1) totalButtons++;  
 
-    if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; }
+    if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; } 
     else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; }
 
-    // 色情報をローカルストレージから読み込み（初回のみ）
+    // 色情報をローカルストレージから読み込み
     if (!AppState.data.playerColors) {
         AppState.data.playerColors = JSON.parse(localStorage.getItem('vlink_player_colors') || '{}');
     }
@@ -200,28 +200,29 @@ function renderPlayerGrids() {
             else isActive = AppState.ui.statsPlayers.includes(i);
 
             wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
-
-            // ★ カスタム背景色の適用（アクティブ選択時以外）
-            if (AppState.data.playerColors[i] && !isActive && !isCompareActive) {
+            
+            // ★ カスタム背景色を「常に」適用する（選択時も色はそのまま）
+            if (AppState.data.playerColors[i]) {
                 wrapper.style.background = AppState.data.playerColors[i];
             }
 
             const btn = document.createElement('button'); btn.className = `player-btn`;
             btn.onclick = () => selectPlayer(i);
-            btn.innerHTML = `<span style="font-size:${currentFontSize};">${AppState.data.players[i]}</span>`;
+            // ★ 選択時に文字が消えないよう、色は常に黒(#333)で固定
+            btn.innerHTML = `<span style="font-size:${currentFontSize}; color:#333;">${AppState.data.players[i]}</span>`;
             wrapper.appendChild(btn);
-
+            
             if (type === 'input') {
-                // ★ 編集ボタンを右上のコンパクトな「✎」に変更
-                const editBtn = document.createElement('div');
+                // ★ 編集ボタンを「✏️」のみに変更
+                const editBtn = document.createElement('div'); 
                 editBtn.className = 'edit-single-btn';
-                editBtn.innerHTML = '✎';
+                editBtn.innerHTML = '✏️'; 
                 editBtn.onclick = (e) => editSingleName(e, i);
                 wrapper.appendChild(editBtn);
             }
             container.appendChild(wrapper);
         }
-
+        
         if (AppState.data.activePlayerCount < 12) {
             const addWrapper = document.createElement('div');
             addWrapper.className = 'player-wrapper player-add-btn';
@@ -234,16 +235,16 @@ function renderPlayerGrids() {
                 if (!AppState.data.players[AppState.data.activePlayerCount]) AppState.data.players[AppState.data.activePlayerCount] = String(AppState.data.activePlayerCount);
                 saveToLocal(); renderPlayerGrids();
             };
-            addWrapper.innerHTML = `<span style="font-size:${currentFontSize};">＋</span>`;
+            addWrapper.innerHTML = `<span style="font-size:${currentFontSize}; color:#333;">＋</span>`;
             container.appendChild(addWrapper);
         }
-
+        
         if (AppState.data.activePlayerCount > 1) {
             const removeWrapper = document.createElement('div');
             removeWrapper.className = 'player-wrapper player-add-btn';
             let currentWrapperHeight = (type === 'compare') ? '46px' : wrapperHeight;
 
-            removeWrapper.style.height = currentWrapperHeight;
+            removeWrapper.style.height = currentWrapperHeight; 
             removeWrapper.style.borderColor = '#dc3545';
             removeWrapper.onmouseover = () => removeWrapper.style.backgroundColor = '#fff5f5';
             removeWrapper.onmouseout = () => removeWrapper.style.backgroundColor = 'transparent';
@@ -251,29 +252,19 @@ function renderPlayerGrids() {
                 if(confirm(`No.${AppState.data.activePlayerCount} (${AppState.data.players[AppState.data.activePlayerCount]}) の選手枠を削除しますか？\n※記録済みのデータ自体は残りますが、選択できなくなります。`)) {
                     const removingId = AppState.data.activePlayerCount;
                     AppState.data.activePlayerCount--;
-
+                    
                     if(AppState.ui.selectedPlayerId === removingId) {
                         AppState.ui.selectedPlayerId = null; resetInput(); draw('input-canvas');
                     }
                     AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                     AppState.ui.pstatsPlayers = AppState.ui.pstatsPlayers.filter(p => p !== removingId);
                     AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
-
-                    const btnAll = document.getElementById('btn-compare-all');
-                    if(btnAll && AppState.ui.currentTab === 'compare') {
-                        if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
-                            btnAll.innerHTML = '☐ 全解除'; btnAll.style.background = '#6c757d';
-                        } else {
-                            btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
-                        }
-                    }
-
-                    // 色情報も削除
+                    
                     if (AppState.data.playerColors && AppState.data.playerColors[removingId]) {
                         delete AppState.data.playerColors[removingId];
                         localStorage.setItem('vlink_player_colors', JSON.stringify(AppState.data.playerColors));
                     }
-
+                    
                     saveToLocal(); renderPlayerGrids();
                     if(AppState.ui.currentTab === 'compare') renderCompareVisual();
                     if(AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
@@ -993,7 +984,6 @@ function saveBatchRename() {
 function editSingleName(e, id) {
     e.stopPropagation();
 
-    // 編集モーダルを画面に生成（初回のみ）
     let modal = document.getElementById('player-edit-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -1010,20 +1000,19 @@ function editSingleName(e, id) {
                 <div>
                     <label style="font-size:12px; font-weight:bold;">背景カラー:</label>
                     <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
-                        <input type="color" id="edit-player-color" style="width:50px; height:35px; border:none; cursor:pointer;">
+                        <input type="color" id="edit-player-color" style="width:50px; height:35px; border:2px solid #333; cursor:pointer; padding:0;">
                         <button type="button" class="action-btn btn-utility" style="padding:6px 10px; font-size:11px; box-shadow:none;" onclick="document.getElementById('edit-player-color').value='#ffffff'">白(標準)に戻す</button>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-                    <button class="action-btn" style="background:#6c757d; padding:8px 15px; box-shadow:none;" onclick="document.getElementById('player-edit-modal').style.display='none'">キャンセル</button>
-                    <button class="action-btn" style="background:#007bff; padding:8px 15px; box-shadow:none;" onclick="savePlayerEdit()">保存</button>
+                <div style="display:flex; justify-content:center; gap:15px; margin-top:10px;">
+                    <button class="action-btn" style="background:#6c757d; width:100px; padding:8px; box-shadow:none;" onclick="document.getElementById('player-edit-modal').style.display='none'">キャンセル</button>
+                    <button class="action-btn" style="background:#007bff; width:100px; padding:8px; box-shadow:none;" onclick="savePlayerEdit()">保存</button>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
     }
 
-    // 選択された選手の現在のデータをセット
     document.getElementById('edit-player-id').value = id;
     document.getElementById('edit-player-name').value = AppState.data.players[id] || '';
     if (!AppState.data.playerColors) AppState.data.playerColors = JSON.parse(localStorage.getItem('vlink_player_colors') || '{}');
