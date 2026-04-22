@@ -421,6 +421,13 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 
 /* ▼ PC用（画面幅1367px以上）：大きく表示し、9人目以降は下段に折り返す ▼ */
 @media (min-width: 1367px) {
+    /* ★ 全体比較タブが開いている時だけ、幅900pxの制限を解除して画面いっぱいに広げる */
+    .split-layout.single-view:has(#view-compare.active) .split-right-wrapper,
+    .split-layout.single-view:has(#view-compare.active) .split-center,
+    .split-layout.single-view:has(#view-compare.active) .main-container {
+        max-width: 1600px !important;
+    }
+
     .compare-cards-wrapper {
         display: flex !important;
         flex-wrap: wrap !important; /* 折り返しを許可 */
