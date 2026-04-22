@@ -490,3 +490,35 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         white-space: nowrap !important;
     }
 }
+
+/* ====================================================
+   「ブロックシャット」ボタンの表示切り替え（PC / iPad）
+   ==================================================== */
+
+/* ▼ パソコン用（画面幅1367px以上）：制約を解除し、1行で均等幅に収まるフォントサイズに調整 ▼ */
+@media (min-width: 1367px) {
+    .btn-block-shut {
+        font-size: 8.5px !important; /* 3つのボタンが均等になるようフォントを縮小 */
+        letter-spacing: -0.5px !important;
+        white-space: nowrap !important; /* 絶対に横1列にする */
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    .btn-block-shut span {
+        display: inline !important; /* 塊の制約を解除 */
+    }
+}
+
+/* ▼ iPad用（画面幅1366px以下）：これまで通りの綺麗な2行表示をキープ ▼ */
+@media (max-width: 1366px) {
+    .btn-block-shut {
+        font-size: 10px !important;
+        letter-spacing: -0.5px !important;
+        padding: 0 2px !important;
+        line-height: 1.1 !important;
+        white-space: normal !important;
+    }
+    .btn-block-shut span {
+        display: inline-block !important; /* 単語の塊で改行させる */
+    }
+}
