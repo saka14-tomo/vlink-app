@@ -547,3 +547,42 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         display: inline-block !important; /* 単語の塊で改行させる */
     }
 }
+
+/* ====================================================
+   【絶対ルール】特定の文字を途中でちぎらせない設定
+   ==================================================== */
+
+/* ▼ パソコン用（前回完璧に均等化した設定を上書きして適用） ▼ */
+@media (min-width: 1367px) {
+    .btn-block-shut, .btn-two-attack {
+        display: flex !important;
+        flex-direction: row !important; /* PCでは横1列 */
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 2px !important;
+    }
+    .btn-block-shut span, .btn-two-attack span {
+        white-space: nowrap !important; /* 文字のちぎれを禁止 */
+    }
+    .btn-block-shut { font-size: 8px !important; letter-spacing: -0.5px !important; }
+    .btn-two-attack { font-size: 9px !important; letter-spacing: -0.5px !important; }
+}
+
+/* ▼ iPad用（今回のエラーの根本解決） ▼ */
+@media (max-width: 1366px) {
+    .btn-block-shut, .btn-two-attack {
+        display: flex !important;
+        flex-direction: column !important; /* iPadでは強制的に縦2段組み */
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 0 !important;
+        line-height: 1.1 !important;
+    }
+    /* ↓これがiPadの暴走を止めるストッパーです↓ */
+    .btn-block-shut span, .btn-two-attack span {
+        display: block !important;
+        white-space: nowrap !important; /* ブラウザによる文字の強制分断を完全禁止 */
+        font-size: 9px !important;
+        letter-spacing: -0.5px !important;
+    }
+}
