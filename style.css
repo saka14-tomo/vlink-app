@@ -397,3 +397,53 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 .compact-btn {
     white-space: normal !important; /* 改行を許可 */
 }
+
+/* ====================================================
+   1. 選択中の選手ボタンのデザイン変更（色を変えず、濃い黄色の外枠＋細い黒線の二重枠）
+   ==================================================== */
+.player-wrapper.active, .player-wrapper.compare-active { 
+    /* 背景色はJSのインラインスタイルが優先されるためCSSでは指定なし */
+    border: 3px solid #ffcc00 !important; /* 濃いめの黄色 */
+    border-bottom: 3px solid #ffcc00 !important;
+    /* 外側と内側に1pxの黒い実線を描画して二重枠を表現 */
+    box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 4px 10px rgba(0,0,0,0.15) !important; 
+    transform: translateY(2px) !important; 
+}
+/* 選択時の文字色は常に黒 */
+.player-wrapper.active .player-btn span, .player-wrapper.compare-active .player-btn span { 
+    color: #333 !important; 
+    font-weight: bold !important; 
+}
+
+/* ====================================================
+   2. 比較画面（全体比較タブ）のレイアウト調整（人数に応じて縮小・縦収まり）
+   ==================================================== */
+.compare-cards-wrapper {
+    display: flex !important;
+    flex-wrap: nowrap !important; /* 絶対に折り返さず横1列に並べる */
+    overflow-x: visible !important;
+    gap: 6px !important;
+    width: 100% !important;
+    justify-content: center !important;
+}
+.compare-card {
+    flex: 1 1 0 !important; /* 人数に応じて均等に縮小する */
+    min-width: 0 !important; /* 限界まで縮小可能にする */
+    max-width: 160px !important;
+    padding: 6px 4px !important; /* 縦幅を抑えるために余白を最小化 */
+}
+.compare-canvas {
+    width: 100% !important;
+    max-width: 130px !important; /* コートが縦に伸びすぎるのを防ぐ */
+    height: auto !important;
+    aspect-ratio: 1 / 2 !important;
+    margin: 0 auto !important;
+}
+.compare-table {
+    margin-top: 4px !important;
+}
+.compare-table td {
+    padding: 2px 1px !important; /* 表の余白を極限まで詰める */
+    font-size: 10px !important; /* 文字を小さくして収める */
+    white-space: nowrap !important;
+}

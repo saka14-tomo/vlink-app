@@ -77,7 +77,7 @@
                         </div>
                         <div style="display: flex; gap: 8px; width: 100%;">
                             <input type="text" id="yt-url-input" placeholder="YouTube URLを貼り付け..." style="flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; outline: none; min-width: 0;">
-                            <button class="action-btn" style="background: #dc3545; padding: 12px 20px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">読込</button>
+                            <button class="action-btn" style="background: #dc3545; padding: 12px 40px; font-size: 13px; flex-shrink: 0;" onclick="loadYouTubeVideo()">読込</button>
                             <button class="action-btn btn-utility" style="padding: 12px 15px; flex-shrink: 0;" onclick="hideYouTubeInput()">✖</button>
                         </div>
                         <div id="yt-playlist-container" style="display: none; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; background: #f9f9f9; border-radius: 4px;"></div>
@@ -170,7 +170,7 @@
                         <div class="btn-row">
                             <button class="action-btn btn-error spike-action-btn compact-btn" onclick="saveAction('spike', 'アウト')" disabled>アウト</button>
                             <button class="action-btn btn-error spike-action-btn compact-btn" onclick="saveAction('spike', 'ネット')" disabled>ネット</button>
-                            <button class="action-btn btn-error spike-action-btn compact-btn" style="font-size: 10px; line-height: 1.1;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロック<br>シャット</button>
+                            <button class="action-btn btn-error spike-action-btn compact-btn" style="font-size: 10px; line-height: 1.1; white-space: normal;" onclick="saveAction('spike', 'ブロックシャット')" disabled>ブロック<br>シャット</button>
                         </div>
 
                         <div class="category-title compact-title">サーブレシーブ</div>
@@ -187,14 +187,14 @@
 
                         <div class="category-title compact-title">トス</div>
                         <div class="btn-row">
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px;" onclick="saveDirectAction('toss', 'レフト')" disabled>レフト</button>
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px;" onclick="saveDirectAction('toss', 'センター')" disabled>センター</button>
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px;" onclick="saveDirectAction('toss', 'ライト')" disabled>ライト</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; white-space: nowrap; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'レフト')" disabled>レフト</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; white-space: nowrap; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'センター')" disabled>センター</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; white-space: nowrap; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'ライト')" disabled>ライト</button>
                         </div>
                         <div class="btn-row">
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 10px; line-height: 1.1;" onclick="saveDirectAction('toss', '２アタック')" disabled>２<br>アタック</button>
-                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px;" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
-                            <button class="action-btn btn-error toss-btn compact-btn" style="font-size: 11px;" onclick="saveDirectAction('toss', 'ミス')" disabled>ミス</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 10px; line-height: 1.1; white-space: normal;" onclick="saveDirectAction('toss', '２アタック')" disabled>２<br>アタック</button>
+                            <button class="action-btn btn-in toss-btn compact-btn" style="font-size: 11px; white-space: nowrap; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'クイック')" disabled>クイック</button>
+                            <button class="action-btn btn-error toss-btn compact-btn" style="font-size: 11px; white-space: nowrap; letter-spacing: -0.5px;" onclick="saveDirectAction('toss', 'ミス')" disabled>ミス</button>
                         </div>
                     </div>
                 </div>

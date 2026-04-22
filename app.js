@@ -204,6 +204,8 @@ function renderPlayerGrids() {
             // ★ カスタム背景色を「常に」適用する（選択時も色はそのまま）
             if (AppState.data.playerColors[i]) {
                 wrapper.style.background = AppState.data.playerColors[i];
+            } else {
+                wrapper.style.background = 'linear-gradient(135deg, #ffffff, #e6e9ec)';
             }
 
             const btn = document.createElement('button'); btn.className = `player-btn`;
