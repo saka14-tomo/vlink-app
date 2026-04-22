@@ -269,30 +269,73 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 }
 
 /* ====================================================
-   iPad・タブレット（横向き）用の画面バランス最適化（動画60%：入力40%）
+   1. 選手カードのコンパクトな「✎」ボタン
    ==================================================== */
-@media (max-width: 1366px) and (min-width: 1101px) {
-    /* 動画エリアと入力エリアの割合を 1.5 : 1 (およそ60%:40%) に設定 */
-    .split-layout { grid-template-columns: 1.5fr 1fr !important; }
+.player-wrapper {
+    position: relative !important;
+}
+.edit-single-btn {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: none !important;
+    border-radius: 0 0 0 8px !important;
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: -1px 1px 4px rgba(0,0,0,0.15) !important;
+    z-index: 5 !important;
+    color: #007bff !important;
+    border-bottom: 1px solid #ddd !important;
+    border-left: 1px solid #ddd !important;
+}
+.edit-single-btn:hover { background: #fff !important; color: #0056b3 !important; }
 
-    /* データ入力エリア全体のすき間と余白を極限まで詰める */
-    .main-container { gap: 6px !important; padding: 10px !important; }
+/* ====================================================
+   2. 1画面時（動画非表示）の「完全中央寄せ」
+   ==================================================== */
+.split-layout.single-view {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+}
+.split-layout.single-view .split-right-wrapper,
+.split-layout.single-view .split-center,
+.split-layout.single-view .main-container {
+    width: 100% !important;
+    max-width: 900px !important;
+    margin: 0 auto !important; /* 中央寄せ */
+    justify-content: center !important;
+}
 
-    /* 選手選択(左側)とボタン(右側)の幅をさらにスリム化 */
-    /* ※コート(中央)はタッチ座標ズレを防ぐため220pxを維持します */
-    .left-panel { width: 110px !important; }
-    .right-panel { width: 140px !important; }
+/* ====================================================
+   3. iPad・タブレット（横向き）用のはみ出し修正
+   ==================================================== */
+@media (max-width: 1366px) {
+    /* 動画エリア(56%) : 入力エリア(44%)の割合に再調整し、入力エリアに余裕を持たせる */
+    .split-layout { grid-template-columns: 1.3fr 1fr !important; }
 
-    /* 選手ボタンの文字サイズと高さを極小化 */
-    .player-wrapper { height: 40px !important; border-bottom: 2px solid #b0b5ba !important; }
-    .player-btn span { font-size: 11px !important; letter-spacing: -0.5px !important; }
-    .edit-single-btn { height: 14px !important; font-size: 8px !important; padding: 2px !important; }
+    .main-container { padding: 10px !important; gap: 8px !important; justify-content: center !important; }
 
-    /* 入力ボタンの文字サイズと高さを微調整（文字がはみ出さないように字間も詰める） */
-    .compact-btn { height: 28px !important; font-size: 9px !important; padding: 0 !important; letter-spacing: -0.5px !important; white-space: nowrap !important; }
-    .category-title { font-size: 10px !important; padding: 3px !important; margin: 2px 0 !important; }
-    .instruction-banner { font-size: 8px !important; margin-bottom: 2px !important; padding: 2px !important; }
+    /* コートはタッチ操作の座標ズレを防ぐため、縮小せず220pxのまま維持 */
+    .court-wrapper { width: 220px !important; flex: none !important; }
 
-    /* その他の下部ボタンなどの余白と文字サイズ調整 */
-    .action-btn { font-size: 9px !important; padding: 6px !important; }
+    /* 左右のパネルを「余白を埋める自動伸縮」に設定し、はみ出しを防ぐ */
+    .left-panel { width: auto !important; flex: 1 1 0 !important; min-width: 80px !important; }
+    .right-panel { width: auto !important; flex: 1.2 1 0 !important; min-width: 120px !important; overflow: hidden !important; }
+
+    /* 各ボタンの文字サイズ・高さをスリム化して枠内に収める */
+    .player-wrapper { height: auto !important; min-height: 40px !important; }
+    .player-btn span { font-size: 11px !important; letter-spacing: -0.5px !important; white-space: normal !important; line-height: 1.1 !important; }
+
+    .compact-btn { height: 32px !important; font-size: 10px !important; padding: 0 2px !important; letter-spacing: -0.5px !important; white-space: normal !important; line-height: 1.1 !important; }
+    .category-title { font-size: 11px !important; padding: 4px !important; margin: 2px 0 !important; white-space: nowrap !important; text-overflow: ellipsis !important; overflow: hidden !important; }
+    .instruction-banner { font-size: 9px !important; padding: 2px !important; margin-bottom: 2px !important; white-space: nowrap !important; text-overflow: ellipsis !important; overflow: hidden !important; }
+    .action-btn { font-size: 10px !important; padding: 6px 4px !important; white-space: normal !important; line-height: 1.2 !important; }
 }

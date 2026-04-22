@@ -165,15 +165,19 @@ function toggleCourt() {
 }
 
 function renderPlayerGrids() {
-    let wrapperHeight = '66px'; let fontSize = '20px';     
-    let editHeight = '20px'; let editFontSize = '10px';
+    let wrapperHeight = '66px'; let fontSize = '20px';
 
     let totalButtons = AppState.data.activePlayerCount;
-    if (AppState.data.activePlayerCount < 12) totalButtons++; 
-    if (AppState.data.activePlayerCount > 1) totalButtons++;  
+    if (AppState.data.activePlayerCount < 12) totalButtons++;
+    if (AppState.data.activePlayerCount > 1) totalButtons++;
 
-    if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; editHeight = '16px'; editFontSize = '9px'; } 
-    else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; editHeight = '18px'; editFontSize = '9px'; }
+    if (totalButtons > 10) { wrapperHeight = '48px'; fontSize = '16px'; }
+    else if (totalButtons > 8) { wrapperHeight = '56px'; fontSize = '18px'; }
+
+    // 色情報をローカルストレージから読み込み（初回のみ）
+    if (!AppState.data.playerColors) {
+        AppState.data.playerColors = JSON.parse(localStorage.getItem('vlink_player_colors') || '{}');
+    }
 
     ['input', 'serve', 'spike', 'compare'].forEach(type => {
         const container = document.getElementById(`player-grid-${type}`); if(!container) return;
@@ -196,20 +200,28 @@ function renderPlayerGrids() {
             else isActive = AppState.ui.statsPlayers.includes(i);
 
             wrapper.className = `player-wrapper ${isActive ? 'active' : ''} ${isCompareActive ? 'compare-active' : ''}`;
+
+            // ★ カスタム背景色の適用（アクティブ選択時以外）
+            if (AppState.data.playerColors[i] && !isActive && !isCompareActive) {
+                wrapper.style.background = AppState.data.playerColors[i];
+            }
+
             const btn = document.createElement('button'); btn.className = `player-btn`;
             btn.onclick = () => selectPlayer(i);
             btn.innerHTML = `<span style="font-size:${currentFontSize};">${AppState.data.players[i]}</span>`;
             wrapper.appendChild(btn);
-            
+
             if (type === 'input') {
-                const editBtn = document.createElement('div'); editBtn.className = 'edit-single-btn';
-                editBtn.style.height = editHeight; editBtn.style.fontSize = editFontSize;
-                editBtn.innerHTML = '✏️ 編集'; editBtn.onclick = (e) => editSingleName(e, i);
+                // ★ 編集ボタンを右上のコンパクトな「✎」に変更
+                const editBtn = document.createElement('div');
+                editBtn.className = 'edit-single-btn';
+                editBtn.innerHTML = '✎';
+                editBtn.onclick = (e) => editSingleName(e, i);
                 wrapper.appendChild(editBtn);
             }
             container.appendChild(wrapper);
         }
-        
+
         if (AppState.data.activePlayerCount < 12) {
             const addWrapper = document.createElement('div');
             addWrapper.className = 'player-wrapper player-add-btn';
@@ -225,13 +237,13 @@ function renderPlayerGrids() {
             addWrapper.innerHTML = `<span style="font-size:${currentFontSize};">＋</span>`;
             container.appendChild(addWrapper);
         }
-        
+
         if (AppState.data.activePlayerCount > 1) {
             const removeWrapper = document.createElement('div');
             removeWrapper.className = 'player-wrapper player-add-btn';
             let currentWrapperHeight = (type === 'compare') ? '46px' : wrapperHeight;
 
-            removeWrapper.style.height = currentWrapperHeight; 
+            removeWrapper.style.height = currentWrapperHeight;
             removeWrapper.style.borderColor = '#dc3545';
             removeWrapper.onmouseover = () => removeWrapper.style.backgroundColor = '#fff5f5';
             removeWrapper.onmouseout = () => removeWrapper.style.backgroundColor = 'transparent';
@@ -239,14 +251,14 @@ function renderPlayerGrids() {
                 if(confirm(`No.${AppState.data.activePlayerCount} (${AppState.data.players[AppState.data.activePlayerCount]}) の選手枠を削除しますか？\n※記録済みのデータ自体は残りますが、選択できなくなります。`)) {
                     const removingId = AppState.data.activePlayerCount;
                     AppState.data.activePlayerCount--;
-                    
+
                     if(AppState.ui.selectedPlayerId === removingId) {
                         AppState.ui.selectedPlayerId = null; resetInput(); draw('input-canvas');
                     }
                     AppState.ui.comparePlayers = AppState.ui.comparePlayers.filter(p => p !== removingId);
                     AppState.ui.pstatsPlayers = AppState.ui.pstatsPlayers.filter(p => p !== removingId);
                     AppState.ui.statsPlayers = AppState.ui.statsPlayers.filter(p => p !== removingId);
-                    
+
                     const btnAll = document.getElementById('btn-compare-all');
                     if(btnAll && AppState.ui.currentTab === 'compare') {
                         if(AppState.ui.comparePlayers.length === AppState.data.activePlayerCount) {
@@ -255,7 +267,13 @@ function renderPlayerGrids() {
                             btnAll.innerHTML = '☑️ 一括表示'; btnAll.style.background = '#17a2b8';
                         }
                     }
-                    
+
+                    // 色情報も削除
+                    if (AppState.data.playerColors && AppState.data.playerColors[removingId]) {
+                        delete AppState.data.playerColors[removingId];
+                        localStorage.setItem('vlink_player_colors', JSON.stringify(AppState.data.playerColors));
+                    }
+
                     saveToLocal(); renderPlayerGrids();
                     if(AppState.ui.currentTab === 'compare') renderCompareVisual();
                     if(AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
@@ -974,15 +992,68 @@ function saveBatchRename() {
 
 function editSingleName(e, id) {
     e.stopPropagation();
-    const newName = prompt(`No.${id} の選手名を入力してください:`, AppState.data.players[id]);
-    if (newName !== null) {
-        const trimmed = newName.trim();
-        AppState.data.players[id] = trimmed === "" ? String(id) : trimmed;
-        saveToLocal(); renderPlayerGrids(); updateLog();
-        if (AppState.ui.currentTab === 'compare') renderCompareVisual();
-        if (AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
+
+    // 編集モーダルを画面に生成（初回のみ）
+    let modal = document.getElementById('player-edit-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'player-edit-modal';
+        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;';
+        modal.innerHTML = `
+            <div style="background:white; padding:20px; border-radius:12px; width:80%; max-width:300px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+                <h3 style="margin:0; border-bottom:2px solid #007bff; padding-bottom:8px; font-size:16px;">✏️ 選手編集</h3>
+                <input type="hidden" id="edit-player-id">
+                <div>
+                    <label style="font-size:12px; font-weight:bold;">名前:</label>
+                    <input type="text" id="edit-player-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; margin-top:4px;">
+                </div>
+                <div>
+                    <label style="font-size:12px; font-weight:bold;">背景カラー:</label>
+                    <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
+                        <input type="color" id="edit-player-color" style="width:50px; height:35px; border:none; cursor:pointer;">
+                        <button type="button" class="action-btn btn-utility" style="padding:6px 10px; font-size:11px; box-shadow:none;" onclick="document.getElementById('edit-player-color').value='#ffffff'">白(標準)に戻す</button>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                    <button class="action-btn" style="background:#6c757d; padding:8px 15px; box-shadow:none;" onclick="document.getElementById('player-edit-modal').style.display='none'">キャンセル</button>
+                    <button class="action-btn" style="background:#007bff; padding:8px 15px; box-shadow:none;" onclick="savePlayerEdit()">保存</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
+
+    // 選択された選手の現在のデータをセット
+    document.getElementById('edit-player-id').value = id;
+    document.getElementById('edit-player-name').value = AppState.data.players[id] || '';
+    if (!AppState.data.playerColors) AppState.data.playerColors = JSON.parse(localStorage.getItem('vlink_player_colors') || '{}');
+    document.getElementById('edit-player-color').value = AppState.data.playerColors[id] || '#ffffff';
+
+    modal.style.display = 'flex';
 }
+
+window.savePlayerEdit = function() {
+    const id = document.getElementById('edit-player-id').value;
+    const name = document.getElementById('edit-player-name').value.trim();
+    const color = document.getElementById('edit-player-color').value;
+
+    // 名前と色の保存
+    AppState.data.players[id] = name === "" ? String(id) : name;
+    if (!AppState.data.playerColors) AppState.data.playerColors = {};
+
+    if (color === '#ffffff') {
+        delete AppState.data.playerColors[id]; // 白の場合は標準のグラデーションに戻す
+    } else {
+        AppState.data.playerColors[id] = color;
+    }
+
+    localStorage.setItem('vlink_player_colors', JSON.stringify(AppState.data.playerColors));
+    document.getElementById('player-edit-modal').style.display = 'none';
+
+    saveToLocal(); renderPlayerGrids(); updateLog();
+    if (AppState.ui.currentTab === 'compare') renderCompareVisual();
+    if (AppState.ui.currentTab === 'player-stats') renderPlayerStatsTable();
+};
 
 // ==========================================
 // 6. 動画制御 (Video Manager) & 履歴機能
