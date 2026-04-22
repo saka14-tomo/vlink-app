@@ -416,34 +416,70 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 }
 
 /* ====================================================
-   2. 比較画面（全体比較タブ）のレイアウト調整（人数に応じて縮小・縦収まり）
+   2. 比較画面（全体比較タブ）のレイアウト調整（PCとiPadで分岐）
    ==================================================== */
-.compare-cards-wrapper {
-    display: flex !important;
-    flex-wrap: nowrap !important; /* 絶対に折り返さず横1列に並べる */
-    overflow-x: visible !important;
-    gap: 6px !important;
-    width: 100% !important;
-    justify-content: center !important;
+
+/* ▼ PC用（画面幅1367px以上）：大きく表示し、9人目以降は下段に折り返す ▼ */
+@media (min-width: 1367px) {
+    .compare-cards-wrapper {
+        display: flex !important;
+        flex-wrap: wrap !important; /* 折り返しを許可 */
+        gap: 15px !important;
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .compare-card {
+        flex: 1 1 calc(12.5% - 15px) !important; /* 1行に最大8つ並ぶように幅を計算 */
+        min-width: 140px !important; /* PC用に最低サイズを大きく */
+        max-width: 180px !important; /* 大きくなりすぎないように制限 */
+        padding: 10px 8px !important; 
+    }
+    .compare-canvas {
+        width: 100% !important;
+        max-width: 160px !important; 
+        height: auto !important;
+        aspect-ratio: 1 / 2 !important;
+        margin: 0 auto !important;
+    }
+    .compare-table {
+        margin-top: 8px !important;
+    }
+    .compare-table td {
+        padding: 4px 2px !important;
+        font-size: 12px !important; /* 文字も少し大きく */
+        white-space: nowrap !important;
+    }
 }
-.compare-card {
-    flex: 1 1 0 !important; /* 人数に応じて均等に縮小する */
-    min-width: 0 !important; /* 限界まで縮小可能にする */
-    max-width: 160px !important;
-    padding: 6px 4px !important; /* 縦幅を抑えるために余白を最小化 */
-}
-.compare-canvas {
-    width: 100% !important;
-    max-width: 130px !important; /* コートが縦に伸びすぎるのを防ぐ */
-    height: auto !important;
-    aspect-ratio: 1 / 2 !important;
-    margin: 0 auto !important;
-}
-.compare-table {
-    margin-top: 4px !important;
-}
-.compare-table td {
-    padding: 2px 1px !important; /* 表の余白を極限まで詰める */
-    font-size: 10px !important; /* 文字を小さくして収める */
-    white-space: nowrap !important;
+
+/* ▼ iPad・タブレット用（画面幅1366px以下）：これまで通り1段に縮小して収める ▼ */
+@media (max-width: 1366px) {
+    .compare-cards-wrapper {
+        display: flex !important;
+        flex-wrap: nowrap !important; /* 絶対に折り返さず横1列に並べる */
+        overflow-x: visible !important;
+        gap: 6px !important;
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .compare-card {
+        flex: 1 1 0 !important; /* 人数に応じて均等に縮小する */
+        min-width: 0 !important; /* 限界まで縮小可能にする */
+        max-width: 160px !important;
+        padding: 6px 4px !important; /* 縦幅を抑えるために余白を最小化 */
+    }
+    .compare-canvas {
+        width: 100% !important;
+        max-width: 130px !important; /* コートが縦に伸びすぎるのを防ぐ */
+        height: auto !important;
+        aspect-ratio: 1 / 2 !important;
+        margin: 0 auto !important;
+    }
+    .compare-table {
+        margin-top: 4px !important;
+    }
+    .compare-table td {
+        padding: 2px 1px !important; /* 表の余白を極限まで詰める */
+        font-size: 10px !important; /* 文字を小さくして収める */
+        white-space: nowrap !important;
+    }
 }
