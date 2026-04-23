@@ -334,7 +334,6 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     .player-wrapper { height: auto !important; min-height: 40px !important; }
     .player-btn span { font-size: 11px !important; letter-spacing: -0.5px !important; white-space: normal !important; line-height: 1.1 !important; }
 
-    .compact-btn { height: 32px !important; font-size: 10px !important; padding: 0 2px !important; letter-spacing: -0.5px !important; white-space: normal !important; line-height: 1.1 !important; }
     .category-title { font-size: 11px !important; padding: 4px !important; margin: 2px 0 !important; white-space: nowrap !important; text-overflow: ellipsis !important; overflow: hidden !important; }
     .instruction-banner { font-size: 9px !important; padding: 2px !important; margin-bottom: 2px !important; white-space: nowrap !important; text-overflow: ellipsis !important; overflow: hidden !important; }
     .action-btn { font-size: 10px !important; padding: 6px 4px !important; white-space: normal !important; line-height: 1.2 !important; }
@@ -534,18 +533,51 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     }
 }
 
-/* ▼ iPad用（画面幅1366px以下）：これまで通りの綺麗な2行表示をキープ ▼ */
+/* ====================================================
+   iPad・モバイル用：柔軟なサイズ比率とフォント調整
+   ==================================================== */
 @media (max-width: 1366px) {
-    .btn-block-shut {
-        font-size: 10px !important;
-        letter-spacing: -0.5px !important;
-        padding: 0 2px !important;
-        line-height: 1.1 !important;
-        white-space: normal !important;
+    /* ボタンを並べる行の基本設定 */
+    .btn-row {
+        display: flex !important;
+        gap: 2% !important; /* 固定pxではなく%で隙間を作る */
+        justify-content: space-between !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
     }
-    .btn-block-shut span {
-        display: inline-block !important; /* 単語の塊で改行させる */
+
+    /* 統一ルール：指定された9つのボタンを対象 */
+    /* スパイク（アウト/ネット/ブロックシャット）、トス（全6種） */
+    .compact-btn {
+        flex: 1 !important; /* 横幅を均等に分ける */
+        /* ★ 55.53 : 32 の比率を維持 */
+        aspect-ratio: 55.53 / 32 !important;
+        height: auto !important; /* 高さは比率に合わせて自動決定 */
+
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 4px !important;
+        border-radius: 8px !important;
+
+        /* ★ デバイスに合わせてフォントサイズを 9px 〜 12px で自動伸縮 */
+        font-size: clamp(9px, 1.2vw, 12px) !important;
+        font-weight: bold !important;
+        white-space: nowrap !important; /* 勝手な改行を禁止 */
+        overflow: hidden !important;
     }
+
+    /* ★ 5文字以上のボタン専用ルール：さらにフォントを小さく */
+    /* ブロックシャット、2アタック など */
+    .btn-block-shut,
+    .btn-two-attack {
+        /* 標準よりさらに小さい 7px 〜 9.5px で自動伸縮 */
+        font-size: clamp(7px, 1vw, 9.5px) !important;
+        letter-spacing: -0.5px !important; /* 文字間を詰めて収める */
+    }
+
+    /* 選手カードなどの他の要素への影響を防ぐため、
+       .compact-btn 以外のボタンサイズは既存のまま維持されます */
 }
 
 /* ====================================================
@@ -566,23 +598,4 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     }
     .btn-block-shut { font-size: 8px !important; letter-spacing: -0.5px !important; }
     .btn-two-attack { font-size: 9px !important; letter-spacing: -0.5px !important; }
-}
-
-/* ▼ iPad用（今回のエラーの根本解決） ▼ */
-@media (max-width: 1366px) {
-    .btn-block-shut, .btn-two-attack {
-        display: flex !important;
-        flex-direction: column !important; /* iPadでは強制的に縦2段組み */
-        justify-content: center !important;
-        align-items: center !important;
-        padding: 0 !important;
-        line-height: 1.1 !important;
-    }
-    /* ↓これがiPadの暴走を止めるストッパーです↓ */
-    .btn-block-shut span, .btn-two-attack span {
-        display: block !important;
-        white-space: nowrap !important; /* ブラウザによる文字の強制分断を完全禁止 */
-        font-size: 9px !important;
-        letter-spacing: -0.5px !important;
-    }
 }
