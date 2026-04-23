@@ -599,3 +599,18 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     .btn-block-shut { font-size: 8px !important; letter-spacing: -0.5px !important; }
     .btn-two-attack { font-size: 9px !important; letter-spacing: -0.5px !important; }
 }
+
+/* iPadおよびモバイル端末向けの文字収まり最適化 */
+@media screen and (max-width: 1024px) {
+    .btn-row .action-btn {
+        min-width: 0 !important;
+    }
+
+    .action-btn {
+        white-space: nowrap !important; /* 文字の折り返しを禁止して1行に収める */
+        padding-left: 4px !important;   /* 左右の余白を狭くしてスペースを確保 */
+        padding-right: 4px !important;
+        font-size: 12px !important;     /* 少し小さめの文字サイズで収める */
+        letter-spacing: -0.5px !important; /* 文字間を少し詰める */
+    }
+}
