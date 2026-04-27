@@ -616,31 +616,46 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 }
 
 /* ====================================================
-   iPad・モバイル用：文字サイズの最終調整（上書き）
+   iPad・モバイル用：レイアウト最終調整（ブロック2段 & トス縮小）
    ==================================================== */
 @media (max-width: 1366px) {
-    /* 1. 一般ボタンのフォントサイズを統一（見やすく適した大きさに） */
+    /* 1. 一般ボタン（エース・決定・レシーブなど）の標準サイズ */
     .compact-btn {
-        font-size: clamp(11px, 1.4vw, 14px) !important;
+        font-size: clamp(11px, 1.4vw, 13px) !important;
     }
 
-    /* 2. 「２アタック」専用サイズ */
-    .btn-two-attack {
-        font-size: clamp(9px, 1.1vw, 11px) !important;
+    /* 2. トス結果のボタンをさらに小さく設定 */
+    .toss-btn {
+        font-size: 10px !important; /* 全体より一回り小さく */
         letter-spacing: -0.5px !important;
     }
 
-    /* 3. 「ブロックシャット」専用サイズ（枠内に確実に収めるため極小化） */
-    .btn-block-shut {
-        font-size: 8px !important;
-        letter-spacing: -0.8px !important; /* 文字間をギュッと詰める */
-        padding-left: 2px !important;
-        padding-right: 2px !important;
+    /* 3. 「２アタック」の微調整（2段表示かつ小サイズ） */
+    .btn-two-attack {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        line-height: 1.1 !important;
+        font-size: 9px !important;
     }
-    
-    /* ブロックシャットの文字をちぎれさせず1行に収める */
+    .btn-two-attack span {
+        display: block !important;
+    }
+
+    /* 4. 「ブロックシャット」を2段表示に変更 */
+    .btn-block-shut {
+        display: flex !important;
+        flex-direction: column !important; /* 縦に並べる */
+        justify-content: center !important;
+        align-items: center !important;
+        line-height: 1.1 !important; /* 行間を詰める */
+        font-size: 10px !important;   /* 2段にする分、1段の時より少しだけ読みやすく */
+        padding: 2px 0 !important;
+    }
+
+    /* spanタグで囲った部分を強制的に改行させる */
     .btn-block-shut span {
-        display: inline-block !important;
+        display: block !important;
         white-space: nowrap !important;
     }
 }
