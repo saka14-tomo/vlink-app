@@ -1281,7 +1281,7 @@ function loadLocalVideo(event) {
     toggleVideoSource('hide'); 
 }
 
-// ★変更: async を追加
+// ★変更: async を追加し、タイトル取得とSupabase送信処理を組み込み
 async function loadYouTubeVideo() {
     const url = document.getElementById('yt-url-input').value;
     if (!url) { alert("URLを入力してください。"); return; }
@@ -1301,14 +1301,28 @@ async function loadYouTubeVideo() {
         if (existingItem && existingItem.name && existingItem.name !== "YouTube Video") {
             vidName = existingItem.name; // すでに履歴に名前があればそれを使う
         } else {
-            // ★追加: 新規のURLなら、ここでタイトルを自動取得する
-            document.getElementById('yt-url-input').value = "タイトルを取得中..."; // ユーザーへのフィードバック
+            // ★追加: 新規のURLならタイトルを自動取得
+            document.getElementById('yt-url-input').value = "タイトルを取得中...";
             vidName = await getYouTubeVideoInfo(url);
         }
 
         AppState.video.name = vidName; 
         AppState.video.id = "yt_" + videoId;
         AppState.video.type = 'youtube'; 
+
+        // ★追加: Supabaseの新しい video_history テーブルへ保存指示
+        if (supabaseClient) {
+            supabaseClient.from('video_history').insert([
+                { 
+                    youtube_url: url, 
+                    youtube_video_id: videoId,
+                    title: vidName
+                    // user_id は現在未設定
+                }
+            ]).then(({ error }) => {
+                if(error) console.warn("Supabase保存待機中(ログイン未実装):", error.message);
+            });
+        }
         
         addToHistory(AppState.video.id, AppState.video.name, 'youtube', url);
         showPlayer('youtube');
