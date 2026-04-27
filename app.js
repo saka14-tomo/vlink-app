@@ -984,6 +984,74 @@ function saveBatchRename() {
     saveToLocal(); renderPlayerGrids(); switchTab('input');
 }
 
+// ==========================================
+// 選手カラー編集用 補助関数
+// ==========================================
+window.selectPlayerColor = function(hex) {
+    document.getElementById('edit-player-color').value = hex;
+    document.getElementById('current-color-preview').style.background = hex;
+};
+
+window.renderCustomColors = function() {
+    // マイカラーの初期値（保存されていなければこの色セット）
+    let customColors = JSON.parse(localStorage.getItem('vlink_custom_colors') || '["#ff4d4d", "#007bff", "#28a745", "#ffc107", "#e83e8c", "#6f42c1"]');
+    const container = document.getElementById('custom-colors-container');
+    if(!container) return;
+    container.innerHTML = '';
+
+    let isDeleteMode = container.dataset.deleteMode === 'true';
+
+    customColors.forEach((color, index) => {
+        let div = document.createElement('div');
+        div.style.cssText = `width:26px; height:26px; border-radius:4px; background:${color}; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2); position:relative;`;
+
+        if (isDeleteMode) {
+            // 削除モード時
+            div.innerHTML = `<div style="position:absolute; top:-6px; right:-6px; background:#dc3545; color:white; font-size:10px; font-weight:bold; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border-radius:50%; box-shadow:0 1px 2px rgba(0,0,0,0.3);">×</div>`;
+            div.onclick = () => deleteCustomColor(index);
+        } else {
+            // 通常時（選択）
+            div.onclick = () => selectPlayerColor(color);
+        }
+        container.appendChild(div);
+    });
+};
+
+window.addCustomColor = function(hex) {
+    let customColors = JSON.parse(localStorage.getItem('vlink_custom_colors') || '["#ff4d4d", "#007bff", "#28a745", "#ffc107", "#e83e8c", "#6f42c1"]');
+    if (!customColors.includes(hex)) {
+        customColors.push(hex);
+        localStorage.setItem('vlink_custom_colors', JSON.stringify(customColors));
+    }
+    selectPlayerColor(hex);
+    renderCustomColors();
+};
+
+window.deleteCustomColor = function(index) {
+    let customColors = JSON.parse(localStorage.getItem('vlink_custom_colors') || '[]');
+    customColors.splice(index, 1);
+    localStorage.setItem('vlink_custom_colors', JSON.stringify(customColors));
+    renderCustomColors();
+};
+
+window.toggleColorDeleteMode = function() {
+    const container = document.getElementById('custom-colors-container');
+    let isDeleteMode = container.dataset.deleteMode === 'true';
+    container.dataset.deleteMode = !isDeleteMode;
+
+    const btn = document.getElementById('toggle-color-delete-btn');
+    if (btn) {
+        btn.innerText = !isDeleteMode ? "完了" : "削除";
+        btn.style.background = !isDeleteMode ? "#dc3545" : "#f8f9fa";
+        btn.style.color = !isDeleteMode ? "white" : "#333";
+    }
+    renderCustomColors();
+};
+
+
+// ==========================================
+// 選手名・カラー編集モーダル (書き換え部分)
+// ==========================================
 function editSingleName(e, id) {
     e.stopPropagation();
 
@@ -992,34 +1060,51 @@ function editSingleName(e, id) {
         modal = document.createElement('div');
         modal.id = 'player-edit-modal';
         modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;';
-        // 【変更点】inputにEnterキーでの保存処理(onkeydown)と、おすすめカラーパレットを追加
+
+        // エクセル風基本カラーパレット（4段x7列 = 28色）
+        const standardColorsHTML = [
+            '#000000', '#444444', '#666666', '#999999', '#cccccc', '#eeeeee', '#ffffff',
+            '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#9900ff',
+            '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#cfe2f3', '#d9d2e9',
+            '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3d85c6', '#674ea7'
+        ].map(c => `<div onclick="selectPlayerColor('${c}')" style="background:${c}; width:100%; aspect-ratio:1; border:1px solid #ddd; cursor:pointer; box-sizing:border-box;"></div>`).join('');
+
         modal.innerHTML = `
-            <div style="background:white; padding:20px; border-radius:12px; width:80%; max-width:300px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+            <div style="background:white; padding:20px; border-radius:12px; width:90%; max-width:320px; display:flex; flex-direction:column; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
                 <h3 style="margin:0; border-bottom:2px solid #007bff; padding-bottom:8px; font-size:16px;">✏️ 選手編集</h3>
                 <input type="hidden" id="edit-player-id">
+
                 <div>
                     <label style="font-size:12px; font-weight:bold;">名前:</label>
                     <input type="text" id="edit-player-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; margin-top:4px;" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); savePlayerEdit(); }">
                 </div>
+
                 <div>
                     <label style="font-size:12px; font-weight:bold;">背景カラー:</label>
-                    <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
-                        <input type="color" id="edit-player-color" style="width:50px; height:35px; border:2px solid #333; cursor:pointer; padding:0;">
-                        <button type="button" class="action-btn btn-utility" style="padding:6px 10px; font-size:11px; box-shadow:none;" onclick="document.getElementById('edit-player-color').value='#ffffff'">白(標準)に戻す</button>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:4px; margin-bottom:10px;">
+                        <div id="current-color-preview" style="width:40px; height:30px; border:2px solid #333; border-radius:4px; box-shadow:inset 0 0 4px rgba(0,0,0,0.1);"></div>
+                        <input type="hidden" id="edit-player-color">
+                        <button type="button" class="action-btn btn-utility" style="padding:6px 10px; font-size:11px; box-shadow:none;" onclick="selectPlayerColor('#ffffff')">白(標準)に戻す</button>
                     </div>
-                    
-                    <div style="font-size:11px; color:#666; margin-top:10px; margin-bottom:4px;">おすすめカラー:</div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start;">
-                        <div onclick="document.getElementById('edit-player-color').value='#ff4d4d'" style="width:24px; height:24px; border-radius:50%; background:#ff4d4d; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#007bff'" style="width:24px; height:24px; border-radius:50%; background:#007bff; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#28a745'" style="width:24px; height:24px; border-radius:50%; background:#28a745; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#ffc107'" style="width:24px; height:24px; border-radius:50%; background:#ffc107; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#fd7e14'" style="width:24px; height:24px; border-radius:50%; background:#fd7e14; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#e83e8c'" style="width:24px; height:24px; border-radius:50%; background:#e83e8c; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-                        <div onclick="document.getElementById('edit-player-color').value='#6f42c1'" style="width:24px; height:24px; border-radius:50%; background:#6f42c1; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+
+                    <div style="font-size:11px; color:#666; margin-bottom:4px; font-weight:bold;">基本カラー</div>
+                    <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; margin-bottom:12px; border:1px solid #ccc; padding:2px; background:#f8f9fa;">
+                        ${standardColorsHTML}
                     </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:11px; color:#666; font-weight:bold;">マイカラー</div>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" style="background:#007bff; color:white; border:none; border-radius:3px; font-size:10px; padding:4px 8px; cursor:pointer;" onclick="document.getElementById('native-color-picker').click()">+ 追加</button>
+                            <button id="toggle-color-delete-btn" type="button" style="background:#f8f9fa; color:#333; border:1px solid #ccc; border-radius:3px; font-size:10px; padding:4px 8px; cursor:pointer;" onclick="toggleColorDeleteMode()">削除</button>
+                        </div>
+                    </div>
+                    <div id="custom-colors-container" style="display:flex; flex-wrap:wrap; gap:8px; min-height:30px; padding-bottom:4px;"></div>
+
+                    <input type="color" id="native-color-picker" style="display:none;" onchange="addCustomColor(this.value)">
                 </div>
-                <div style="display:flex; justify-content:center; gap:15px; margin-top:15px;">
+
+                <div style="display:flex; justify-content:center; gap:15px; margin-top:10px;">
                     <button class="action-btn" style="background:#6c757d; width:100px; padding:8px; box-shadow:none;" onclick="document.getElementById('player-edit-modal').style.display='none'">キャンセル</button>
                     <button class="action-btn" style="background:#007bff; width:100px; padding:8px; box-shadow:none;" onclick="savePlayerEdit()">保存</button>
                 </div>
@@ -1028,14 +1113,28 @@ function editSingleName(e, id) {
         document.body.appendChild(modal);
     }
 
+    // データのセット
     document.getElementById('edit-player-id').value = id;
     document.getElementById('edit-player-name').value = AppState.data.players[id] || '';
+
     if (!AppState.data.playerColors) AppState.data.playerColors = JSON.parse(localStorage.getItem('vlink_player_colors') || '{}');
-    document.getElementById('edit-player-color').value = AppState.data.playerColors[id] || '#ffffff';
+    const initialColor = AppState.data.playerColors[id] || '#ffffff';
+    selectPlayerColor(initialColor);
+
+    // 削除モードを「通常」にリセットしてからマイカラーを描画
+    const customContainer = document.getElementById('custom-colors-container');
+    if (customContainer) {
+        customContainer.dataset.deleteMode = 'false';
+        const btn = document.getElementById('toggle-color-delete-btn');
+        if(btn) {
+            btn.innerText = "削除";
+            btn.style.background = "#f8f9fa";
+            btn.style.color = "#333";
+        }
+    }
+    renderCustomColors();
 
     modal.style.display = 'flex';
-
-    // 【おまけ機能】モーダルが開いた瞬間に名前入力欄を選択状態にして、すぐタイピングできるようにする
     setTimeout(() => { document.getElementById('edit-player-name').focus(); }, 10);
 }
 
