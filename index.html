@@ -133,6 +133,7 @@
                             <div id="player-grid-input" class="player-grid"></div>
                         </div>
                         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 15px;">
+                            <button id="btn-court-toggle" class="action-btn" style="background:#6f42c1; font-size: 11px; padding: 8px; font-weight: bold; width: 100%; box-shadow:none; margin-bottom: 5px;" onclick="toggleCourt()">🔄 自コート: 下側</button>
                             <button class="action-btn" style="background:#4a4a4a; font-size: 11px; padding: 8px; width: 100%;" onclick="openRenameView()">📝 選手名一括設定</button>
                             <button class="action-btn" style="background:#28a745; font-size: 11px; padding: 8px; width: 100%;" onclick="registerCurrentTeam()">💾 現在の選手を登録</button>
                             <button class="action-btn" style="background:#17a2b8; font-size: 11px; padding: 8px; width: 100%; box-shadow:none;" onclick="openTeamSelectModal()">👥 チーム呼出</button>
@@ -144,8 +145,7 @@
                         <canvas id="input-canvas"></canvas>
                         <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
                         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-                            <button id="btn-court-toggle" class="action-btn" style="background:#6f42c1; font-size: 11px; padding: 8px; font-weight: bold; width: 100%; box-shadow:none;" onclick="toggleCourt()">🔄 自コート: 下側</button>
-                            <button class="action-btn btn-utility" style="padding: 8px; font-size: 11px; font-weight: bold; width: 100%; box-sizing: border-box;" onclick="cancelCurrentInput()">🔙 一つ戻る</button>
+                            <button class="action-btn btn-utility" style="padding: 12px; font-size: 13px; font-weight: bold; width: 100%; box-sizing: border-box;" onclick="cancelCurrentInput()">🔙 一つ戻る</button>
                         </div>
                     </div>
 
