@@ -1177,6 +1177,18 @@ window.savePlayerEdit = function() {
 // 6. 動画制御 (Video Manager) & 履歴機能
 // ==========================================
 
+// ★追加: YouTubeのURLからタイトルを自動取得する関数
+async function getYouTubeVideoInfo(videoUrl) {
+    try {
+        const response = await fetch(`https://noembed.com/embed?url=${videoUrl}`);
+        const data = await response.json();
+        return data.title || "無題の動画";
+    } catch (error) {
+        console.error("動画情報の取得に失敗しました:", error);
+        return "無題の動画";
+    }
+}
+
 window.updatePlaybackSettings = function() {
     AppState.settings.preRoll = parseInt(document.getElementById('preroll-time-select').value, 10);
     AppState.settings.playDuration = parseInt(document.getElementById('playduration-time-select').value, 10);
@@ -1269,7 +1281,8 @@ function loadLocalVideo(event) {
     toggleVideoSource('hide'); 
 }
 
-function loadYouTubeVideo() {
+// ★変更: async を追加
+async function loadYouTubeVideo() {
     const url = document.getElementById('yt-url-input').value;
     if (!url) { alert("URLを入力してください。"); return; }
     
@@ -1283,7 +1296,15 @@ function loadYouTubeVideo() {
         else { alert("⚠️ URLから動画IDを読み取れませんでした。"); return; }
 
         let existingItem = (AppState.videoHistory || []).find(h => h.id === "yt_" + videoId);
-        let vidName = (existingItem && existingItem.name !== "YouTube Video") ? existingItem.name : "YouTube Video";
+        let vidName = "YouTube Video";
+
+        if (existingItem && existingItem.name && existingItem.name !== "YouTube Video") {
+            vidName = existingItem.name; // すでに履歴に名前があればそれを使う
+        } else {
+            // ★追加: 新規のURLなら、ここでタイトルを自動取得する
+            document.getElementById('yt-url-input').value = "タイトルを取得中..."; // ユーザーへのフィードバック
+            vidName = await getYouTubeVideoInfo(url);
+        }
 
         AppState.video.name = vidName; 
         AppState.video.id = "yt_" + videoId;
@@ -1300,6 +1321,7 @@ function loadYouTubeVideo() {
         } else { rebuildYTPlayer(videoId); }
         
         document.getElementById('yt-url-input').blur();
+        document.getElementById('yt-url-input').value = ''; // 入力欄をクリア
         AppState.video.time = 0; updateTimerDisplay(); checkAndLoadVideoData(AppState.video.id);
         toggleVideoSource('hide');
     } else {
