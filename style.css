@@ -614,3 +614,33 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         letter-spacing: -0.5px !important; /* 文字間を少し詰める */
     }
 }
+
+/* ====================================================
+   iPad・モバイル用：文字サイズの最終調整（上書き）
+   ==================================================== */
+@media (max-width: 1366px) {
+    /* 1. 一般ボタンのフォントサイズを統一（見やすく適した大きさに） */
+    .compact-btn {
+        font-size: clamp(11px, 1.4vw, 14px) !important;
+    }
+
+    /* 2. 「２アタック」専用サイズ */
+    .btn-two-attack {
+        font-size: clamp(9px, 1.1vw, 11px) !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    /* 3. 「ブロックシャット」専用サイズ（枠内に確実に収めるため極小化） */
+    .btn-block-shut {
+        font-size: 8px !important;
+        letter-spacing: -0.8px !important; /* 文字間をギュッと詰める */
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+    }
+    
+    /* ブロックシャットの文字をちぎれさせず1行に収める */
+    .btn-block-shut span {
+        display: inline-block !important;
+        white-space: nowrap !important;
+    }
+}
