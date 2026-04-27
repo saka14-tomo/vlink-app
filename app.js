@@ -970,7 +970,8 @@ function openRenameView() {
     }
     for(let i = 1; i <= AppState.data.activePlayerCount; i++) {
         const input = document.getElementById(`rename-input-${i}`);
-        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); input.blur(); document.getElementById('save-rename-btn').focus(); } });
+        // 【変更点】Enterキーで直接保存(saveBatchRename)を実行するように変更
+        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); input.blur(); saveBatchRename(); } });
     }
     switchTab('rename');
 }
@@ -991,13 +992,14 @@ function editSingleName(e, id) {
         modal = document.createElement('div');
         modal.id = 'player-edit-modal';
         modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;';
+        // 【変更点】inputにEnterキーでの保存処理(onkeydown)と、おすすめカラーパレットを追加
         modal.innerHTML = `
             <div style="background:white; padding:20px; border-radius:12px; width:80%; max-width:300px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
                 <h3 style="margin:0; border-bottom:2px solid #007bff; padding-bottom:8px; font-size:16px;">✏️ 選手編集</h3>
                 <input type="hidden" id="edit-player-id">
                 <div>
                     <label style="font-size:12px; font-weight:bold;">名前:</label>
-                    <input type="text" id="edit-player-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; margin-top:4px;">
+                    <input type="text" id="edit-player-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; margin-top:4px;" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); savePlayerEdit(); }">
                 </div>
                 <div>
                     <label style="font-size:12px; font-weight:bold;">背景カラー:</label>
@@ -1005,8 +1007,19 @@ function editSingleName(e, id) {
                         <input type="color" id="edit-player-color" style="width:50px; height:35px; border:2px solid #333; cursor:pointer; padding:0;">
                         <button type="button" class="action-btn btn-utility" style="padding:6px 10px; font-size:11px; box-shadow:none;" onclick="document.getElementById('edit-player-color').value='#ffffff'">白(標準)に戻す</button>
                     </div>
+                    
+                    <div style="font-size:11px; color:#666; margin-top:10px; margin-bottom:4px;">おすすめカラー:</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start;">
+                        <div onclick="document.getElementById('edit-player-color').value='#ff4d4d'" style="width:24px; height:24px; border-radius:50%; background:#ff4d4d; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#007bff'" style="width:24px; height:24px; border-radius:50%; background:#007bff; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#28a745'" style="width:24px; height:24px; border-radius:50%; background:#28a745; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#ffc107'" style="width:24px; height:24px; border-radius:50%; background:#ffc107; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#fd7e14'" style="width:24px; height:24px; border-radius:50%; background:#fd7e14; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#e83e8c'" style="width:24px; height:24px; border-radius:50%; background:#e83e8c; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                        <div onclick="document.getElementById('edit-player-color').value='#6f42c1'" style="width:24px; height:24px; border-radius:50%; background:#6f42c1; cursor:pointer; border:1px solid #aaa; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:center; gap:15px; margin-top:10px;">
+                <div style="display:flex; justify-content:center; gap:15px; margin-top:15px;">
                     <button class="action-btn" style="background:#6c757d; width:100px; padding:8px; box-shadow:none;" onclick="document.getElementById('player-edit-modal').style.display='none'">キャンセル</button>
                     <button class="action-btn" style="background:#007bff; width:100px; padding:8px; box-shadow:none;" onclick="savePlayerEdit()">保存</button>
                 </div>
@@ -1021,6 +1034,9 @@ function editSingleName(e, id) {
     document.getElementById('edit-player-color').value = AppState.data.playerColors[id] || '#ffffff';
 
     modal.style.display = 'flex';
+
+    // 【おまけ機能】モーダルが開いた瞬間に名前入力欄を選択状態にして、すぐタイピングできるようにする
+    setTimeout(() => { document.getElementById('edit-player-name').focus(); }, 10);
 }
 
 window.savePlayerEdit = function() {
