@@ -27,7 +27,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 .main-container { 
     display: flex; gap: 20px; background: white; padding: 20px; border-radius: 12px; 
     box-shadow: 0 8px 24px rgba(0,0,0,0.06); align-items: stretch; justify-content: center;
-    width: 100%; max-width: 760px; box-sizing: border-box; flex-wrap: nowrap; transition: all 0.3s;
+    width: 100%; max-width: 860px; box-sizing: border-box; flex-wrap: nowrap; transition: all 0.3s;
 }
 
 /* アプリ全体の2カラムレスポンシブレイアウト (Gridレイアウトで高さを同期) */
@@ -74,7 +74,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helv
 }
 
 /* 左パネル（入力操作側の内側レイアウト）- 幅を固定 */
-.left-panel { width: 180px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.left-panel { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .player-wrapper { 
     display: flex; flex-direction: column; width: 100%; border-radius: 10px; overflow: hidden; 
@@ -109,7 +109,7 @@ canvas { border-radius: 6px; background: #e9ecef; box-shadow: inset 0 0 10px rgb
 .zone-cell.locked { background: rgba(0, 123, 255, 0.65) !important; border-color: #007bff !important; color: #fff !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 11; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
 
 /* 右パネル：操作・統計 - 幅を固定 */
-.right-panel { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; } 
+.right-panel { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 .category-title { font-size: 13px; font-weight: bold; color: #495057; border-left: 4px solid #007bff; padding: 6px 8px; margin: 4px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; flex-shrink: 0; }
 
 /* スクロール不要・全表示・最下部揃え版 入力エリア */
