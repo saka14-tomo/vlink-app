@@ -144,11 +144,13 @@ function toggleLargeScreen() {
     if (AppState.ui.isLargeScreen) {
         if(sourceUi) sourceUi.style.display = 'none';
         splitLayout.style.maxWidth = '100%'; 
+        splitLayout.classList.add('large-screen-active'); // ★追加: 大画面用の合図をオン
         if(btn) { btn.innerText = '🗗 縮小'; btn.style.background = '#ff9800'; }
         if(btnPlaylist) { btnPlaylist.innerText = '🗗 縮小'; btnPlaylist.style.background = '#ff9800'; }
     } else {
         if(sourceUi && !AppState.playlist.active) sourceUi.style.display = 'block';
         splitLayout.style.maxWidth = '1600px'; 
+        splitLayout.classList.remove('large-screen-active'); // ★追加: 大画面用の合図をオフ
         if(btn) { btn.innerText = '🔲 大画面'; btn.style.background = '#17a2b8'; }
         if(btnPlaylist) { btnPlaylist.innerText = '🔲 大画面'; btnPlaylist.style.background = '#17a2b8'; }
     }

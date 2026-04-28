@@ -659,3 +659,31 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         white-space: nowrap !important;
     }
 }
+
+/* ====================================================
+   大画面モード時の右カラム拡張設定 (PC専用)
+   ==================================================== */
+@media (min-width: 1101px) {
+    /* 動画側と入力側の比率を調整 */
+    .split-layout.large-screen-active:not(.single-view) {
+        grid-template-columns: 1.3fr 1fr !important; 
+    }
+
+    /* 860pxの幅制限を解除して画面右端まで広げる */
+    .split-layout.large-screen-active .split-right-wrapper .main-container {
+        max-width: 100% !important; 
+        padding: 25px !important;
+    }
+
+    /* 左パネル（選手選択など）を余白に合わせて伸ばす */
+    .split-layout.large-screen-active .left-panel {
+        width: auto !important;
+        flex: 1 1 0 !important; 
+    }
+
+    /* 右パネル（入力ボタン群）を余白に合わせて伸ばす */
+    .split-layout.large-screen-active .right-panel {
+        width: auto !important;
+        flex: 1.2 1 0 !important; 
+    }
+}
