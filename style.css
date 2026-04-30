@@ -698,3 +698,20 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         padding-right: 10px !important;
     }
 }
+
+/* ====================================================
+   パソコン大画面表示時：動画カラムと入力カラムの縦幅を揃える
+   ==================================================== */
+@media (min-width: 1101px) {
+    .split-center {
+        height: 100%;
+    }
+    .view-content {
+        height: 100%;
+        flex: 1;
+    }
+    .view-content .main-container {
+        height: 100% !important;
+    }
+}
+

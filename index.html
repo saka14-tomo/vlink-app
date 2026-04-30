@@ -144,9 +144,6 @@
                     <div class="court-wrapper">
                         <canvas id="input-canvas"></canvas>
                         <div id="input-area" onpointerdown="handleCourtClick(event)"></div>
-                        <div style="margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; box-sizing: border-box;">
-                            <button class="action-btn btn-utility" style="padding: 12px; font-size: 13px; font-weight: bold; width: 33%; box-sizing: border-box;" onclick="cancelCurrentInput()">🔙 戻る</button>
-                        </div>
                     </div>
 
                     <div class="right-panel compact-panel">
@@ -183,6 +180,10 @@
                         <div class="btn-row">
                             <button class="action-btn btn-ace direct-btn compact-btn" onclick="saveDirectAction('receive', '成功')" disabled>〇 成功</button>
                             <button class="action-btn btn-error direct-btn compact-btn" onclick="saveDirectAction('receive', 'ミス')" disabled>✕ ミス</button>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-start; margin-top: 4px; margin-bottom: 4px; width: 100%;">
+                            <button class="action-btn" style="background: #ffffff; color: #333; border: 2px solid #adb5bd; padding: 6px 16px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" onclick="cancelCurrentInput()">🔙 戻る</button>
                         </div>
 
                         <div class="category-title compact-title">トス</div>
