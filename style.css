@@ -687,3 +687,14 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         flex: 1.2 1 0 !important; 
     }
 }
+
+/* ====================================================
+   iPad・モバイル用：YouTube読込ボタンの幅を広げる（入力枠は自動で縮小されます）
+   ==================================================== */
+@media (max-width: 1366px) {
+    #youtube-input-group button[onclick="loadYouTubeVideo()"] {
+        width: 100px !important; /* ボタンの幅。お好みに合わせて 80px 〜 120px 等で調整してください */
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
