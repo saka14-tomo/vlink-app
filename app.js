@@ -79,8 +79,11 @@ function switchTab(target) {
     const videoArea = document.getElementById('shared-video-area');
     const logArea = document.getElementById('shared-log-area');
     const splitLayout = document.getElementById('shared-split-layout');
+    const sourceUi = document.getElementById('video-source-ui');
 
     logArea.style.display = (target === 'input') ? 'flex' : 'none';
+    // ▼ この1行を追加（動画ソース選択欄をどのタブでも強制的に表示）
+    if (sourceUi) sourceUi.style.display = 'block';
     
     if (target === 'input') {
         videoArea.style.display = 'flex';
@@ -141,18 +144,23 @@ function toggleLargeScreen() {
     const btn = document.getElementById('btn-large-screen');
     const btnPlaylist = document.getElementById('btn-playlist-large-screen');
 
+    // 【PC/iPad共通】大画面にしても「動画ソース選択欄」を常に表示する
+    if (sourceUi) sourceUi.style.display = 'block';
+
     if (AppState.ui.isLargeScreen) {
-        if(sourceUi) sourceUi.style.display = 'none';
+        // 大画面モード時の設定
         splitLayout.style.maxWidth = '100%'; 
-        splitLayout.classList.add('large-screen-active'); // ★追加: 大画面用の合図をオン
-        if(btn) { btn.innerText = '🗗 縮小'; btn.style.background = '#ff9800'; }
-        if(btnPlaylist) { btnPlaylist.innerText = '🗗 縮小'; btnPlaylist.style.background = '#ff9800'; }
+        splitLayout.classList.add('large-screen-active');
+        // 大画面時は「縮小」ボタンを表示
+        if(btn) { btn.innerHTML = '🗗 縮小'; btn.style.background = '#ff9800'; }
+        if(btnPlaylist) { btnPlaylist.innerHTML = '🗗 縮小'; btnPlaylist.style.background = '#ff9800'; }
     } else {
-        if(sourceUi && !AppState.playlist.active) sourceUi.style.display = 'block';
+        // 通常モード時の設定
         splitLayout.style.maxWidth = '1600px'; 
-        splitLayout.classList.remove('large-screen-active'); // ★追加: 大画面用の合図をオフ
-        if(btn) { btn.innerText = '🔲 大画面'; btn.style.background = '#17a2b8'; }
-        if(btnPlaylist) { btnPlaylist.innerText = '🔲 大画面'; btnPlaylist.style.background = '#17a2b8'; }
+        splitLayout.classList.remove('large-screen-active');
+        // 通常時は「大画面」ボタンを表示
+        if(btn) { btn.innerHTML = '🔲 大画面'; btn.style.background = '#17a2b8'; }
+        if(btnPlaylist) { btnPlaylist.innerHTML = '🔲 大画面'; btnPlaylist.style.background = '#17a2b8'; }
     }
 }
 
