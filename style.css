@@ -716,90 +716,64 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
 }
 
 /* ====================================================
-   iPad・タブレット用：動画最大化 ＆ ボタンサイズ個別統一
+   iPad・タブレット用：ボタンの潰れ防止 ＆ 余白削減による動画最大化
    ==================================================== */
 @media (max-width: 1366px) {
-    /* 1. 全体の無駄な余白を削減し、動画エリア(左)に残りの全幅を100%与える */
-    .split-layout:not(.single-view) {
-        grid-template-columns: 1fr auto !important;
-        gap: 10px !important; /* カラム同士の隙間を詰める */
+    /* 大画面時の強制的な比率指定を解除し、右側は必要な幅だけ、残りはすべて動画にする */
+    .split-layout.large-screen-active:not(.single-view) {
+        grid-template-columns: 1fr auto !important; 
     }
 
-    /* 2. 入力エリア内の余白・隙間を極限まで削る */
+    /* カラム間やパネル内の無駄な余白を極限まで削って動画のスペースを稼ぐ */
+    .split-layout:not(.single-view) {
+        gap: 8px !important; 
+    }
     .main-container {
         padding: 6px !important;
         gap: 6px !important;
     }
 
-    /* ▼ 各パネルの幅を「固定」し、状態によるサイズ変動を完全に防ぐ ▼ */
+    /* ▼ 各パネルを「絶対に潰れない（縮まない）」ようにガッチリ保護 ▼ */
 
-    /* 3. 左パネル：選手選択は「通常時の大きさ」を保つため少し広めの【120px】 */
+    /* 【左パネル：選手選択・下部5ボタン】通常時の幅をキープ */
     .left-panel {
-        width: 120px !important; 
-        flex: none !important;
+        width: 120px !important;
+        min-width: 120px !important; /* これにより絶対に潰れなくなります */
+        flex-shrink: 0 !important;
     }
-    
-    /* 4. 中央コート：タッチしづらくならないよう【220px】を維持 */
+
+    /* 【中央：コート】 */
     .court-wrapper {
         width: 220px !important;
-        flex: none !important;
+        min-width: 220px !important;
+        flex-shrink: 0 !important;
     }
-    
-    /* 5. 右パネル：プレー結果は「大画面時の小ささ」に統一するため狭めの【110px】 */
+
+    /* 【右パネル：19個の入力ボタン】大画面時のスリムな幅をキープ */
     .right-panel {
-        width: 110px !important; 
-        flex: none !important;
+        width: 110px !important;
+        min-width: 110px !important;
+        flex-shrink: 0 !important;
     }
 
-    /* ▼ 各ボタンの個別サイズ統一 ▼ */
-
-    /* 【要望3】選手選択ボタン：通常時の大きさをキープ */
-    .player-wrapper {
-        height: 42px !important;
-        min-height: 42px !important;
-    }
-    .player-btn span {
-        font-size: 11.5px !important; 
-    }
-
-    /* 【要望1】左下のアクションボタン5つ：大画面時の小ささに統一 */
+    /* ▼ 左下の5つのアクションボタンの文字崩れ防止 ▼ */
     .left-panel > div:last-child .action-btn {
         font-size: 10px !important;
         padding: 6px 2px !important;
         margin-bottom: 4px !important;
-        height: 32px !important; /* 高さを抑えてスリムに */
+        height: 32px !important;
+        white-space: nowrap !important; /* 勝手な改行を禁止 */
+        overflow: hidden !important;
+        letter-spacing: -0.5px !important; /* 文字間を少し詰めて綺麗に収める */
     }
 
-    /* 【要望2】右側の19個の入力ボタン：大画面時の小ささに統一 */
-    .compact-btn {
-        aspect-ratio: 55.53 / 32 !important;
-        height: auto !important;
-        font-size: 10px !important; /* 常に小さめで固定 */
-        padding: 2px !important;
+    /* 選手選択ボタンのテキストも改行させない */
+    .player-btn span {
+        font-size: 11.5px !important;
+        white-space: nowrap !important;
     }
-    /* 特に文字が長いボタンの微調整 */
-    .btn-block-shut { font-size: 8px !important; }
-    .btn-two-attack { font-size: 8px !important; }
-    .toss-btn { font-size: 9.5px !important; }
-    
-    /* タイトルやバナーの縦幅も削ってさらにコンパクトに */
-    .category-title { font-size: 10.5px !important; padding: 4px !important; margin: 2px 0 !important; }
-    .instruction-banner { font-size: 9px !important; padding: 3px !important; margin-bottom: 2px !important; }
-    
-    /* 動画が比率を保ったまま縦に伸びすぎないための安全装置 */
-    .split-layout .split-left {
-        max-height: calc(100vh - 40px) !important;
-    }
-    #video-player-wrapper {
-        max-height: 100% !important;
-    }
-}
 
-/* ====================================================
-   iPad・タブレット用：追加の調整（✕ボタン拡大 ＆ 縦幅微調整）
-   ==================================================== */
-@media (max-width: 1366px) {
-    /* YouTube読込ボタン横の「✕ボタン」を押しやすく大きくする */
+    /* YouTube読込の✕ボタン（前回の修正維持） */
     #youtube-input-group .btn-utility {
         padding: 12px 20px !important;
         font-size: 20px !important;
@@ -807,11 +781,6 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-    }
-
-    /* 動画ソース選択欄が常に表示される分、動画の縦幅が圧迫されないよう比率を再調整 */
-    .split-layout.large-screen-active:not(.single-view) {
-        grid-template-columns: 1.45fr 1fr !important; 
     }
 }
 
