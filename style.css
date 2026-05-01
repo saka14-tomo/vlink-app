@@ -789,3 +789,70 @@ tr.clickable-stat.active-filter { outline: 2px solid #007bff !important; outline
     display: block !important;
 }
 
+/* ====================================================
+   iPad完全固定用：大画面時でも通常時の美しいボタンサイズを【絶対維持】する
+   ==================================================== */
+@media (max-width: 1366px) {
+    /* PC用ルールによる「大画面時に右側を勝手に伸縮させる」誤作動を完全にキャンセル */
+    .split-layout:not(.single-view),
+    .split-layout.large-screen-active:not(.single-view) {
+        grid-template-columns: 1fr auto !important; 
+    }
+    
+    .split-layout.large-screen-active .split-right-wrapper .main-container {
+        width: auto !important;
+        max-width: max-content !important;
+    }
+
+    /* ▼ 1. 左パネル（選手選択・自コート切替など5つのボタン） ▼ */
+    /* 伸縮（flex: 1）を完全に禁止し、通常時の美しく見える幅（130px）で永遠に固定 */
+    .left-panel,
+    .split-layout.large-screen-active .left-panel {
+        width: 130px !important;
+        min-width: 130px !important;
+        max-width: 130px !important;
+        flex: none !important; 
+    }
+
+    /* ▼ 2. 中央コート ▼ */
+    /* タッチ位置がズレないよう220pxで永遠に固定 */
+    .court-wrapper,
+    .split-layout.large-screen-active .court-wrapper {
+        width: 220px !important;
+        min-width: 220px !important;
+        max-width: 220px !important;
+        flex: none !important;
+    }
+
+    /* ▼ 3. 右パネル（プレー結果ボタン） ▼ */
+    /* 130pxで永遠に固定 */
+    .right-panel,
+    .split-layout.large-screen-active .right-panel {
+        width: 130px !important;
+        min-width: 130px !important;
+        max-width: 130px !important;
+        flex: none !important;
+    }
+
+    /* ▼ 選手選択ボタンのサイズと文字の形崩れを阻止 ▼ */
+    .player-wrapper,
+    .split-layout.large-screen-active .player-wrapper {
+        height: 44px !important;
+        min-height: 44px !important;
+    }
+    .player-btn span,
+    .split-layout.large-screen-active .player-btn span {
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* ▼ 自コート切替など、左下5つのボタンの形崩れを阻止 ▼ */
+    .left-panel > div:last-child .action-btn,
+    .split-layout.large-screen-active .left-panel > div:last-child .action-btn {
+        height: 36px !important;
+        font-size: 11px !important;
+        padding: 8px 4px !important;
+        white-space: nowrap !important;
+        letter-spacing: -0.5px !important;
+    }
+}
